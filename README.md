@@ -8,7 +8,7 @@ A third-person lane game in the Saelion valley. The Reign keeps the lanterns lit
 
 | Place | State |
 |---|---|
-| Claude artifact "Livloch" | current, 0.11 |
+| Claude artifact "Livloch" | current, 0.12 |
 | https://stevoblevo.github.io/livloch/ | 0.6 live; 0.9 with every version waits on stevoblevo.github.io pull request 23 |
 | saelion.co | not published |
 
@@ -44,6 +44,7 @@ Serve the folder with any static server and open `index.html`. Fonts and Three.j
 - 0.9 views become a mechanic: view-bound rare fruit and moods before the red rain; concept plates filed in `docs/concepts/`
 - 0.10 Ever Fallen mode, Lean Back modifier, Rainwake and Memory views, the Cabinet (easter eggs, Snuff, concept plate gallery)
 - 0.11 paper heroes: Dora is a painted cutout made from a turnaround sheet (`tools/sheet.py`)
+- 0.12 each view is drawn its own way (ink, origami, bedtime book, zine neon, lantern, ledger, wet glass), after the style kits
 
 ## Known gaps
 
