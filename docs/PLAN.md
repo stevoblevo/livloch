@@ -31,6 +31,7 @@ All of this happened 15 to 17 November 2026.
 | 0.15 | **Painted heroes walk.** Each cutout is split at the hem into a body and hinged legs: legs scissor in the side view and lift in turn from front and back; the body rides the step | `release/0.15` |
 | 0.16 | **A reason to keep playing.** The owner played and did not want to finish a match. Goals: one small thing to do next is always on screen, each pays souls, and the list walks through the hidden systems. Always-open links to Everfallen, AND SO, Reignfawn, kk and the Peachfall on the title. A frame-rate report in the pause screen | `release/0.16` |
 | 0.17 | **First Rain.** A six-minute match scored in five stars, now the default on the title. The roadmap is in `docs/ROADMAP.md` | `release/0.17` |
+| 0.18 | **The valley is painted.** All four heroes are painted cutouts. Motion sheets give them armless bodies, arms that swing and an aiming pose. The Reign's three houses are painted. New key art in the gallery, the two concept videos in the Cabinet, the animatic's line on the title | `release/0.18` |
 
 ## Where it stands
 | Thing | State |
@@ -95,7 +96,7 @@ The valley is paper, so its people can be paper. Since 0.11 a hero can be a flat
 2. `python3 tools/sheet.py SHEET.png art/heroes/NAME.png`
 3. Add `NAME: { src: 'art/heroes/NAME.png', h: HEIGHT }` to `PAPER`. If the file is missing or fails to load, the built shapes are used.
 
-**Done:** Dora, Anna. **Slots built and tested with stand-ins (0.13), waiting on pictures:** lantern houses, Hush towers, both troopers, hollows, small ones, the Ness, pines, rocks, the far backdrop. File names, cell order and the one line to add are in `art/flats/README.md`. **Waiting on sheets for heroes:** Myra Belle, Skein Doll. **No slot yet:** fruit bushes, the strays, the fold cranes.
+**Done:** Dora, Anna, Myra Belle, Skein Doll (turnaround and motion sheets, `tools/motion.py`), and the Reign lantern houses. **Slots built and tested with stand-ins (0.13), waiting on pictures:** lantern houses, Hush towers, both troopers, hollows, small ones, the Ness, pines, rocks, the far backdrop. File names, cell order and the one line to add are in `art/flats/README.md`. **Heroes:** all four done. **No slot yet:** fruit bushes, the strays, the fold cranes.
 
 **Order the owner is having them painted** (by screen area): houses and towers, the four crowd figures, the backdrop, the other heroes, the Ness, scenery.
 
