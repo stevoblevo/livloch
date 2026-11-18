@@ -106,7 +106,7 @@ test('Ever Fallen: a small one put down relights the nearest dark house, and the
 test('Ever Fallen: the rain comes every 150 s and one hollow thicker each time', () => {
   const W = world({ mode: 'fallen' }), ev = run(W, 470, keepAlive); const reds = ev.filter(e => e.k === 'red');
   assert.deepStrictEqual(reds.map(e => Math.round(e.at)), [150, 300, 450]);
-  const extra = at => ev.filter(e => e.k === 'hollow' && Math.abs(e.at - at) < 0.2).length; assert.deepStrictEqual([extra(reds[0].at), extra(reds[1].at), extra(reds[2].at)], [3, 4, 5]);
+  const extra = at => ev.filter(e => e.k === 'hollow' && e.extra && Math.abs(e.at - at) < 0.2).length; assert.deepStrictEqual([extra(reds[0].at), extra(reds[1].at), extra(reds[2].at)], [3, 4, 5]);
 });
 test('Lean Back: the hero plays itself, goes where it is called, and the fold works from the chair', () => {
   const W = world({ lean: true, auto: false }); assert.ok(W.player.useAI && W.lean); assert.ok(S.call(2)); run(W, 60, keepAlive); assert.strictEqual(W.player.ai.lane, 2, 'called lane is kept');
@@ -117,6 +117,27 @@ test('Lean Back: the hero plays itself, goes where it is called, and the fold wo
 test('Rainwake pays half again only while the rain is red; Memory pays half', () => {
   const W = world(), h = W.player, got = (f) => { const a = h.total; f(); S._t.give(h, 100); return h.total - a; };
   assert.strictEqual(got(() => {}), 100); assert.strictEqual(got(() => { W.lens = 'rain'; }), 100); assert.strictEqual(got(() => { W.red = 10; }), 150); assert.strictEqual(got(() => { W.lens = 'memory'; }), 50);
+});
+test('Echo replays the last seconds of shots from where they were fired, weaker, then rests', () => {
+  const W = world({ auto: false }), p = W.player; W.waveT = 1e9; W.hollowT = [1e9, 1e9, 1e9]; W.thiefT = 1e9;
+  assert.strictEqual(S.echo(), false, 'nothing to replay yet');
+  p.ctl.fire = true; p.ctl.ax = p.x; p.ctl.ay = 1.3; p.ctl.az = p.z - 40; const x0 = p.x, z0 = p.z; run(W, 3, keepAlive); p.ctl.fire = false; const fired = W.rec.filter(r => r.s).length; assert.ok(fired > 5, 'recorded ' + fired + ' shots');
+  W.projs.length = 0; assert.strictEqual(S.echo(), true); assert.ok(W.echo && W.echoCd === C.ECHO_CD);
+  const ev = run(W, C.ECHO_T + 0.5, keepAlive), es = ev.filter(e => e.k === 'echoshot'); assert.strictEqual(es.length, fired, 'every shot replayed'); assert.ok(Math.abs(es[0].x - x0) < 2 && Math.abs(es[0].z - z0) < 2, 'from where they were fired');
+  assert.ok(ev.some(e => e.k === 'echoend') && !W.echo); assert.strictEqual(S.echo(), false, 'resting');
+  const W2 = world({ auto: false }), q = W2.player; q.ctl.fire = true; q.ctl.ax = q.x; q.ctl.ay = 1.3; q.ctl.az = q.z - 40; run(W2, 9.5, keepAlive); q.ctl.fire = false; S.setLens('memory'); assert.ok(S.echo()); assert.strictEqual(W2.echoCd, C.ECHO_CD_MEM); assert.ok(W2.echo.f[W2.echo.f.length - 1].t - W2.echo.f[0].t > C.ECHO_T + 1, 'Memory replays longer');
+});
+test('Echo shots hurt at ECHO_DMG strength', () => {
+  const W = world(), p = W.player; W.waveT = 1e9; W.hollowT = [1e9, 1e9, 1e9]; W.thiefT = 1e9; W.projs.length = 0;
+  W.rec.length = 0; for (let k = 0; k < 30; k++) W.rec.push({ t: W.t - 3 + k * 0.1, x: p.x, z: p.z, yaw: 0, s: k === 10 ? [p.x, 1.3, p.z, 0, 0, -1] : null });
+  assert.ok(S.echo()); let b = []; for (let k = 0; k < 80 && !b.length; k++) { S.step(1 / 40); b = W.projs.filter(q => q.echo); } assert.ok(b.length >= 1, 'echo bullet in flight'); assert.ok(Math.abs(b[0].dmg - p.def.gun.dmg * p.st.dmg * C.ECHO_DMG) < 1e-6);
+});
+test('Dreamwalk shows the systems: it misses a mood once, then answers it, and wears Rainwake in the rain', () => {
+  const W = world({ dream: true, auto: false }); assert.ok(W.lean && W.dream && W.player.useAI);
+  const ev = run(W, C.RED_EVERY + 20, keepAlive);
+  assert.ok(ev.some(e => e.k === 'moodmiss'), 'one deliberate miss'); assert.ok(ev.some(e => e.k === 'moodsolved'), 'then the answer'); assert.ok(ev.find(e => e.k === 'red').thin, 'so the rain came thin');
+  assert.ok(ev.some(e => e.k === 'dream' && e.sys === 'rainwake') && W.lens === 'rain', 'Rainwake worn in the rain');
+  assert.ok(ev.some(e => e.k === 'call'), 'it called a thread');
 });
 test('the model never reads the look: sim and core have no presentation references', () => {
   for (const f of ['core.js', 'sim.js']) { const src = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8').replace(/typeof window !== 'undefined' \? window : globalThis/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/.*$/gm, '$1'); // comments may talk about the rule; code may not break it

@@ -20,6 +20,11 @@
 | 0.7 | 1794961493-2818 | pending a pull request on the Pages repo | `release/0.7` ecba971e9bb964dfe2a71c958714e564f1a5aec4, PR #1 |
 | 0.8 | published after this commit; see README | pending the same pull request | `release/0.8`, `work/0.8-fruit` |
 | 0.9 | artifact version `1794962708-4006` | Pages branch `livloch-0.7` at `41d2ba9`, waiting on pull request 23 | `release/0.9` (`974b389`), `work/0.9-views` |
+| 0.10 | artifact | Pages `v0.10/`; saelion.co first published at 0.10.1 from `release/livloch-0.10.1-20261118` (`101cb3c`) | `release/0.10` |
+| 0.11 | artifact | Pages `v0.11/`; saelion.co `release/livloch-0.11-20261118` (`8d1e714`) | `release/0.11` |
+| 0.12 | artifact | Pages `v0.12/`; saelion.co `release/livloch-0.12-20261118` (`ae9fa3b`) | `release/0.12` |
+| 0.13 | artifact | folded into 0.14 on the sites | `release/0.13` |
+| 0.14 | artifact | see `docs/DORA.md` for how each site is published | `release/0.14` |
 
 ## Versioning
 This session cannot push tags or create releases (the GitHub proxy refuses both), so each version is a branch: `release/0.4`, `release/0.5`, `release/0.6`, `release/0.6.1`, `release/0.7`, `release/0.8`, `release/0.9`. They never move. Turn them into tags from a normal clone with `git tag v0.7 origin/release/0.7 && git push --tags` if tags are wanted.

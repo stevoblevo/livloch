@@ -26,11 +26,13 @@ All of this happened 15 to 17 November 2026.
 | 0.10.1 | Keys shown on screen for keyboard play (the captured mouse made the buttons unclickable) | `main` |
 | 0.11 | **Paper heroes.** A hero can be a painted cutout made from a turnaround sheet; Dora is the first. `tools/sheet.py` turns a sheet into a sprite. Key art added to the gallery and used as the share card | `release/0.11` |
 | 0.12 | **Views are drawn differently, not just coloured differently.** The final render pass gives each view its own hand, taken from the three style kits: ink hatching (Skeptic Noir), flat origami with drawn folds and a watercolour bedtime page (Storeybrook), zine neon (Hypermetapunk), lantern pools (Depthfield night), a sepia ledger, wet glass | `release/0.12` |
+| 0.13 | **Slots for painted art.** Structures, troopers, hollows, small ones, the Ness, trees, rocks and a far backdrop can each be replaced by a painted cutout by adding one line. Nothing looks different until the pictures arrive | `release/0.13` |
+| 0.14 | **Echo and Dreamwalk.** Echo replays your last seconds beside you (C, or the Echo button). Dreamwalk is Lean Back with the hands played too: it names each hidden thing the first time it happens and asks at the end what to keep, change or cut. Anna painted. Source sheets and capture scripts moved into the repo | `release/0.14` |
 
 ## Where it stands
 | Thing | State |
 |---|---|
-| Rules | 19 regression tests pass (`node tools/test.js`) |
+| Rules | 22 regression tests pass (`node tools/test.js`) |
 | Ever Fallen | Bots hold about 14:00 on Gentle, 11:50 on Even, 9:40 on Cruel, recovering 7 to 23 lights (`node tools/fallen.js`). No person has played it |
 | Bots | Gentle 6 of 6, Even 4 of 6, Cruel 0 of 6 Reign wins. Bots never die, which flatters the Reign. Bots never change the view, so they never get rare fruit or a thin rain, which flatters the Hush |
 | Human play | **One phone session, at 0.1, with invisible bullets.** Nothing since |
@@ -90,7 +92,9 @@ The valley is paper, so its people can be paper. Since 0.11 a hero can be a flat
 2. `python3 tools/sheet.py SHEET.png art/heroes/NAME.png`
 3. Add `NAME: { src: 'art/heroes/NAME.png', h: HEIGHT }` to `PAPER`. If the file is missing or fails to load, the built shapes are used.
 
-**Done:** Dora. **Waiting on sheets:** Anna, Myra Belle, Skein Doll. **Then, same method extended to non-heroes** (needs a small renderer change each): troopers and hollows as instanced cutouts, the Ness, lantern houses and Hush towers as standing flats, trees, rocks and bushes.
+**Done:** Dora, Anna. **Slots built and tested with stand-ins (0.13), waiting on pictures:** lantern houses, Hush towers, both troopers, hollows, small ones, the Ness, pines, rocks, the far backdrop. File names, cell order and the one line to add are in `art/flats/README.md`. **Waiting on sheets for heroes:** Myra Belle, Skein Doll. **No slot yet:** fruit bushes, the strays, the fold cranes.
+
+**Order the owner is having them painted** (by screen area): houses and towers, the four crowd figures, the backdrop, the other heroes, the Ness, scenery.
 
 **Limits to be honest about:** cutouts have no limbs to animate (they waddle and lean), they look flat from directly above, and they ignore the views' recolouring, so Dora looks the same in every view. If that last one matters, the fix is a tint per view.
 
@@ -100,6 +104,19 @@ The valley is paper, so its people can be paper. Since 0.11 a hero can be a flat
 The owner's note on 0.11: "every view is the same, just a different colour scheme". True then. Since 0.12 the last render pass (`mComp` in `js/gfx.js`, uniform `m`) draws each view its own way. The kits are on `saelion.co/toolkit`: **Storeybrook** (paper, watercolour, pages, origami, comic, stickers), **Depthfield** (layered ridges, glass, weather, a ledger in the dark), **Hypermetapunk** (dusk, chrome and neon, tape, stamps, zine).
 
 Still the same under every view: the shapes. The next step is geometry per view, in this order: Origami re-cuts the world into flat facets and visible folds; Knight Night stands everything up as paper-theatre flats with footlights; Depthfield views get layered ridgelines behind the valley; Hypermetapunk gets tape, stamps and sticker labels on the HUD. Lighter graphics turns the drawing pass off, so the views fall back to palettes there.
+
+## What the player should learn without being told
+Agreed with the owner on 18 November. In the order they should be found; each makes the one before it cheaper.
+1. Equal force cancels. Progress comes only from breaking symmetry.
+2. The world keeps time: 24-second waves, five-minute rain, fruit regrowing. Arriving at the right moment beats arriving with more.
+3. Looking is an action: change the view and different things exist.
+4. Distance is not fixed: threads carry you, the fold moves a lane.
+5. You cannot keep everything lit.
+
+**Balance target that follows:** winnable on Even with two of these, on Cruel only with four. Nothing has been tuned against it yet.
+
+## Painting with time
+The five coordinates already in the game are where (two), height, when, and which view. Steps, cheapest first: **Echo** (built, 0.14); **the loop**, where whatever is placed on a beat of the 24-second wave recurs on that beat until painted over; **Depthfield as a view**, where depth on screen is time and the next 30 seconds are drawn as ridges; **cross-view paths**, painted in one view and real in another (the fifteenth mode on the plates).
 
 ## Standing rules
 - The model owns the view; the model never reads the renderer. Tests enforce it. See `AGENTS.md`.
