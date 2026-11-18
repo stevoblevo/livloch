@@ -12,6 +12,9 @@ What is forbidden is the other direction: `sim.js` or `core.js` reading the rend
 
 History: 0.7 went further and banned views from affecting play at all, following a handoff note. The owner's concept plates call the views "Playable Reality Views", so 0.9 reversed that, keeping the architecture and dropping the ban.
 
+## Modes
+`S.newWorld({ mode: 'fallen' })` is Ever Fallen; `{ lean: true }` is the Lean Back modifier. Both are model state, tested in `tools/test.js`. `node tools/fallen.js` measures how long bots hold.
+
 ## Commands
 | Command | What it tells you |
 |---|---|

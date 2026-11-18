@@ -22,11 +22,13 @@ All of this happened 15 to 17 November 2026.
 | 0.7 | Inkblot Noir look with cues; red-rain warning; rule tests; evidence pass | `release/0.7` |
 | 0.8 | Fruit: lemon, rose hips, Verde Limón little and big; design comments; this plan | `release/0.8` |
 | 0.9 | **Views become a mechanic.** The view is model state. Big fruit is the rare tier and each exists only through one view. A mood before each red rain is answered by wearing the right view, which thins the rain | `release/0.9` |
+| 0.10 | **Two ways to play, and a cabinet.** Ever Fallen mode (already lost; recover lights; survive). Lean Back modifier (hero plays itself; you keep the view, the thread, the fold). Two views with a price: Rainwake and Memory. The Cabinet: ten easter eggs opened by feats, with doors to other Saelion worlds, a mini game (Snuff) and the concept plates. Fixes a 0.9 crash when a mood landed on the view already worn | `release/0.10` |
 
 ## Where it stands
 | Thing | State |
 |---|---|
-| Rules | 13 regression tests pass (`node tools/test.js`) |
+| Rules | 19 regression tests pass (`node tools/test.js`) |
+| Ever Fallen | Bots hold about 14:00 on Gentle, 11:50 on Even, 9:40 on Cruel, recovering 7 to 23 lights (`node tools/fallen.js`). No person has played it |
 | Bots | Gentle 6 of 6, Even 4 of 6, Cruel 0 of 6 Reign wins. Bots never die, which flatters the Reign. Bots never change the view, so they never get rare fruit or a thin rain, which flatters the Hush |
 | Human play | **One phone session, at 0.1, with invisible bullets.** Nothing since |
 | Sound | Measured, never heard |
@@ -64,11 +66,25 @@ From the concept plates (`docs/concepts/`). The plates name each mode and hint a
 | Whiteout (Paper) / Snowbound | Quiet, high contrast | Origami | Big Lemon exists here. Creases are plain. Answers one mood |
 | Threadspace (Wire) / Threadline | Wireframe, hidden structure | Hypermetapunk | Big Verde Limón exists here. Answers one mood |
 | Inkblot | Negative space, doubt | Inkblot Noir | Shows thief routes and which structures can be hurt. Answers one mood |
+| Rainwake (Red Rain) | the red rain | Rainwake | Souls worth half again while the rain is red. Shows the time to the next rain. Answers one mood |
+| Memory | Echo overlays | Memory | Ten-second trails behind small ones and hollows. Lights hold twice as long, dark passes twice as fast, souls worth half. Answers one mood |
 | Emberdusk | Cinematic, ominous | Lantern Night, roughly | Answers one mood |
-| Watercolor, Prism, Depthfield 5D, Retrovision (Comix), Dreamwalk, Rainwake (Red Rain), Hush (Counter), Silentworld (Muted), Negative, Memory, Starlit | various | not built | none |
+| Watercolor, Prism, Depthfield 5D, Retrovision (Comix), Dreamwalk, Hush (Counter), Silentworld (Muted), Negative, Starlit | various | not built | none |
 | Ætherweave, the Fifteenth Mode | Paint paths, weave time layers, reveal hidden relations, seed a new valley | not built | none |
 
 Good next purposes, straight from the hints: **Memory** shows where things were ten seconds ago (the "ghost of the recent state"); **Hush (Counter)** shows the world as the Hush sees it, what it will take next; **Rainwake** is the only view in which the red rain can be read ahead of time.
+
+## Modes and the cabinet (0.10)
+- **Ever Fallen** is this game's reading of the name. The Everfallen pages on saelion.co and GitHub Pages hold no rules to follow, so nothing here claims to be canon. Rules live in the DESIGN header of `js/sim.js`.
+- **Lean Back** borrows its line from `saelion.co/kk`: "a watch, not a wall". It is the one-thumb way to play on a phone.
+- **The Cabinet** is data in `js/core.js` (`LL.CABINET`, `LL.PLATES`); feats are awarded in `js/main.js` (`feats`), and only to a person, never while the valley is just being watched. Five taps on the word Settings in the pause screen reveals a switch that opens everything.
+
+## Art pipeline (the next big step)
+Everything on screen is primitives built in code. The engine loads no models yet. The cheapest route to a professional look that keeps the no-build web game:
+1. Add `GLTFLoader` and load `.glb` files from `art/models/`, falling back to the current primitives when a file is missing. Agent work, one session.
+2. Assets wanted first, in order of how much screen they fill: the three heroes plus Skein Doll (rigged, idle/run/shoot/hit, under 15k triangles each); the Reign lantern house in three sizes and its Hush counterpart; trooper and hollow; the Ness; six trees and rocks; the fruit bushes.
+3. Format: glTF 2.0 binary, Y up, metres, one material per object where possible, base colour in vertex colours or one shared 1024 px palette texture so the views can still recolour them.
+4. One art direction, taken from `art/title.jpg`, applied to every asset. Mixed styles would look worse than the primitives do.
 
 ## Standing rules
 - The model owns the view; the model never reads the renderer. Tests enforce it. See `AGENTS.md`.

@@ -86,6 +86,38 @@ test('bots do not camp on rare fruit they cannot reach', () => {
   const W = world(); const f = W.fruit.find(q => q.k === 'biglemon'); f.ripe = true; const b = W.heroes.find(h => !h.isPlayer); b.x = f.x + 6; b.z = f.z;
   run(W, 20, w => { keepAlive(w); f.ripe = true; }); assert.ok(Math.hypot(b.x - f.x, b.z - f.z) > 12, 'bot walked away, now ' + Math.hypot(b.x - f.x, b.z - f.z).toFixed(0) + ' m off');
 });
+test('a mood never asks for the view already worn, whichever view that is', () => {
+  for (const lens of C.LENSES) for (const seed of [1, 2, 3]) { const W = world({ lens: lens, seed: seed }); const ev = run(W, C.RED_EVERY - C.RED_WARN + 2, keepAlive); assert.ok(ev.some(e => e.k === 'redwarn'), 'warned'); assert.notStrictEqual(W.mood.lens, lens); }
+});
+test('Ever Fallen: the Hush cannot be hurt, houses start dark, and it always ends in a fall', () => {
+  const W = world({ mode: 'fallen' }); assert.ok(W.structs.filter(s => s.team === 0 && s.kind !== 'patron').every(s => s.dark), 'Reign houses start dark');
+  const g = W.structs.find(s => s.team === 1 && s.kind === 'guardian'), hp = g.hp; g.pressed = true; S._t.damage(g, 5000, W.player, 'unit'); assert.strictEqual(g.hp, hp, 'Hush guardian took no damage');
+  const ev = run(W, 3000); assert.ok(W.over && W.winner === 1, 'ended with the Reign fallen at ' + W.t.toFixed(0)); const o = ev.find(e => e.k === 'over'); assert.ok(o.fallen && o.t > 0 && o.lights >= 0);
+  assert.ok(!ev.some(e => e.k === 'gutter'), 'no gutter in Ever Fallen');
+});
+test('Ever Fallen: a small one put down relights the nearest dark house, and the light fades after LIT_T', () => {
+  const W = world({ mode: 'fallen' }); W.thiefT = 1e9; W.hollowT = [1e9, 1e9, 1e9]; W.waveT = 1e9; W.redNext = 1e9;
+  S._t.spawnThief(); const th = W.thieves[0]; assert.ok(th && th.alive, 'a small one comes even with nothing lit'); th.x = -48; th.z = -60; W.fx.length = 0;
+  S._t.kill(th, W.player, W.player); const lit = W.structs.filter(s => s.team === 0 && s.kind !== 'patron' && !s.dark); assert.strictEqual(lit.length, 1); assert.strictEqual(W.lights, 1);
+  run(W, C.LIT_T - 5, keepAlive); assert.ok(!lit[0].dark, 'still lit before LIT_T'); run(W, 10, keepAlive); assert.ok(lit[0].dark, 'dark again after LIT_T');
+  S._t.spawnThief(); const t2 = W.thieves[W.thieves.length - 1]; t2.x = -48; t2.z = -60; S.setLens('memory'); S._t.kill(t2, W.player, W.player); const l2 = W.structs.find(s => s.team === 0 && s.kind !== 'patron' && !s.dark);
+  run(W, C.LIT_T + 30, keepAlive); assert.ok(!l2.dark, 'Memory holds a light past LIT_T'); run(W, C.LIT_T, keepAlive); assert.ok(l2.dark, 'and not forever');
+});
+test('Ever Fallen: the rain comes every 150 s and one hollow thicker each time', () => {
+  const W = world({ mode: 'fallen' }), ev = run(W, 470, keepAlive); const reds = ev.filter(e => e.k === 'red');
+  assert.deepStrictEqual(reds.map(e => Math.round(e.at)), [150, 300, 450]);
+  const extra = at => ev.filter(e => e.k === 'hollow' && Math.abs(e.at - at) < 0.2).length; assert.deepStrictEqual([extra(reds[0].at), extra(reds[1].at), extra(reds[2].at)], [3, 4, 5]);
+});
+test('Lean Back: the hero plays itself, goes where it is called, and the fold works from the chair', () => {
+  const W = world({ lean: true, auto: false }); assert.ok(W.player.useAI && W.lean); assert.ok(S.call(2)); run(W, 60, keepAlive); assert.strictEqual(W.player.ai.lane, 2, 'called lane is kept');
+  assert.strictEqual(LL.nearestLane(W.player.x, W.player.z), 2, 'hero is on the called thread');
+  W.creases.forEach(c => { c.guard.alive = true; c.t = 0; c.cd = 0; }); assert.strictEqual(S.leanFold(), false, 'no fold while the crease is guarded'); W.creases[0].guard.alive = false; assert.strictEqual(S.leanFold(), true); assert.ok(W.creases[0].t > 0);
+  const W2 = world(); assert.strictEqual(S.call(1), false, 'no calling outside Lean Back'); assert.strictEqual(S.leanFold(), false);
+});
+test('Rainwake pays half again only while the rain is red; Memory pays half', () => {
+  const W = world(), h = W.player, got = (f) => { const a = h.total; f(); S._t.give(h, 100); return h.total - a; };
+  assert.strictEqual(got(() => {}), 100); assert.strictEqual(got(() => { W.lens = 'rain'; }), 100); assert.strictEqual(got(() => { W.red = 10; }), 150); assert.strictEqual(got(() => { W.lens = 'memory'; }), 50);
+});
 test('the model never reads the look: sim and core have no presentation references', () => {
   for (const f of ['core.js', 'sim.js']) { const src = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8').replace(/typeof window !== 'undefined' \? window : globalThis/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/.*$/gm, '$1'); // comments may talk about the rule; code may not break it
     for (const bad of [/\bLL\.gfx\b/, /\bLL\.ui\b/, /\bdocument\b/, /\bwindow\b/, /\blook\b/i, /\bLK\b/, /localStorage/]) assert.ok(!bad.test(src), f + ' mentions ' + bad); }
