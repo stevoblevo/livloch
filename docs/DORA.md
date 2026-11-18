@@ -5,9 +5,9 @@
 ## Never done
 | Thread | Asked | State |
 |---|---|---|
-| A person plays a full match | Every release since 0.1 | Still none. Everything about feel, sound and readability is unverified. Dreamwalk (0.14) is the cheapest way to get verdicts without playing |
+| A person finishes a match | Every release since 0.1 | **Corrected 18 November:** the owner has played, repeatedly, and said it is "not enticing enough to complete a whole match yet". Earlier notes in this repository saying nobody had played were wrong. No full match has been finished. 0.16 adds goals as the first answer |
 | Tidy the catalogue of `stevoblevo` repositories | First message, 15 November | Never scoped, never started. Needs the owner to say which repositories and what "optimising" means |
-| Real-device frame rate | Raised at 0.6 | Never measured. 0.12 added a render pass and 0.13 can add crowds of cutouts |
+| Real-device frame rate | Raised at 0.6 | The owner saw no lag or dropped frames. Not measured yet; 0.16 adds a report in the pause screen with a copy button |
 | How anything sounds | Raised at 0.6 | Levels were measured offline; nobody has listened |
 
 ## Open decisions for the owner
