@@ -1,0 +1,14 @@
+
+Even, 12 bot matches per row
+  baseline               Reign wins  5/12 | mean loss at 12:01 | Reign structures lost 10:00-12:00 per match 2.17 | lights carried home per match 1.00 | hero deaths per match 0.00
+  stagger thieves        Reign wins  7/12 | mean loss at 12:06 | Reign structures lost 10:00-12:00 per match 1.92 | lights carried home per match 1.17 | hero deaths per match 0.00
+  cap one blackout       Reign wins  5/12 | mean loss at 12:53 | Reign structures lost 10:00-12:00 per match 2.00 | lights carried home per match 1.50 | hero deaths per match 0.00
+  recovery window 20 s   Reign wins  8/12 | mean loss at 12:18 | Reign structures lost 10:00-12:00 per match 1.83 | lights carried home per match 1.17 | hero deaths per match 0.00
+  all three              Reign wins  7/12 | mean loss at 12:15 | Reign structures lost 10:00-12:00 per match 1.92 | lights carried home per match 1.00 | hero deaths per match 0.00
+
+Cruel, 12 bot matches per row
+  baseline               Reign wins  0/12 | mean loss at 12:12 | Reign structures lost 10:00-12:00 per match 0.92 | lights carried home per match 2.25 | hero deaths per match 0.00
+  stagger thieves        Reign wins  1/12 | mean loss at 11:24 | Reign structures lost 10:00-12:00 per match 1.17 | lights carried home per match 1.33 | hero deaths per match 0.00
+  cap one blackout       Reign wins  1/12 | mean loss at 10:33 | Reign structures lost 10:00-12:00 per match 1.25 | lights carried home per match 1.33 | hero deaths per match 0.08
+  recovery window 20 s   Reign wins  0/12 | mean loss at 12:19 | Reign structures lost 10:00-12:00 per match 1.08 | lights carried home per match 1.17 | hero deaths per match 0.00
+  all three              Reign wins  1/12 | mean loss at 11:46 | Reign structures lost 10:00-12:00 per match 1.08 | lights carried home per match 1.50 | hero deaths per match 0.00

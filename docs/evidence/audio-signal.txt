@@ -1,0 +1,15 @@
+Audio signal measurement. Each event is rendered through the game's own synth in an OfflineAudioContext, with no drone,
+and the rendered samples are measured. Full scale is 1.0. This shows an event makes sound and roughly how loud and how long.
+It does not show what it sounds like. Nobody has listened to it.
+Live AudioContext started in this run: true
+
+theft from the player        peak 0.178  rms 0.0157  audible for 0.50 s
+guardian blackout (snuff)    peak 0.152  rms 0.0097  audible for 0.35 s
+red rain warning             peak 0.269  rms 0.0176  audible for 1.06 s
+red rain start               peak 0.568  rms 0.0501  audible for 2.51 s
+thief home with a light      peak 0.276  rms 0.0173  audible for 0.94 s
+thief caught                 peak 0.117  rms 0.0056  audible for 0.28 s
+guardian relit               peak 0.144  rms 0.0096  audible for 0.79 s
+fold                         peak 0.373  rms 0.0271  audible for 1.44 s
+hollow slam nearby           peak 0.274  rms 0.0131  audible for 0.18 s
+control: unknown event       peak 0.000  rms 0.0000  audible for 0.00 s  SILENT
