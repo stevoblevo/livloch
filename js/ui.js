@@ -78,8 +78,15 @@ UI.init = function (handlers) {
     if (type === 'c') el.checked = !!cfg[key]; else el.value = cfg[key];
     el.addEventListener('input', function () { cfg[key] = type === 'c' ? el.checked : +el.value; H.save(); H.apply(); });
   };
-  bind('oSens', 'sens'); bind('oVol', 'vol'); bind('oInv', 'invert', 'c'); bind('oAssist', 'assist', 'c'); bind('oLow', 'low', 'c');
+  bind('oSens', 'sens'); bind('oVol', 'vol'); bind('oInv', 'invert', 'c'); bind('oAssist', 'assist', 'c'); bind('oLow', 'low', 'c'); bind('oPet', 'pet', 'c'); UI.petStatus();
   $('oAuto').addEventListener('input', function () { cfg.autoFire = $('oAuto').checked; H.save(); });
+};
+UI.petStatus = function () {
+  const checkbox = $('oPet'), caption = $('petCaption');
+  if (!checkbox || !caption) return;
+  checkbox.disabled = !LL.cfg.petUnlocked;
+  checkbox.checked = !!LL.cfg.petUnlocked && !!LL.cfg.pet;
+  caption.textContent = LL.cfg.petUnlocked ? 'Guardian fox · follow and reveal stolen light' : 'Guardian fox · rescue a stolen light to unlock';
 };
 UI.lookChips = function () { const k = LL.cfg.look; document.querySelectorAll('[data-look]').forEach(b => { if (b.tagName === 'BUTTON') b.setAttribute('aria-pressed', String(b.getAttribute('data-look') === k)); }); const L = LL.gfx.LOOKS[k]; $('lookLine').textContent = L ? 'Look: ' + L.name + ', from ' + L.kit + '.' : ''; };
 /* ---------- the cabinet: easter eggs ---------- */
