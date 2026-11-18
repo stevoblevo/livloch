@@ -21,12 +21,13 @@ All of this happened 15 to 17 November 2026.
 | 0.6.1 | Fix: bullets, soul orbs and bar fills had never drawn | `release/0.6.1` |
 | 0.7 | Inkblot Noir look with cues; red-rain warning; rule tests; evidence pass | `release/0.7` |
 | 0.8 | Fruit: lemon, rose hips, Verde Limón little and big; design comments; this plan | `release/0.8` |
+| 0.9 | **Views become a mechanic.** The view is model state. Big fruit is the rare tier and each exists only through one view. A mood before each red rain is answered by wearing the right view, which thins the rain | `release/0.9` |
 
 ## Where it stands
 | Thing | State |
 |---|---|
-| Rules | 10 regression tests pass (`node tools/test.js`) |
-| Bots | Gentle about 5 of 6, Even about 4 of 6, Cruel 0 of 6 Reign wins. Bots never die, so these flatter the Reign |
+| Rules | 13 regression tests pass (`node tools/test.js`) |
+| Bots | Gentle 6 of 6, Even 4 of 6, Cruel 0 of 6 Reign wins. Bots never die, which flatters the Reign. Bots never change the view, so they never get rare fruit or a thin rain, which flatters the Hush |
 | Human play | **One phone session, at 0.1, with invisible bullets.** Nothing since |
 | Sound | Measured, never heard |
 | Real devices | No frame-rate data |
@@ -35,7 +36,7 @@ All of this happened 15 to 17 November 2026.
 ## The gate before anything else
 **A person plays one full match on desktop and one on a phone, with sound, and writes down what happened.** Every item below is a guess until then. Only the owner can do this.
 
-What to write down: was it clear what to shoot; did movement and firing feel good; when did it get boring or unfair; did you find the fold, a fruit, the Ness without being told; how did it sound.
+What to write down: did you change the view, and did the mood line tell you which one; was it clear what to shoot; did movement and firing feel good; when did it get boring or unfair; did you find the fold, a fruit, the Ness without being told; how did it sound.
 
 ## Next, in order
 Each step is one version. "Agent" means a coding agent can do it alone. "Person" means it needs the owner.
@@ -44,22 +45,39 @@ Each step is one version. "Agent" means a coding agent can do it alone. "Person"
 |---|---|---|---|---|
 | 1 | n/a | Play test above | Person | Notes exist |
 | 2 | 0.9 | Fix what the play test finds. Expect shooting feel first: hit reactions, recoil, camera kick, clearer hits | Agent, from the notes | The same person says it is better |
-| 3 | 0.10 | Second red rain: test fewer extra hollows at 10:00 (bot data points there, not at thieves). Change one number, compare 24 bot matches each way, then a person plays Cruel | Agent, then Person | Cruel is winnable by a person who uses the fold or the Greatness, and not by bots |
+| 3 | 0.10 | Second red rain. The mood now removes the extra hollows for a player who answers it, which is where bot data said the collapse comes from. Check that a person who solves the mood can hold at 10:00 on Cruel; only then touch numbers | Person, then Agent | Cruel is winnable by a person who answers moods and uses the fold or the Greatness, and not by bots |
 | 4 | 0.11 | Thread tuning: each thread has a pitch in 31 steps; ringing a consonant interval on it strengthens your troopers there. Model rule plus test first, then sound, then a hint | Agent | Test passes; a person finds it within three matches or the hint is wrong |
 | 5 | 0.12 | The Hush folds on Cruel, and thieves can be bribed with a fruit ("meet, don't take", see `docs/experiments.md`) | Agent | Tests; person confirms it reads as a rule and not a bug |
-| 6 | 0.13 | Look-bound secrets, the Reignfawn way, but look-neutral in the model: the secret exists in every look and one look makes it visible | Agent | Test proves the model ignores the look |
+| 6 | 0.13 | Give every view one purpose, from the mode table below. Then a radial toggle instead of cycling | Agent | One test per view; a person can say what each view is for |
 | 7 | 1.0 candidate | Second valley (Peach Dusk or Red Rain), a between-valleys screen, save of valleys kept | Agent | Two valleys playable start to end |
 | 8 | n/a | Decide engine and art pipeline for anything beyond a browser prototype. Needs real art; code cannot paint the plate | Person | A written decision |
 
 Do not start 4 to 7 before 1 and 2. They add secrets to a game nobody has yet confirmed is fun to move and shoot in.
 
+## The fifteen modes
+From the concept plates (`docs/concepts/`). The plates name each mode and hint at its purpose. Six exist as views. "Purpose built" means a rule in `sim.js`, not just a palette.
+
+| Plate name | Hint on the plate | In the game as | Purpose built |
+|---|---|---|---|
+| Storybook (Classic) / Dawnvale | Warm, story default | Cobalt Snow (default) | Home view; nothing special |
+| Moonlit | Cool, clarity | Knight Night | Big Rose hips exist here. Answers one mood |
+| Whiteout (Paper) / Snowbound | Quiet, high contrast | Origami | Big Lemon exists here. Creases are plain. Answers one mood |
+| Threadspace (Wire) / Threadline | Wireframe, hidden structure | Hypermetapunk | Big Verde Limón exists here. Answers one mood |
+| Inkblot | Negative space, doubt | Inkblot Noir | Shows thief routes and which structures can be hurt. Answers one mood |
+| Emberdusk | Cinematic, ominous | Lantern Night, roughly | Answers one mood |
+| Watercolor, Prism, Depthfield 5D, Retrovision (Comix), Dreamwalk, Rainwake (Red Rain), Hush (Counter), Silentworld (Muted), Negative, Memory, Starlit | various | not built | none |
+| Ætherweave, the Fifteenth Mode | Paint paths, weave time layers, reveal hidden relations, seed a new valley | not built | none |
+
+Good next purposes, straight from the hints: **Memory** shows where things were ten seconds ago (the "ghost of the recent state"); **Hush (Counter)** shows the world as the Hush sees it, what it will take next; **Rainwake** is the only view in which the red rain can be read ahead of time.
+
 ## Standing rules
-- The model never reads the look. Tests enforce it.
+- The model owns the view; the model never reads the renderer. Tests enforce it. See `AGENTS.md`.
 - One version, one branch `release/X.Y`, never moved. `main` changes only by pull request.
 - Bot results are never reported as human results.
 - Nothing is deployed to saelion.co from this repo.
 
 ## Open questions for the owner
-1. Is "Big little Verde Limón" two fruits (built that way) or one name?
+1. Answered: big and little are tiers of strength and rarity. Built as little fruit (common, one hero) and big fruit (rare, whole side, one view each).
 2. Should fruit be eaten by walking through it (built that way), or shot down first?
 3. Co-op: same screen, or online later?
+4. The plates show a fox companion, a quest tracker and Map, Hush, Pets, Craft, Mode buttons. Which of those belong in Livloch and which in Reignfawn?

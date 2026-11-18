@@ -8,8 +8,8 @@ A third-person lane game in the Saelion valley. The Reign keeps the lanterns lit
 
 | Place | State |
 |---|---|
-| Claude artifact "Livloch" | current, 0.8 |
-| https://stevoblevo.github.io/livloch/ | 0.6 live; 0.8 with every version waits on stevoblevo.github.io pull request 23 |
+| Claude artifact "Livloch" | current, 0.9 |
+| https://stevoblevo.github.io/livloch/ | 0.6 live; 0.9 with every version waits on stevoblevo.github.io pull request 23 |
 | saelion.co | not published |
 
 ## Run
@@ -41,6 +41,7 @@ Serve the folder with any static server and open `index.html`. Fonts and Three.j
 - 0.6.1 fix: bullets, soul orbs and health-bar fills were invisible since 0.1
 - 0.7 Inkblot Noir look with model-driven cues; red-rain warning; regression tests; evidence pass
 - 0.8 fruit power-ups: lemon, rose hips, Verde Limón little and big; design comments in every source file; `docs/PLAN.md`
+- 0.9 views become a mechanic: view-bound rare fruit and moods before the red rain; concept plates filed in `docs/concepts/`
 
 ## Known gaps
 
