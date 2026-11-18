@@ -1,0 +1,25 @@
+const { chromium } = require('/opt/npm-tools/node_modules/playwright');
+const fs = require('fs'), http = require('http'), path = require('path');
+const root = process.env.LL_ROOT || '/home/claude/livelock';
+const srv = http.createServer((q, r) => { let p = path.join(root, q.url.split('?')[0] === '/' ? 'index.html' : q.url.split('?')[0]); fs.readFile(p, (e, d) => { if (e) { r.writeHead(404); r.end(); } else { r.writeHead(200, { 'content-type': p.endsWith('.js') ? 'text/javascript' : (p.endsWith('.jpg') ? 'image/jpeg' : 'text/html') }); r.end(d); } }); }).listen(8765);
+(async () => {
+  const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+  const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
+  const pg = await ctx.newPage(); const errs = [];
+  pg.on('pageerror', e => errs.push('PAGEERROR: ' + e.message + ' | ' + (e.stack || '').split('\n').slice(1, 3).join(' | ')));
+  await pg.route('**/*', rt => { const u = rt.request().url(); if (u.includes('three.min.js')) return rt.fulfill({ path: '/tmp/t/node_modules/three/build/three.min.js', contentType: 'text/javascript' }); if (u.startsWith('http://localhost')) return rt.continue(); return rt.abort(); });
+  await pg.goto('http://localhost:8765/'); await pg.waitForTimeout(2000);
+  await pg.tap('#cDream'); await pg.waitForTimeout(200); console.log('button:', await pg.textContent('#bPlay'));
+  await pg.tap('#bPlay'); await pg.waitForTimeout(1500);
+  const ff = (secs) => pg.evaluate((secs) => { const S = LL.sim, W = S.W; for (let i = 0; i < secs * 30 && !W.over; i++) { S.step(1 / 30); W.fx.forEach(e => { LL.gfx.fx(e); LL.ui.fx(e); }); W.fx.length = 0; } return { t: Math.round(W.t), over: W.over, lens: W.lens, echoes: W.echoes, folds: W.player.folds || 0, moods: W.moodsSolved, card: document.querySelector('#dreamCard b').textContent }; }, secs);
+  console.log(JSON.stringify(await ff(60))); await pg.waitForTimeout(1200); await pg.screenshot({ path: '/tmp/t/d-1.png' });
+  await pg.tap('#lFast'); console.log('fast:', await pg.textContent('#lFast'));
+  console.log(JSON.stringify(await ff(260))); await pg.waitForTimeout(1200); await pg.screenshot({ path: '/tmp/t/d-2.png' });
+  console.log(JSON.stringify(await ff(3000))); await pg.waitForTimeout(4200);
+  await pg.evaluate(() => LL.ui.showOver()); await pg.waitForTimeout(500);
+  console.log('calls hidden:', await pg.evaluate(() => document.getElementById('calls').hidden), '| rows:', await pg.evaluate(() => document.querySelectorAll('#callList .cr').length));
+  await pg.evaluate(() => { const r = document.querySelectorAll('#callList .cr'); r[0].querySelectorAll('.chip')[0].click(); document.querySelectorAll('#callList .cr')[1].querySelectorAll('.chip')[2].click(); });
+  await pg.screenshot({ path: '/tmp/t/d-3.png' }); console.log(await pg.evaluate(() => LL.ui.callsText()));
+  console.log(errs.length ? errs.slice(0, 6).join('\n') : 'no page errors');
+  await b.close(); srv.close();
+})().catch(e => { console.error('RUNFAIL', e); process.exit(1); });

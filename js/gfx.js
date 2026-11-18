@@ -145,7 +145,7 @@ function applyLook() {
 }
 function construct() {
   if (scene) scene.traverse(function (o) { if (o.geometry) o.geometry.dispose(); if (o.material && o.material.dispose) o.material.dispose(); });
-  mats = {}; tcCache = {}; fruitM = []; cueDash = null; cueRings = []; creaseM = []; heroM = []; structM = []; strayM = []; knotPool = []; fawnPool = []; zonePool = []; rings = []; nessM = null; R.decor = false;
+  mats = {}; tcCache = {}; fruitM = []; cueDash = null; cueRings = []; creaseM = []; heroM = []; echoM = null; structM = []; strayM = []; knotPool = []; fawnPool = []; zonePool = []; rings = []; nessM = null; R.decor = false;
   renderer.setClearColor(LK.clear);
   scene = new T.Scene(); scene.fog = new T.Fog(LK.fog[0], LK.fog[1], LK.fog[2]);
   scene.add(new T.HemisphereLight(LK.hemi[0], LK.hemi[1], LK.hemi[2]));
@@ -426,7 +426,7 @@ function hm(col, em) { const m = new T.MeshLambertMaterial({ color: col, emissiv
    To switch one on, add a line:  FLATS.house = { src: 'art/flats/house.png', cells: 3 };  See art/flats/README.md. */
 const FLATS = R.FLATS = {};
 R._flats = function () { return Object.keys(flatTex).map(function (k) { return k + ':' + (flatTex[k].t ? 'loaded' : 'no'); }).join(' '); }; // for tools
-const flatTex = {}; let bd = null, decorPrims = [], decorTrees = [], decorRocks = [], decorHidden = false;
+const flatTex = {}; let echoM = null, bd = null, decorPrims = [], decorTrees = [], decorRocks = [], decorHidden = false;
 function flatLoad(name, cb) {
   const F = FLATS[name]; if (!F || R.noPaper) return;
   let e = flatTex[name];
@@ -754,6 +754,8 @@ function ring(x, y, z, r0, r1, col, life) {
 }
 R.fx = function (e) {
   switch (e.k) {
+    case 'echo': case 'echoend': for (let k = 0; k < 14; k++) emit(e.x, 0.4 + Math.random() * 1.6, e.z, 1, 0x9fd0ff, 2.2, 0.6, 1.5, 0); break;
+    case 'echoshot': emit(e.x, e.y, e.z, 2, 0x9fd0ff, 1.5, 0.25, 0, 0); break;
     case 'hit': {
       const col = e.tk === 'hero' ? 0xfff0d0 : (e.tk === 'trooper' ? 0xffc890 : 0xbfd0ff);
       if (e.kind === 'gun') emit(e.x, e.y, e.z, e.crit ? 5 : 2, e.crit ? 0xffe070 : col, 4, 0.3, 1);
@@ -906,6 +908,14 @@ R.frame = function (dt, view) {
     if (h.furyT > 0 && Math.random() < dt * 22) emit(h.x + (Math.random() - 0.5) * 0.7, h.y + 1.3, h.z + (Math.random() - 0.5) * 0.7, 1, 0x8fdc50, 1.2, 0.5, 1.8, 0);
     if (h.hipsT > 0 && Math.random() < dt * 16) emit(h.x, h.y + 0.6 + Math.random(), h.z, 1, 0xf0624a, 0.6, 0.7, 1.6, 0);
     if (W.great[h.team] > 0 && Math.random() < dt * 16) emit(h.x + (Math.random() - 0.5) * 0.8, h.y + 0.3 + Math.random() * 1.6, h.z + (Math.random() - 0.5) * 0.8, 1, 0xffe08a, 0.6, 0.7, 2.2, 0);
+  }
+  { // the echo: a pale second self where the model says it is
+    const e = W.echo;
+    if (e && !echoM) { const id = W.player.def.id, pt = paperTex[id]; let m;
+      if (pt) { const t = pt.clone(); t.needsUpdate = true; t.repeat.set(0.25, 1); t.offset.x = 0.5; const P = PAPER[id]; m = new T.Mesh(new T.PlaneGeometry(P.h * (pt.image.width / 4) / pt.image.height, P.h), new T.MeshBasicMaterial({ map: t, transparent: true, opacity: 0.55, color: 0x9fd0ff, side: T.DoubleSide, depthWrite: false })); m.userData.hy = P.h / 2; }
+      else { m = new T.Mesh(new T.ConeGeometry(0.5, 2, 6), new T.MeshBasicMaterial({ color: 0x9fd0ff, transparent: true, opacity: 0.45, depthWrite: false })); m.userData.hy = 1; }
+      m.material.userData.lk = true; m.material.userData.bl = true; m.material.userData.solid = true; echoM = m; dyn.add(m); }
+    if (echoM) { echoM.visible = !!e; if (e) { echoM.position.set(e.x, echoM.userData.hy + Math.sin(time * 6) * 0.05, e.z); echoM.rotation.y = Math.atan2(camPos.x - e.x, camPos.z - e.z); if (Math.random() < dt * 14) emit(e.x, 0.3 + Math.random() * 1.6, e.z, 1, 0x9fd0ff, 0.6, 0.5, 1.4, 0); } }
   }
   // troopers
   let n0 = 0, n1 = 0, nh = 0;

@@ -8,7 +8,7 @@ A third-person lane game in the Saelion valley. The Reign keeps the lanterns lit
 
 | Place | State |
 |---|---|
-| Claude artifact "Livloch" | current, 0.13 |
+| Claude artifact "Livloch" | current, 0.14 |
 | https://stevoblevo.github.io/livloch/ | 0.6 live; 0.9 with every version waits on stevoblevo.github.io pull request 23 |
 | saelion.co | not published |
 
@@ -46,6 +46,7 @@ Serve the folder with any static server and open `index.html`. Fonts and Three.j
 - 0.11 paper heroes: Dora is a painted cutout made from a turnaround sheet (`tools/sheet.py`)
 - 0.12 each view is drawn its own way (ink, origami, bedtime book, zine neon, lantern, ledger, wet glass), after the style kits
 - 0.13 slots for painted art: structures, crowds, the Ness, scenery and a backdrop each take a cutout (`art/flats/README.md`)
+- 0.14 Echo (replay your last seconds beside you) and Dreamwalk (a self-playing tour that names every hidden system and collects verdicts)
 
 ## Known gaps
 
