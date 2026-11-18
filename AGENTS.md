@@ -4,13 +4,22 @@
 A static WebGL game. No build step, no bundler, no dependencies to install to run it. `index.html` loads Three.js r128 from cdnjs and the scripts in `js/` in order.
 
 ## The one rule that matters
-**The model is authoritative and never reads the look.** `js/core.js` and `js/sim.js` are the whole game and run under Node with no DOM. Looks, cues, HUD and sound only draw what the model already knows. If a puzzle depends on meaning or memory, put it in world rules that hold in every look. `tools/test.js` fails if `sim.js` or `core.js` mention the look, the renderer or the DOM.
+**The model owns the view. Presentation follows the model; the model never asks the renderer.**
+
+Views are a mechanic in this game: rare fruit exists only through one view, and the mood before each red rain is answered by wearing the right view. That is done by making the view a piece of model state, `W.lens`, which the player changes through `S.setLens()` like any other action. `gfx.js` then draws whatever `W.lens` says.
+
+What is forbidden is the other direction: `sim.js` or `core.js` reading the renderer, the DOM, CSS, or a pixel. `tools/test.js` fails if they do. This keeps every rule testable under Node and avoids the bug Reignfawn had, where a rule depended on what happened to be on screen.
+
+History: 0.7 went further and banned views from affecting play at all, following a handoff note. The owner's concept plates call the views "Playable Reality Views", so 0.9 reversed that, keeping the architecture and dropping the ban.
+
+## Modes
+`S.newWorld({ mode: 'fallen' })` is Ever Fallen; `{ lean: true }` is the Lean Back modifier. Both are model state, tested in `tools/test.js`. `node tools/fallen.js` measures how long bots hold.
 
 ## Commands
 | Command | What it tells you |
 |---|---|
 | `for f in js/*.js tools/*.js; do node --check $f; done` | syntax only |
-| `node tools/test.js` | rule regressions: no Hush heroes, Last Breath once per life, Mercy threshold, theft refund, guardian blackout timing, hollow respawn, red-rain cycle, look-neutral model |
+| `node tools/test.js` | rule regressions: no Hush heroes, Last Breath once per life, Mercy threshold, theft refund, guardian blackout timing, hollow respawn, red-rain cycle, fruit, view-bound fruit, moods, model independent of the renderer |
 | `node tools/soak.js [n]` | bot-only win rates per difficulty |
 | `node tools/timeline.js [difficulty] [seed]` | one bot match as a timeline |
 | `node tools/redrain.js [n]` | red-rain experiment variants, bots only |
