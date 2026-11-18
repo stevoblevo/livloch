@@ -147,6 +147,12 @@ test('goals: one thing to do next, each pays once, any order', () => {
   assert.ok(W.fx.filter(e => e.k === 'goal').length === 2);
   const F = world({ mode: 'fallen' }); assert.strictEqual(S.goal(), null, 'Ever Fallen has no goals; it has a clock');
 });
+test('First Rain ends when the first red rain ends and counts five stars', () => {
+  const W = world({ mode: 'short' }); const ev = run(W, 400, keepAlive); const o = ev.find(e => e.k === 'over');
+  assert.ok(W.over && o && o.short, 'ended'); assert.ok(Math.abs(o.t - (C.RED_EVERY + C.RED_T)) < 1, 'at ' + o.t.toFixed(1)); assert.strictEqual(W.winner, 0);
+  assert.deepStrictEqual(Object.keys(o.stars).sort(), LL.STARS.map(s => s.id).sort()); assert.strictEqual(o.n, LL.STARS.filter(s => o.stars[s.id]).length); assert.strictEqual(o.stars.mood, false, 'bots answer no mood');
+  const L = world(); run(L, 400, keepAlive); assert.ok(!L.over && !L.short, 'the long match does not end at the rain');
+});
 test('the model never reads the look: sim and core have no presentation references', () => {
   for (const f of ['core.js', 'sim.js']) { const src = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8').replace(/typeof window !== 'undefined' \? window : globalThis/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/.*$/gm, '$1'); // comments may talk about the rule; code may not break it
     for (const bad of [/\bLL\.gfx\b/, /\bLL\.ui\b/, /\bdocument\b/, /\bwindow\b/, /\blook\b/i, /\bLK\b/, /localStorage/]) assert.ok(!bad.test(src), f + ' mentions ' + bad); }
