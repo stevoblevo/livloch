@@ -8,8 +8,8 @@ A third-person lane game in the Saelion valley. The Reign keeps the lanterns lit
 
 | Place | State |
 |---|---|
-| Claude artifact "Livloch" | current, 0.6 |
-| https://stevoblevo.github.io/livloch/ | current, 0.6 (copied by hand from this source) |
+| Claude artifact "Livloch" | current, 0.8 |
+| https://stevoblevo.github.io/livloch/ | 0.6 live; 0.8 with every version waits on stevoblevo.github.io pull request 23 |
 | saelion.co | not published |
 
 ## Run
@@ -23,7 +23,7 @@ Serve the folder with any static server and open `index.html`. Fonts and Three.j
 | File | What it holds |
 |---|---|
 | `js/core.js` | constants, lanes, heroes, items |
-| `js/sim.js` | the whole match, headless: heroes, troopers, the Hush (hollows, thieves, red rain), souls, the Ness, creases and the fold |
+| `js/sim.js` | the whole match, headless: heroes, troopers, the Hush (hollows, thieves, red rain), souls, the Ness, creases and the fold, fruit |
 | `js/gfx.js` | the WebGL scene, the six looks, bloom, the Inkblot cues |
 | `js/audio.js` | synthesised sound in 31 equal steps |
 | `js/input.js` | mouse and keyboard, touch, gamepad |
@@ -39,7 +39,8 @@ Serve the folder with any static server and open `index.html`. Fonts and Three.j
 - 0.5 the Hush as its own side; hero lore corrected
 - 0.6 Cobalt Snow look from the concept plate; lantern houses; thread on the ground; bloom
 - 0.6.1 fix: bullets, soul orbs and health-bar fills were invisible since 0.1
-- 0.7 (this branch, unpublished) Inkblot Noir look with model-driven cues; red-rain warning; regression tests; evidence pass
+- 0.7 Inkblot Noir look with model-driven cues; red-rain warning; regression tests; evidence pass
+- 0.8 fruit power-ups: lemon, rose hips, Verde Limón little and big; design comments in every source file; `docs/PLAN.md`
 
 ## Known gaps
 
@@ -52,6 +53,7 @@ Serve the folder with any static server and open `index.html`. Fonts and Three.j
 
 ## Records
 
+- `docs/PLAN.md`: **start here.** Where the game is, what is next, who can do it
 - `docs/IMPORT.md`: where each version came from, and rollback steps
 - `docs/ISSUE-3-REPORT.md`: what was tested, seen, measured, and what is still unverified
 - `docs/experiments.md`: four Peachfall ideas sized as separate experiments
