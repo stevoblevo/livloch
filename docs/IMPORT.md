@@ -19,9 +19,10 @@
 | 0.6.1 | 1794961205-6969 | pending a pull request on the Pages repo | `hotfix/0.6.1` d4f4c51e14f979fc48c84692c8cf5a67e0178edb |
 | 0.7 | 1794961493-2818 | pending a pull request on the Pages repo | `release/0.7` ecba971e9bb964dfe2a71c958714e564f1a5aec4, PR #1 |
 | 0.8 | published after this commit; see README | pending the same pull request | `release/0.8`, `work/0.8-fruit` |
+| 0.9 | artifact version `1794962708-4006` | Pages branch `livloch-0.7` at `41d2ba9`, waiting on pull request 23 | `release/0.9` (`974b389`), `work/0.9-views` |
 
 ## Versioning
-This session cannot push tags or create releases (the GitHub proxy refuses both), so each version is a branch: `release/0.4`, `release/0.5`, `release/0.6`, `release/0.6.1`, `release/0.7`, `release/0.8`. They never move. Turn them into tags from a normal clone with `git tag v0.7 origin/release/0.7 && git push --tags` if tags are wanted.
+This session cannot push tags or create releases (the GitHub proxy refuses both), so each version is a branch: `release/0.4`, `release/0.5`, `release/0.6`, `release/0.6.1`, `release/0.7`, `release/0.8`, `release/0.9`. They never move. Turn them into tags from a normal clone with `git tag v0.7 origin/release/0.7 && git push --tags` if tags are wanted.
 
 On GitHub Pages every version stays playable under `livloch/vX.Y/`, listed at `livloch/versions/`, the way Knight Side keeps `v1` to `v11`.
 
