@@ -11,7 +11,7 @@
 'use strict';
 const LL = window.LL, C = LL.C, S = LL.sim, U = LL.U, R = LL.gfx, A = LL.audio, I = LL.input, UI = LL.ui;
 const KEY = 'livelock.v1';
-const cfg = LL.cfg = { sens: 1, vol: 0.6, invert: false, autoFire: null, assist: true, low: false, hero: 0, diff: 1, wins: 0, losses: 0, look: 'snow', lookPrev: 'snow', coached: false, v6: false, mode: 'match', lean: false, bestT: 0, bestL: 0, unl: {}, all: false, snuffBest: 0 };
+const cfg = LL.cfg = { sens: 1, vol: 0.6, invert: false, autoFire: null, assist: true, low: false, hero: 0, diff: 1, wins: 0, losses: 0, look: 'snow', lookPrev: 'snow', coached: false, v6: false, mode: 'match', lean: false, bestT: 0, bestL: 0, unl: {}, all: false, snuffBest: 0, pet: false, petUnlocked: false };
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) for (const k in cfg) if (k in s) cfg[k] = s[k]; } catch (e) {}
 if (!cfg.v6) { cfg.v6 = true; cfg.look = 'snow'; }
 cfg.hero = U.clamp(cfg.hero | 0, 0, LL.HEROES.length - 1); cfg.diff = U.clamp(cfg.diff | 0, 0, 2);
@@ -112,6 +112,11 @@ function runCoach(dt, p) {
 const worn = {}; let lens0 = 'snow';
 function feats(e) {
   if (W.auto && !W.lean) return;
+  // Earn the little companion by bringing back a stolen light. It changes no combat rule.
+  if (!cfg.petUnlocked && ((e.k === 'thiefdown' && e.p && e.carry) || (e.k === 'relit' && e.recovered))) {
+    cfg.petUnlocked = cfg.pet = true; save(); R.setPet(true); UI.petStatus();
+    UI.banner('A small guardian has found you.', 'It follows and points to thieves carrying light. Toggle it in Settings.', 5);
+  }
   const U_ = UI.unlock;
   if (e.k === 'thiefdown' && e.p) U_('snuff'); else if (e.k === 'relit' && e.recovered) { U_('snuff'); if (e.n >= 10) U_('garden'); }
   else if (e.k === 'fruit' && C.FRUIT_INFO[e.kind].big) U_('peachfall');
@@ -166,7 +171,7 @@ function frame(now) {
 function boot() {
   UI.init({
     play: play, pause: pause, resume: resume, quit: quit, save: save,
-    apply: function () { A.setVol(cfg.vol); R.setQuality(cfg.low); },
+    apply: function () { A.setVol(cfg.vol); R.setQuality(cfg.low); R.setPet(cfg.petUnlocked && cfg.pet); },
     buy: function (i) { UI.afterBuy(S.buy(W.player, i)); },
     look: setLook, ink: toggleInk, view: nextView,
     call: function (l) { if (state === 'play') S.call(l); }, leanFold: function () { if (state === 'play') S.leanFold(); },
@@ -180,7 +185,7 @@ function boot() {
   I.onUnlock = function () { if (state === 'play' && UI.screen === null && !W.over && !W.auto) pause(); };
   if (cfg.mode !== 'fallen') cfg.mode = 'match';
   if (!window.THREE || !R.init(canvas)) { UI.error('This browser would not hand over WebGL, so the valley cannot be drawn here. Try another browser or device.'); return; }
-  R.setQuality(cfg.low);
+  R.setQuality(cfg.low); R.setPet(cfg.petUnlocked && cfg.pet);
   if (!R.LOOKS[cfg.look]) cfg.look = 'snow';
   document.body.setAttribute('data-look', cfg.look); if (cfg.look !== 'snow') R.setLook(cfg.look); else LL.C.TEAM_CSS = R.look.css; UI.lookChips();
   window.addEventListener('resize', R.resize);
