@@ -1,0 +1,34 @@
+# Working on Livloch
+
+## What this is
+A static WebGL game. No build step, no bundler, no dependencies to install to run it. `index.html` loads Three.js r128 from cdnjs and the scripts in `js/` in order.
+
+## The one rule that matters
+**The model is authoritative and never reads the look.** `js/core.js` and `js/sim.js` are the whole game and run under Node with no DOM. Looks, cues, HUD and sound only draw what the model already knows. If a puzzle depends on meaning or memory, put it in world rules that hold in every look. `tools/test.js` fails if `sim.js` or `core.js` mention the look, the renderer or the DOM.
+
+## Commands
+| Command | What it tells you |
+|---|---|
+| `for f in js/*.js tools/*.js; do node --check $f; done` | syntax only |
+| `node tools/test.js` | rule regressions: no Hush heroes, Last Breath once per life, Mercy threshold, theft refund, guardian blackout timing, hollow respawn, red-rain cycle, look-neutral model |
+| `node tools/soak.js [n]` | bot-only win rates per difficulty |
+| `node tools/timeline.js [difficulty] [seed]` | one bot match as a timeline |
+| `node tools/redrain.js [n]` | red-rain experiment variants, bots only |
+| `node tools/evidence.js` | headless Chrome frames and an offline audio measurement into `docs/evidence/`; needs `playwright`, a Chrome binary (`CHROME`), and a local `three.min.js` r128 (`THREE_JS`) |
+
+## Words for claims
+- **Tested**: a command above ran and its output is quoted or committed.
+- **Seen in frame**: a committed image shows it. Say which file.
+- **Measured**: a number came from a tool. Say what the tool can and cannot show.
+- **Unverified**: everything else, including anything about feel, difficulty for a person, real-device frame rate, and how sound actually sounds.
+Bot results are simulator results. Never report them as human play.
+
+## Gotchas already paid for
+- Three r128 sizes `InstancedMesh.instanceColor` from `.count` at the first `setColorAt`. Allocate it at full capacity before setting `count = 0` (see `initColor` in `gfx.js`). Getting this wrong made bullets, soul orbs and bar fills invisible from 0.1 to 0.6.
+- A live `AnalyserNode` in headless Chrome did not register new sources. Audio is measured by `LL.audio.offline`, which renders one event in an `OfflineAudioContext`.
+- The sim uses `Math.random` in a few places, so it is not deterministic for a given seed. Treat small differences between runs as noise.
+
+## Publishing
+- This repo is the source. The Claude artifact and `stevoblevo.github.io/livloch/` are hand copies of a tagged state; record which commit each one matches in `README.md`.
+- Do not deploy to saelion.co or change its routing from here. That needs separate publisher authorisation through `stevoblevo/saelion-relay-canary`, as a candidate branch and pull request.
+- No force-pushes. Changes to `main` go through a pull request.

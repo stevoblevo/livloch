@@ -1,0 +1,49 @@
+difficulty Even seed 3 (bots only)
+ 0:30   phase calm | structures lost R0 H0 | dark 0 | hollows 0 | thieves 0 | steals 0 caught 0 home 0 | mercy off | player hp 100% | last breaths 0
+ 1:00   phase calm | structures lost R0 H0 | dark 0 | hollows 3 | thieves 0 | steals 0 caught 0 home 0 | mercy off | player hp 100% | last breaths 0
+ 1:30   phase calm | structures lost R0 H0 | dark 0 | hollows 2 | thieves 0 | steals 0 caught 0 home 0 | mercy off | player hp 100% | last breaths 0
+ 2:00   phase calm | structures lost R0 H0 | dark 0 | hollows 2 | thieves 0 | steals 0 caught 0 home 0 | mercy off | player hp 100% | last breaths 0
+ 2:30   phase calm | structures lost R0 H0 | dark 0 | hollows 3 | thieves 1 | steals 0 caught 0 home 0 | mercy off | player hp 100% | last breaths 0
+ 3:00   phase calm | structures lost R0 H0 | dark 0 | hollows 1 | thieves 0 | steals 1 caught 1 home 0 | mercy off | player hp 100% | last breaths 0
+ 3:04 Hush loses guardian on thread 1
+ 3:30   phase calm | structures lost R0 H1 | dark 0 | hollows 3 | thieves 0 | steals 1 caught 1 home 0 | mercy off | player hp 100% | last breaths 0
+ 3:33 Hush loses guardian on thread 2
+ 4:00   phase calm | structures lost R0 H2 | dark 0 | hollows 0 | thieves 0 | steals 1 caught 2 home 0 | mercy off | player hp 100% | last breaths 0
+ 4:30   phase calm | structures lost R0 H2 | dark 0 | hollows 3 | thieves 0 | steals 1 caught 2 home 0 | mercy off | player hp 100% | last breaths 0
+ 4:45 red rain warning
+ 5:00 RED RAIN begins
+ 5:00   phase RED  | structures lost R0 H2 | dark 0 | hollows 3 | thieves 0 | steals 2 caught 2 home 1 | mercy off | player hp 100% | last breaths 0
+ 5:30   phase RED  | structures lost R0 H2 | dark 1 | hollows 5 | thieves 2 | steals 3 caught 2 home 1 | mercy off | player hp 100% | last breaths 0
+ 6:00 red rain ends
+ 6:00   phase calm | structures lost R0 H2 | dark 0 | hollows 2 | thieves 1 | steals 5 caught 3 home 2 | mercy off | player hp 100% | last breaths 0
+ 6:24 Last Breath: Dora
+ 6:30   phase calm | structures lost R0 H2 | dark 0 | hollows 2 | thieves 0 | steals 6 caught 4 home 3 | mercy off | player hp 28% | last breaths 1
+ 6:35 Last Breath: Skein Doll
+ 6:39 Last Breath: Anna
+ 7:00   phase calm | structures lost R0 H2 | dark 0 | hollows 2 | thieves 0 | steals 6 caught 4 home 3 | mercy off | player hp 100% | last breaths 3
+ 7:30   phase calm | structures lost R0 H2 | dark 0 | hollows 3 | thieves 1 | steals 6 caught 4 home 3 | mercy off | player hp 47% | last breaths 3
+ 7:58 Reign loses guardian on thread 0
+ 8:00   phase calm | structures lost R1 H2 | dark 0 | hollows 1 | thieves 0 | steals 6 caught 5 home 3 | mercy off | player hp 26% | last breaths 3
+ 8:30   phase calm | structures lost R1 H2 | dark 0 | hollows 2 | thieves 1 | steals 6 caught 5 home 3 | mercy off | player hp 100% | last breaths 3
+ 9:00   phase calm | structures lost R1 H2 | dark 0 | hollows 3 | thieves 0 | steals 7 caught 6 home 3 | mercy off | player hp 13% | last breaths 3
+ 9:30   phase calm | structures lost R1 H2 | dark 0 | hollows 0 | thieves 1 | steals 7 caught 6 home 3 | mercy off | player hp 85% | last breaths 3
+ 9:45 red rain warning
+ 9:52 Skein Doll falls
+10:00 RED RAIN begins
+10:00   phase RED  | structures lost R1 H2 | dark 0 | hollows 6 | thieves 0 | steals 8 caught 6 home 4 | mercy off | player hp 100% | last breaths 3
+10:30   phase RED  | structures lost R1 H2 | dark 0 | hollows 5 | thieves 1 | steals 9 caught 7 home 4 | mercy off | player hp 55% | last breaths 3
+10:43 Reign loses guardian on thread 1
+11:00   phase RED  | structures lost R2 H2 | dark 0 | hollows 3 | thieves 2 | steals 10 caught 8 home 4 | mercy off | player hp 59% | last breaths 3
+11:00 red rain ends
+11:07 Reign loses warden on thread 0
+11:26 thief home with a light: warden thread 0 dark 120 s
+11:30   phase calm | structures lost R3 H2 | dark 0 | hollows 4 | thieves 0 | steals 11 caught 9 home 5 | mercy off | player hp 84% | last breaths 3
+11:39 Reign loses guardian on thread 2
+11:57 Last Breath: Skein Doll
+12:00   phase calm | structures lost R4 H2 | dark 0 | hollows 1 | thieves 1 | steals 11 caught 9 home 5 | mercy on | player hp 43% | last breaths 4
+12:03 Ness killed, Greatness to team 0
+12:30   phase calm | structures lost R4 H2 | dark 0 | hollows 3 | thieves 0 | steals 11 caught 10 home 5 | mercy on | player hp 83% | last breaths 4
+12:48 Hush loses warden on thread 1
+13:00   phase calm | structures lost R4 H3 | dark 0 | hollows 1 | thieves 0 | steals 11 caught 10 home 5 | mercy off | player hp 100% | last breaths 4
+13:30   phase calm | structures lost R4 H3 | dark 0 | hollows 3 | thieves 0 | steals 11 caught 10 home 5 | mercy off | player hp 100% | last breaths 4
+13:54 OVER: Reign wins

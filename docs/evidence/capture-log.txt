@@ -1,0 +1,19 @@
+desktop-hush-types-snow.jpg | hollow, 3 hush troopers and a thief placed in front of the player, Cobalt Snow look
+desktop-hush-types-ink.jpg | same placement in the Inkblot look; thief route cue should point at the guardian it is after
+desktop-light-taken.jpg | guardian dark=true, thief carrying=true (model values at capture time)
+desktop-light-taken-ink.jpg | Inkblot look: violet ring on the dark guardian, copper route from thief to gate
+desktop-light-returned.jpg | after capture: guardian dark=false, health unchanged=true
+desktop-guardian-dark-120.jpg | thief got home: guardian dark=true, dark timer 120 s, health lost 25%
+desktop-myra-and-skein.jpg | Myra Belle (left of frame or right, purple, round) and the Skein Doll (copper braids, mint cardigan) facing the camera
+desktop-myra-mending-skein-knot.jpg | Myra casts Mending (heal circle), the Skein Doll ties a Knot (turret)
+audio-signal.txt | theft from the player peak 0.178; guardian blackout (snuff) peak 0.152; red rain warning peak 0.269; red rain start peak 0.568; thief home with a light peak 0.276; thief caught peak 0.117; guardian relit peak 0.144; fold peak 0.373; hollow slam nearby peak 0.274; control: unknown event peak 0.000
+desktop script errors: none
+phone-hush-types-snow.jpg | hollow, 3 hush troopers and a thief placed in front of the player, Cobalt Snow look
+phone-hush-types-ink.jpg | same placement in the Inkblot look; thief route cue should point at the guardian it is after
+phone-light-taken.jpg | guardian dark=true, thief carrying=true (model values at capture time)
+phone-light-taken-ink.jpg | Inkblot look: violet ring on the dark guardian, copper route from thief to gate
+phone-light-returned.jpg | after capture: guardian dark=false, health unchanged=true
+phone-guardian-dark-120.jpg | thief got home: guardian dark=true, dark timer 120 s, health lost 25%
+phone-myra-and-skein.jpg | Myra Belle (left of frame or right, purple, round) and the Skein Doll (copper braids, mint cardigan) facing the camera
+phone-myra-mending-skein-knot.jpg | Myra casts Mending (heal circle), the Skein Doll ties a Knot (turret)
+phone script errors: none
