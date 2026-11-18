@@ -23,6 +23,8 @@ All of this happened 15 to 17 November 2026.
 | 0.8 | Fruit: lemon, rose hips, Verde Limón little and big; design comments; this plan | `release/0.8` |
 | 0.9 | **Views become a mechanic.** The view is model state. Big fruit is the rare tier and each exists only through one view. A mood before each red rain is answered by wearing the right view, which thins the rain | `release/0.9` |
 | 0.10 | **Two ways to play, and a cabinet.** Ever Fallen mode (already lost; recover lights; survive). Lean Back modifier (hero plays itself; you keep the view, the thread, the fold). Two views with a price: Rainwake and Memory. The Cabinet: ten easter eggs opened by feats, with doors to other Saelion worlds, a mini game (Snuff) and the concept plates. Fixes a 0.9 crash when a mood landed on the view already worn | `release/0.10` |
+| 0.10.1 | Keys shown on screen for keyboard play (the captured mouse made the buttons unclickable) | `main` |
+| 0.11 | **Paper heroes.** A hero can be a painted cutout made from a turnaround sheet; Dora is the first. `tools/sheet.py` turns a sheet into a sprite. Key art added to the gallery and used as the share card | `release/0.11` |
 
 ## Where it stands
 | Thing | State |
@@ -79,12 +81,19 @@ Good next purposes, straight from the hints: **Memory** shows where things were 
 - **Lean Back** borrows its line from `saelion.co/kk`: "a watch, not a wall". It is the one-thumb way to play on a phone.
 - **The Cabinet** is data in `js/core.js` (`LL.CABINET`, `LL.PLATES`); feats are awarded in `js/main.js` (`feats`), and only to a person, never while the valley is just being watched. Five taps on the word Settings in the pause screen reveals a switch that opens everything.
 
-## Art pipeline (the next big step)
-Everything on screen is primitives built in code. The engine loads no models yet. The cheapest route to a professional look that keeps the no-build web game:
-1. Add `GLTFLoader` and load `.glb` files from `art/models/`, falling back to the current primitives when a file is missing. Agent work, one session.
-2. Assets wanted first, in order of how much screen they fill: the three heroes plus Skein Doll (rigged, idle/run/shoot/hit, under 15k triangles each); the Reign lantern house in three sizes and its Hush counterpart; trooper and hollow; the Ness; six trees and rocks; the fruit bushes.
-3. Format: glTF 2.0 binary, Y up, metres, one material per object where possible, base colour in vertex colours or one shared 1024 px palette texture so the views can still recolour them.
-4. One art direction, taken from `art/title.jpg`, applied to every asset. Mixed styles would look worse than the primitives do.
+## Art pipeline: paper first
+The valley is paper, so its people can be paper. Since 0.11 a hero can be a flat painted cutout that always faces the camera and shows the view that matches where the camera stands (`PAPER` in `js/gfx.js`). This needs no 3D modelling at all.
+
+**To add a painted character**
+1. Get a turnaround sheet: four views in a row on a flat mid-grey background (front, left side, back, three-quarter), feet on one baseline. The prompt that produced Dora's is in the project chat; the owner has ChatGPT drawing the other twelve.
+2. `python3 tools/sheet.py SHEET.png art/heroes/NAME.png`
+3. Add `NAME: { src: 'art/heroes/NAME.png', h: HEIGHT }` to `PAPER`. If the file is missing or fails to load, the built shapes are used.
+
+**Done:** Dora. **Waiting on sheets:** Anna, Myra Belle, Skein Doll. **Then, same method extended to non-heroes** (needs a small renderer change each): troopers and hollows as instanced cutouts, the Ness, lantern houses and Hush towers as standing flats, trees, rocks and bushes.
+
+**Limits to be honest about:** cutouts have no limbs to animate (they waddle and lean), they look flat from directly above, and they ignore the views' recolouring, so Dora looks the same in every view. If that last one matters, the fix is a tint per view.
+
+**3D later, if wanted:** glTF models through `GLTFLoader` with the cutouts as fallback. Only worth it if the paper style is rejected after play.
 
 ## Standing rules
 - The model owns the view; the model never reads the renderer. Tests enforce it. See `AGENTS.md`.
