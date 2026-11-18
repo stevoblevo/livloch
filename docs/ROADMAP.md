@@ -22,11 +22,11 @@ The owner played and did not want to finish a match. Fix that before anything el
 ## Phase 2. Looks like the key art (as sheets arrive)
 | Step | What | Waiting on |
 |---|---|---|
-| A | Lantern houses and Hush towers painted | Sheets A, B |
+| A | Lantern houses painted (**done, 0.18**); Hush towers | Sheet B |
 | B | Troopers, hollows, small ones painted, with legs that walk | Sheets C to F |
 | C | The backdrop: far castle, mountains, floating islands | Painting G |
-| D | Myra Belle, Skein Doll, the Ness, pines, rocks | Sheets I to M |
-| E | Heroes' arms swing and aim | Arm sheets |
+| D | Myra Belle, Skein Doll (**done, 0.18**); the Ness, pines, rocks | Sheets K to M |
+| E | Heroes' arms swing and aim (**done, 0.18**; shoulder positions want the owner's eye) | |
 | F | Geometry per view: Origami re-cut into facets and folds; Knight Night as paper-theatre flats; ridgelines for the Depthfield views | Nothing; agent work |
 | G | The HUD redrawn from the plates: lantern-shaped ability slots, the quest line as on the Skeptic Noir plate | Nothing; agent work |
 | H | Ground and water: painted textures instead of flat colour; the loch reflects | One ground texture sheet |
@@ -44,7 +44,7 @@ The owner played and did not want to finish a match. Fix that before anything el
 **Gate:** the owner can explain the loop to someone else in one sentence after playing it.
 
 ## Phase 4. Depth
-The fox companion (Guardian Flow on the key art), the Hush folding back, a second valley, the radial view toggle, and the co-op decision. Order to be set after Phase 1's gate; some of these may belong to Reignfawn.
+The fox is in every piece of key art sent on 18 November and the poster names it ("Guardian Flow: pets, helpers and more"), so it belongs to Livloch and comes first here. Then: the Hush folding back, a second valley, the radial view toggle, and the co-op decision. Order to be set after Phase 1's gate; some of these may belong to Reignfawn.
 
 ## Phase 5. Ready for strangers, then Steam
 1. Five people who are not the owner play First Rain without help; write down where each got lost.

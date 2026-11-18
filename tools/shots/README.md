@@ -10,6 +10,7 @@ They are working tools, not polished ones. Each starts a small file server on po
 | `modes.js` | Ever Fallen with Lean Back on a phone, start to fall, then the Cabinet, Snuff and the gallery |
 | `paper.js` | A paper hero from six angles (`HERO=0` Dora, `HERO=1` Anna) |
 | `walk.js` | Four moments of a painted hero's stride from behind, the side and the front |
+| `house.js` | A frame facing the Reign's painted houses |
 | `short.js` | A First Rain played to its end, with the mood answered, and the star count |
 | `pull.js` | Goals, the links on the title, and the frame-rate report |
 | `slots.js [standin]` | Every painted-art slot filled with stand-in pictures, or the plain game |

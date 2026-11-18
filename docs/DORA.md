@@ -13,7 +13,8 @@
 ## Open decisions for the owner
 - **Anna's look.** The sheet in the game (crown, goggles, braid, green coat) is not the Save Anna art (loose curls, mint sweater). Kept for now.
 - **Anna's crown.** `saelion.co/kk` says "do not take the crown". Thread or accident?
-- **The fox** ("Guardian Flow" on the key art), the quest tracker and the Pets and Craft buttons: in Livloch, or Reignfawn's?
+- **The fox:** answered by the 18 November key art and poster; it is Livloch's. Not built.
+- **Pictures of real people** sent alongside the concept art on 18 November were not used and are not in the repository. The game uses painted characters only.
 - **Fruit:** eaten by walking through it (built) or shot down first?
 - **Co-op:** same screen, or online later?
 - **Dreamwalk verdicts:** keep, change or cut for each hidden system. Nothing has been judged yet.

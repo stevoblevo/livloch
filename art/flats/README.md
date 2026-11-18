@@ -21,4 +21,4 @@ Heroes go in `art/heroes/` with four figures (front, left side, back, three-quar
 
 Backdrop notes: it wraps all the way round and is mirrored once, so the left and right edges need not match. Put the horizon about a tenth of the way up from the bottom; the strip below it is hidden. No characters, no text.
 
-Tested with stand-in pictures in every slot (0.13). No real picture except Dora exists yet.
+Tested with stand-in pictures in every slot (0.13). `house.png` is real and switched on since 0.18; the sheet draws the three sizes to scale, so each cell is given the same height in the game.
