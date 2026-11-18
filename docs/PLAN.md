@@ -30,6 +30,7 @@ All of this happened 15 to 17 November 2026.
 | 0.14 | **Echo and Dreamwalk.** Echo replays your last seconds beside you (C, or the Echo button). Dreamwalk is Lean Back with the hands played too: it names each hidden thing the first time it happens and asks at the end what to keep, change or cut. Anna painted. Source sheets and capture scripts moved into the repo | `release/0.14` |
 | 0.15 | **Painted heroes walk.** Each cutout is split at the hem into a body and hinged legs: legs scissor in the side view and lift in turn from front and back; the body rides the step | `release/0.15` |
 | 0.16 | **A reason to keep playing.** The owner played and did not want to finish a match. Goals: one small thing to do next is always on screen, each pays souls, and the list walks through the hidden systems. Always-open links to Everfallen, AND SO, Reignfawn, kk and the Peachfall on the title. A frame-rate report in the pause screen | `release/0.16` |
+| 0.17 | **First Rain.** A six-minute match scored in five stars, now the default on the title. The roadmap is in `docs/ROADMAP.md` | `release/0.17` |
 
 ## Where it stands
 | Thing | State |

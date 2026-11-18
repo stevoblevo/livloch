@@ -15,6 +15,9 @@ History: 0.7 went further and banned views from affecting play at all, following
 ## Modes
 `S.newWorld({ mode: 'fallen' })` is Ever Fallen; `{ lean: true }` is the Lean Back modifier. Both are model state, tested in `tools/test.js`. `node tools/fallen.js` measures how long bots hold.
 
+## Where the project is going
+`docs/ROADMAP.md` has the phases and their gates. `docs/PLAN.md` has the history and the how. `docs/DORA.md` has the loose threads.
+
 ## Never lose work
 Every script, source picture and decision lives in this repository, not in a temp folder or a chat. Capture scripts are in `tools/shots/`, source sheets in `docs/sheets/`, open threads in `docs/DORA.md`. Commit and push before ending a session; one never-moving `release/X.Y` branch per version.
 
