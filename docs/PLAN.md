@@ -25,6 +25,7 @@ All of this happened 15 to 17 November 2026.
 | 0.10 | **Two ways to play, and a cabinet.** Ever Fallen mode (already lost; recover lights; survive). Lean Back modifier (hero plays itself; you keep the view, the thread, the fold). Two views with a price: Rainwake and Memory. The Cabinet: ten easter eggs opened by feats, with doors to other Saelion worlds, a mini game (Snuff) and the concept plates. Fixes a 0.9 crash when a mood landed on the view already worn | `release/0.10` |
 | 0.10.1 | Keys shown on screen for keyboard play (the captured mouse made the buttons unclickable) | `main` |
 | 0.11 | **Paper heroes.** A hero can be a painted cutout made from a turnaround sheet; Dora is the first. `tools/sheet.py` turns a sheet into a sprite. Key art added to the gallery and used as the share card | `release/0.11` |
+| 0.12 | **Views are drawn differently, not just coloured differently.** The final render pass gives each view its own hand, taken from the three style kits: ink hatching (Skeptic Noir), flat origami with drawn folds and a watercolour bedtime page (Storeybrook), zine neon (Hypermetapunk), lantern pools (Depthfield night), a sepia ledger, wet glass | `release/0.12` |
 
 ## Where it stands
 | Thing | State |
@@ -94,6 +95,11 @@ The valley is paper, so its people can be paper. Since 0.11 a hero can be a flat
 **Limits to be honest about:** cutouts have no limbs to animate (they waddle and lean), they look flat from directly above, and they ignore the views' recolouring, so Dora looks the same in every view. If that last one matters, the fix is a tint per view.
 
 **3D later, if wanted:** glTF models through `GLTFLoader` with the cutouts as fallback. Only worth it if the paper style is rejected after play.
+
+## Views and the style kits
+The owner's note on 0.11: "every view is the same, just a different colour scheme". True then. Since 0.12 the last render pass (`mComp` in `js/gfx.js`, uniform `m`) draws each view its own way. The kits are on `saelion.co/toolkit`: **Storeybrook** (paper, watercolour, pages, origami, comic, stickers), **Depthfield** (layered ridges, glass, weather, a ledger in the dark), **Hypermetapunk** (dusk, chrome and neon, tape, stamps, zine).
+
+Still the same under every view: the shapes. The next step is geometry per view, in this order: Origami re-cuts the world into flat facets and visible folds; Knight Night stands everything up as paper-theatre flats with footlights; Depthfield views get layered ridgelines behind the valley; Hypermetapunk gets tape, stamps and sticker labels on the HUD. Lighter graphics turns the drawing pass off, so the views fall back to palettes there.
 
 ## Standing rules
 - The model owns the view; the model never reads the renderer. Tests enforce it. See `AGENTS.md`.
