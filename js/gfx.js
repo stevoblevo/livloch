@@ -468,7 +468,7 @@ Boards.prototype.end = function () { if (!this.m) return; for (let i = 0; i < th
    side, back, three-quarter), made by tools/sheet.py from a turnaround drawing. The cutout always turns its face to the
    camera and shows the view that matches where the camera stands, mirrored for the other side. A hero with no sheet,
    or whose sheet fails to load, keeps the built shapes below. Add a hero by adding a line here. */
-const PAPER = R.PAPER = { dora: { src: 'art/heroes/dora.png', h: 2.45 } }; // next: anna, myra, skein, same shape of line
+const PAPER = R.PAPER = { dora: { src: 'art/heroes/dora.png', h: 2.45 }, anna: { src: 'art/heroes/anna.png', h: 2.4 } }; // next: myra, skein, same shape of line
 const paperTex = {}, PAPER_FLIP = -1;
 function paperFor(g, id) {
   const P = PAPER[id]; if (!P || R.noPaper) return;

@@ -91,7 +91,7 @@ The valley is paper, so its people can be paper. Since 0.11 a hero can be a flat
 2. `python3 tools/sheet.py SHEET.png art/heroes/NAME.png`
 3. Add `NAME: { src: 'art/heroes/NAME.png', h: HEIGHT }` to `PAPER`. If the file is missing or fails to load, the built shapes are used.
 
-**Done:** Dora. **Slots built and tested with stand-ins (0.13), waiting on pictures:** lantern houses, Hush towers, both troopers, hollows, small ones, the Ness, pines, rocks, the far backdrop. File names, cell order and the one line to add are in `art/flats/README.md`. **Waiting on sheets for heroes:** Anna, Myra Belle, Skein Doll. **No slot yet:** fruit bushes, the strays, the fold cranes.
+**Done:** Dora, Anna. **Slots built and tested with stand-ins (0.13), waiting on pictures:** lantern houses, Hush towers, both troopers, hollows, small ones, the Ness, pines, rocks, the far backdrop. File names, cell order and the one line to add are in `art/flats/README.md`. **Waiting on sheets for heroes:** Myra Belle, Skein Doll. **No slot yet:** fruit bushes, the strays, the fold cranes.
 
 **Order the owner is having them painted** (by screen area): houses and towers, the four crowd figures, the backdrop, the other heroes, the Ness, scenery.
 
