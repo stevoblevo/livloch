@@ -16,7 +16,13 @@
 | 0.4 | 1794951618-8804 | 67db8a94be5451376fbdb02d4d6dd52e4229bd24 | `import/livloch-0.5` b47fd7d902986b0a7322a3da298e0a6f73865fef |
 | 0.5 | 1794952517-d35f | 0655506b2ee008e2b3886fbe5e280cf630aee850 | `import/livloch-0.5` 19d64c5d18ebc8247cb1537ec5b7e00778b0eebc |
 | 0.6 | 1794959557-cd09 | 797721288747cbb93df0bff314a09aa902716cb8 | `main` 985e63ec5991c12969e3ec4346f2b42a5a1b44d2 |
-| 0.6.1 | 1794961205-6969 | not pushed | `hotfix/0.6.1` |
+| 0.6.1 | 1794961205-6969 | pending a pull request on the Pages repo | `hotfix/0.6.1` d4f4c51e14f979fc48c84692c8cf5a67e0178edb |
+| 0.7 | published after this commit; see README | pending a pull request on the Pages repo | `work/issue-3-proof-and-ink`, PR #1 |
+
+## Versioning
+This session cannot push tags or create releases (the GitHub proxy refuses both), so each version is a branch: `release/0.4`, `release/0.5`, `release/0.6`, `release/0.6.1`, `release/0.7`. They never move. Turn them into tags from a normal clone with `git tag v0.7 origin/release/0.7 && git push --tags` if tags are wanted.
+
+On GitHub Pages every version stays playable under `livloch/vX.Y/`, listed at `livloch/versions/`, the way Knight Side keeps `v1` to `v11`.
 
 0.1 to 0.3 exist only as artifact versions. The artifact tools read the current version, so those three were not imported.
 
