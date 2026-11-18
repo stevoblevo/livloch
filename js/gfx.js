@@ -20,7 +20,8 @@ let T, renderer, scene, camera, W = null, glowTex, time = 0;
 let dummy, tmpC, v1, v2, v3;
 let world, dyn, sky, stars;
 let tr = [null, null], hushEyes, trHat, barBg, barFill, projMesh, orbMesh, parts, staticGlow;
-let nessM = null, nessY = -11, creaseM = [], cueDash = null, cueRings = [], fruitM = [];
+let nessM = null, nessY = -11, creaseM = [], cueDash = null, cueRings = [], fruitM = [], petM = null, petThread = null;
+R.petEnabled = false;
 R.reduced = false; try { R.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
 let heroM = [], structM = [], strayM = [], knotPool = [], fawnPool = [], zonePool = [], rings = [];
 let shake = 0, camPos = { x: 0, y: 30, z: -60 }, camDir = { x: 0, y: 0, z: 1 }, camDist = 5.4;
@@ -144,7 +145,7 @@ function applyLook() {
 }
 function construct() {
   if (scene) scene.traverse(function (o) { if (o.geometry) o.geometry.dispose(); if (o.material && o.material.dispose) o.material.dispose(); });
-  mats = {}; tcCache = {}; fruitM = []; cueDash = null; cueRings = []; creaseM = []; heroM = []; structM = []; strayM = []; knotPool = []; fawnPool = []; zonePool = []; rings = []; nessM = null; R.decor = false;
+  mats = {}; tcCache = {}; fruitM = []; cueDash = null; cueRings = []; creaseM = []; heroM = []; structM = []; strayM = []; knotPool = []; fawnPool = []; zonePool = []; rings = []; nessM = null; petM = null; petThread = null; R.decor = false;
   renderer.setClearColor(LK.clear);
   scene = new T.Scene(); scene.fog = new T.Fog(LK.fog[0], LK.fog[1], LK.fog[2]);
   scene.add(new T.HemisphereLight(LK.hemi[0], LK.hemi[1], LK.hemi[2]));
@@ -650,12 +651,44 @@ function buildDecor() {
   }
   dummy.rotation.set(0, 0, 0);
 }
+/* Optional Guardian Fox: visual guidance only; it has no hitbox, collision, attack or model authority. */
+function buildPet() {
+  if (petM) dyn.remove(petM);
+  if (petThread) dyn.remove(petThread);
+  const g = new T.Group();
+  const gold = new T.MeshLambertMaterial({ color: 0xffc778, emissive: 0xffa440, emissiveIntensity: 0.3, flatShading: true });
+  const pale = new T.MeshLambertMaterial({ color: 0xffecc1, emissive: 0xffdca0, emissiveIntensity: 0.2, flatShading: true });
+  const ink = new T.MeshLambertMaterial({ color: 0x443046, flatShading: true });
+  [gold, pale, ink].forEach(m => { m.userData.lk = true; m.userData.solid = true; });
+  mesh(flat(new T.IcosahedronGeometry(0.47, 0)), gold, 0, 0.66, 0, g).scale.set(1.4, 0.7, 1.6);
+  mesh(flat(new T.IcosahedronGeometry(0.36, 0)), pale, 0, 1.12, 0.56, g).scale.set(1.05, 0.85, 1.2);
+  mesh(flat(new T.ConeGeometry(0.18, 0.58, 4)), gold, -0.27, 1.56, 0.54, g).rotation.z = -0.22;
+  mesh(flat(new T.ConeGeometry(0.18, 0.58, 4)), gold, 0.27, 1.56, 0.54, g).rotation.z = 0.22;
+  mesh(flat(new T.IcosahedronGeometry(0.085, 0)), ink, -0.2, 1.16, 0.88, g);
+  mesh(flat(new T.IcosahedronGeometry(0.085, 0)), ink, 0.2, 1.16, 0.88, g);
+  const tail = new T.Group();
+  mesh(flat(new T.ConeGeometry(0.28, 1.2, 5)), gold, 0, 0.24, -0.8, tail).rotation.x = -0.8;
+  mesh(flat(new T.ConeGeometry(0.21, 0.55, 5)), pale, 0, 0.42, -1.25, tail).rotation.x = -0.8;
+  g.add(tail); g.tail = tail;
+  const halo = glowSprite(0xffe6a6, 4, g, 0, 1.05, -0.2); halo.material.userData.lk = true;
+  g.scale.setScalar(0.74); g.visible = R.petEnabled;
+  dyn.add(g); petM = g;
+  const line = new T.BufferGeometry(); line.setAttribute('position', new T.BufferAttribute(new Float32Array(6), 3));
+  const lm = new T.LineBasicMaterial({ color: 0xffcf85, transparent: true, opacity: 0.55, depthWrite: false, fog: false });
+  lm.userData.lk = true;
+  petThread = new T.Line(line, lm); petThread.visible = false; dyn.add(petThread);
+}
+R.setPet = function (on) {
+  R.petEnabled = !!on;
+  if (petM) petM.visible = R.petEnabled;
+  if (petThread) petThread.visible = false;
+};
 R.build = function (w) {
   W = w;
   heroM.concat(structM, strayM).forEach(function (g) { dyn.remove(g); });
   if (!nessM) nessM = nessModel(); nessY = -11;
   heroM = W.heroes.map(heroModel); structM = W.structs.map(structModel); strayM = W.strays.map(strayModel);
-  buildDecor(); buildCues(); buildFruitArt();
+  buildDecor(); buildCues(); buildFruitArt(); buildPet();
   for (let i = 0; i < PN_MAX; i++) { pLife[i] = 0; pPos[i * 3 + 1] = -999; }
   rings.forEach(r => { r.life = 0; r.m.visible = false; });
   applyLook();
@@ -807,6 +840,33 @@ R.frame = function (dt, view) {
     if (h.furyT > 0 && Math.random() < dt * 22) emit(h.x + (Math.random() - 0.5) * 0.7, h.y + 1.3, h.z + (Math.random() - 0.5) * 0.7, 1, 0x8fdc50, 1.2, 0.5, 1.8, 0);
     if (h.hipsT > 0 && Math.random() < dt * 16) emit(h.x, h.y + 0.6 + Math.random(), h.z, 1, 0xf0624a, 0.6, 0.7, 1.6, 0);
     if (W.great[h.team] > 0 && Math.random() < dt * 16) emit(h.x + (Math.random() - 0.5) * 0.8, h.y + 0.3 + Math.random() * 1.6, h.z + (Math.random() - 0.5) * 0.8, 1, 0xffe08a, 0.6, 0.7, 2.2, 0);
+  }
+  // Model-derived theft cue. Presentation only, no change to sim state.
+  if (petM) {
+    const h = W.player;
+    petM.visible = !!(R.petEnabled && h && h.alive && (!W.auto || W.lean));
+    if (petM.visible) {
+      const tx = h.x - Math.sin(h.yaw) * 1.9 + Math.cos(h.yaw) * 1.4;
+      const tz = h.z - Math.cos(h.yaw) * 1.9 - Math.sin(h.yaw) * 1.4;
+      if (!petM.userData.arrived) { petM.position.set(tx, 0, tz); petM.userData.arrived = true; }
+      petM.position.x += (tx - petM.position.x) * Math.min(1, dt * 7);
+      petM.position.z += (tz - petM.position.z) * Math.min(1, dt * 7);
+      petM.position.y = R.reduced ? 0.08 : 0.08 + Math.abs(Math.sin(time * 5)) * 0.12;
+      petM.tail.rotation.z = R.reduced ? 0 : Math.sin(time * 7) * 0.18;
+      let target = null, dist = 40;
+      for (const t of W.thieves) {
+        if (!t.alive || t.state !== 1 || !t.carry) continue;
+        const d = Math.hypot(t.x - h.x, t.z - h.z);
+        if (d < dist) { dist = d; target = t; }
+      }
+      petM.rotation.y = target ? Math.atan2(target.x - petM.position.x, target.z - petM.position.z) : h.yaw;
+      petThread.visible = !!target;
+      if (target) {
+        const a = petThread.geometry.attributes.position;
+        a.setXYZ(0, petM.position.x, petM.position.y + 0.9, petM.position.z);
+        a.setXYZ(1, target.x, 1.4, target.z); a.needsUpdate = true;
+      }
+    } else if (petThread) petThread.visible = false;
   }
   // troopers
   let n0 = 0, n1 = 0, nh = 0;
