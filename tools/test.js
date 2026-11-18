@@ -139,6 +139,14 @@ test('Dreamwalk shows the systems: it misses a mood once, then answers it, and w
   assert.ok(ev.some(e => e.k === 'dream' && e.sys === 'rainwake') && W.lens === 'rain', 'Rainwake worn in the rain');
   assert.ok(ev.some(e => e.k === 'call'), 'it called a thread');
 });
+test('goals: one thing to do next, each pays once, any order', () => {
+  const W = world({ auto: false }), p = W.player; assert.strictEqual(S.goal().id, 'orbs');
+  const s0 = p.total; S.setLens('ink'); assert.ok(W.goals.done.view, 'changing the view completes its goal out of order'); assert.strictEqual(p.total - s0, 40); assert.strictEqual(S.goal().id, 'orbs', 'the screen still shows the first one not done');
+  S.setLens('snow'); assert.strictEqual(p.total - s0, 40, 'paid once');
+  S._t.spawnThief(); const th = W.thieves[0]; S._t.kill(th, p, p); assert.ok(W.goals.done.thief);
+  assert.ok(W.fx.filter(e => e.k === 'goal').length === 2);
+  const F = world({ mode: 'fallen' }); assert.strictEqual(S.goal(), null, 'Ever Fallen has no goals; it has a clock');
+});
 test('the model never reads the look: sim and core have no presentation references', () => {
   for (const f of ['core.js', 'sim.js']) { const src = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8').replace(/typeof window !== 'undefined' \? window : globalThis/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/.*$/gm, '$1'); // comments may talk about the rule; code may not break it
     for (const bad of [/\bLL\.gfx\b/, /\bLL\.ui\b/, /\bdocument\b/, /\bwindow\b/, /\blook\b/i, /\bLK\b/, /localStorage/]) assert.ok(!bad.test(src), f + ' mentions ' + bad); }

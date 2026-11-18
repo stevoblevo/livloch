@@ -29,6 +29,7 @@ All of this happened 15 to 17 November 2026.
 | 0.13 | **Slots for painted art.** Structures, troopers, hollows, small ones, the Ness, trees, rocks and a far backdrop can each be replaced by a painted cutout by adding one line. Nothing looks different until the pictures arrive | `release/0.13` |
 | 0.14 | **Echo and Dreamwalk.** Echo replays your last seconds beside you (C, or the Echo button). Dreamwalk is Lean Back with the hands played too: it names each hidden thing the first time it happens and asks at the end what to keep, change or cut. Anna painted. Source sheets and capture scripts moved into the repo | `release/0.14` |
 | 0.15 | **Painted heroes walk.** Each cutout is split at the hem into a body and hinged legs: legs scissor in the side view and lift in turn from front and back; the body rides the step | `release/0.15` |
+| 0.16 | **A reason to keep playing.** The owner played and did not want to finish a match. Goals: one small thing to do next is always on screen, each pays souls, and the list walks through the hidden systems. Always-open links to Everfallen, AND SO, Reignfawn, kk and the Peachfall on the title. A frame-rate report in the pause screen | `release/0.16` |
 
 ## Where it stands
 | Thing | State |
@@ -107,6 +108,9 @@ The valley is paper, so its people can be paper. Since 0.11 a hero can be a flat
 The owner's note on 0.11: "every view is the same, just a different colour scheme". True then. Since 0.12 the last render pass (`mComp` in `js/gfx.js`, uniform `m`) draws each view its own way. The kits are on `saelion.co/toolkit`: **Storeybrook** (paper, watercolour, pages, origami, comic, stickers), **Depthfield** (layered ridges, glass, weather, a ledger in the dark), **Hypermetapunk** (dusk, chrome and neon, tape, stamps, zine).
 
 Still the same under every view: the shapes. The next step is geometry per view, in this order: Origami re-cuts the world into flat facets and visible folds; Knight Night stands everything up as paper-theatre flats with footlights; Depthfield views get layered ridgelines behind the valley; Hypermetapunk gets tape, stamps and sticker labels on the HUD. Lighter graphics turns the drawing pass off, so the views fall back to palettes there.
+
+## Why a match was not worth finishing (owner, 18 November)
+The owner's words: "not enticing enough to complete a whole match yet". Working theory, to be tested by asking where he stopped: nothing on screen said what to do next or what he would get for it, a match is 15 to 20 minutes with no ending in sight, and the interesting systems were hidden too well. Answers so far: goals (0.16). Candidates next: a short match that ends at the first rain with a score; a visible sense of the patron's danger; rewards that change how the hero looks or plays, not just numbers.
 
 ## What the player should learn without being told
 Agreed with the owner on 18 November. In the order they should be found; each makes the one before it cheaper.
