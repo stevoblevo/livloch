@@ -26,6 +26,7 @@ All of this happened 15 to 17 November 2026.
 | 0.10.1 | Keys shown on screen for keyboard play (the captured mouse made the buttons unclickable) | `main` |
 | 0.11 | **Paper heroes.** A hero can be a painted cutout made from a turnaround sheet; Dora is the first. `tools/sheet.py` turns a sheet into a sprite. Key art added to the gallery and used as the share card | `release/0.11` |
 | 0.12 | **Views are drawn differently, not just coloured differently.** The final render pass gives each view its own hand, taken from the three style kits: ink hatching (Skeptic Noir), flat origami with drawn folds and a watercolour bedtime page (Storeybrook), zine neon (Hypermetapunk), lantern pools (Depthfield night), a sepia ledger, wet glass | `release/0.12` |
+| 0.13 | **Slots for painted art.** Structures, troopers, hollows, small ones, the Ness, trees, rocks and a far backdrop can each be replaced by a painted cutout by adding one line. Nothing looks different until the pictures arrive | `release/0.13` |
 
 ## Where it stands
 | Thing | State |
@@ -90,7 +91,9 @@ The valley is paper, so its people can be paper. Since 0.11 a hero can be a flat
 2. `python3 tools/sheet.py SHEET.png art/heroes/NAME.png`
 3. Add `NAME: { src: 'art/heroes/NAME.png', h: HEIGHT }` to `PAPER`. If the file is missing or fails to load, the built shapes are used.
 
-**Done:** Dora. **Waiting on sheets:** Anna, Myra Belle, Skein Doll. **Then, same method extended to non-heroes** (needs a small renderer change each): troopers and hollows as instanced cutouts, the Ness, lantern houses and Hush towers as standing flats, trees, rocks and bushes.
+**Done:** Dora. **Slots built and tested with stand-ins (0.13), waiting on pictures:** lantern houses, Hush towers, both troopers, hollows, small ones, the Ness, pines, rocks, the far backdrop. File names, cell order and the one line to add are in `art/flats/README.md`. **Waiting on sheets for heroes:** Anna, Myra Belle, Skein Doll. **No slot yet:** fruit bushes, the strays, the fold cranes.
+
+**Order the owner is having them painted** (by screen area): houses and towers, the four crowd figures, the backdrop, the other heroes, the Ness, scenery.
 
 **Limits to be honest about:** cutouts have no limbs to animate (they waddle and lean), they look flat from directly above, and they ignore the views' recolouring, so Dora looks the same in every view. If that last one matters, the fix is a tint per view.
 
