@@ -676,7 +676,7 @@ function buildPet() {
   const line = new T.BufferGeometry(); line.setAttribute('position', new T.BufferAttribute(new Float32Array(6), 3));
   const lm = new T.LineBasicMaterial({ color: 0xffcf85, transparent: true, opacity: 0.55, depthWrite: false, fog: false });
   lm.userData.lk = true;
-  petThread = new T.Line(line, lm); petThread.visible = false; dyn.add(petThread);
+  petThread = new T.Line(line, lm); petThread.visible = false; petThread.frustumCulled = false; dyn.add(petThread);
 }
 R.setPet = function (on) {
   R.petEnabled = !!on;
