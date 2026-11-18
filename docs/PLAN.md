@@ -28,6 +28,7 @@ All of this happened 15 to 17 November 2026.
 | 0.12 | **Views are drawn differently, not just coloured differently.** The final render pass gives each view its own hand, taken from the three style kits: ink hatching (Skeptic Noir), flat origami with drawn folds and a watercolour bedtime page (Storeybrook), zine neon (Hypermetapunk), lantern pools (Depthfield night), a sepia ledger, wet glass | `release/0.12` |
 | 0.13 | **Slots for painted art.** Structures, troopers, hollows, small ones, the Ness, trees, rocks and a far backdrop can each be replaced by a painted cutout by adding one line. Nothing looks different until the pictures arrive | `release/0.13` |
 | 0.14 | **Echo and Dreamwalk.** Echo replays your last seconds beside you (C, or the Echo button). Dreamwalk is Lean Back with the hands played too: it names each hidden thing the first time it happens and asks at the end what to keep, change or cut. Anna painted. Source sheets and capture scripts moved into the repo | `release/0.14` |
+| 0.15 | **Painted heroes walk.** Each cutout is split at the hem into a body and hinged legs: legs scissor in the side view and lift in turn from front and back; the body rides the step | `release/0.15` |
 
 ## Where it stands
 | Thing | State |
@@ -96,7 +97,9 @@ The valley is paper, so its people can be paper. Since 0.11 a hero can be a flat
 
 **Order the owner is having them painted** (by screen area): houses and towers, the four crowd figures, the backdrop, the other heroes, the Ness, scenery.
 
-**Limits to be honest about:** cutouts have no limbs to animate (they waddle and lean), they look flat from directly above, and they ignore the views' recolouring, so Dora looks the same in every view. If that last one matters, the fix is a tint per view.
+**Walking (0.15):** the renderer cuts each hero picture at `hem` (set per hero in `PAPER`) into a body and legs and swings the legs. No extra art needed. Arms are still fixed in the A-pose; moving them needs an arms-off sheet (see the prompt in the project chat). `tools/shots/walk.js` captures the stride.
+
+**Limits to be honest about:** arms do not move, there is no shooting or hit pose, they look flat from directly above, and they ignore the views' recolouring, so Dora looks the same in every view. If that last one matters, the fix is a tint per view.
 
 **3D later, if wanted:** glTF models through `GLTFLoader` with the cutouts as fallback. Only worth it if the paper style is rejected after play.
 

@@ -9,6 +9,7 @@ They are working tools, not polished ones. Each starts a small file server on po
 | `run.js MODE` | `desk`, `phone`, `looks` (all eight views at one spot), `fold`, `fruit`, `views`, `title` |
 | `modes.js` | Ever Fallen with Lean Back on a phone, start to fall, then the Cabinet, Snuff and the gallery |
 | `paper.js` | A paper hero from six angles (`HERO=0` Dora, `HERO=1` Anna) |
+| `walk.js` | Four moments of a painted hero's stride from behind, the side and the front |
 | `slots.js [standin]` | Every painted-art slot filled with stand-in pictures, or the plain game |
 | `dream.js` | A whole Dreamwalk: which hidden things it named, and the calls list at the end |
 | `sae.js` | The saelion.co copy served at `/livloch` with the site's route rule |
