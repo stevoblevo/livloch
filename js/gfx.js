@@ -269,6 +269,8 @@ function buildThreads() {
   staticGlow = new T.Points(g, new T.PointsMaterial({ map: glowTex, size: 2.4, vertexColors: true, blending: T.AdditiveBlending, transparent: true, depthWrite: false }));
   world.add(staticGlow);
 }
+/* r128 sizes instanceColor from .count at first setColorAt, so allocate it at full capacity up front. */
+function initColor(m, cap) { const a = new Float32Array(cap * 3).fill(1); m.instanceColor = new T.BufferAttribute(a, 3); }
 function buildInstanced() {
   const bodyG = cyl(0.42, 0.52, 1.0, 6); bodyG.translate(0, 0.75, 0);
   tr[0] = new T.InstancedMesh(bodyG, new T.MeshLambertMaterial({ color: SRC_TEAM[0], emissive: SRC_TEAM[0], emissiveIntensity: 0.5 }), 90);
@@ -284,12 +286,12 @@ function buildInstanced() {
   const pg = new T.PlaneGeometry(1, 1);
   barBg = new T.InstancedMesh(pg, new T.MeshBasicMaterial({ color: 0x120c18, transparent: true, opacity: 0.75, depthWrite: false, fog: false }), 170);
   barFill = new T.InstancedMesh(pg, new T.MeshBasicMaterial({ color: 0xffffff, depthWrite: false, fog: false, transparent: true }), 170);
-  barBg.userData.rt = barFill.userData.rt = true; barBg.frustumCulled = barFill.frustumCulled = false; barBg.renderOrder = 8; barFill.renderOrder = 9; barBg.count = barFill.count = 0;
-  barFill.setColorAt(0, tmpC.setHex(0xffffff)); dyn.add(barBg); dyn.add(barFill);
+  barBg.userData.rt = barFill.userData.rt = true; barBg.frustumCulled = barFill.frustumCulled = false; barBg.renderOrder = 8; barFill.renderOrder = 9; initColor(barFill, 170); barBg.count = barFill.count = 0;
+  dyn.add(barBg); dyn.add(barFill);
   projMesh = new T.InstancedMesh(new T.BoxGeometry(1, 1, 1), new T.MeshBasicMaterial({ color: 0xffffff, blending: T.AdditiveBlending, transparent: true, depthWrite: false, fog: false }), 340);
-  projMesh.userData.rt = true; projMesh.frustumCulled = false; projMesh.count = 0; projMesh.setColorAt(0, tmpC); dyn.add(projMesh);
+  projMesh.userData.rt = true; projMesh.frustumCulled = false; initColor(projMesh, 340); projMesh.count = 0; dyn.add(projMesh);
   orbMesh = new T.InstancedMesh(new T.IcosahedronGeometry(1, 1), new T.MeshBasicMaterial({ color: 0xffffff, blending: T.AdditiveBlending, transparent: true, opacity: 0.9, depthWrite: false, fog: false }), 90);
-  orbMesh.userData.rt = true; orbMesh.frustumCulled = false; orbMesh.count = 0; orbMesh.setColorAt(0, tmpC); dyn.add(orbMesh);
+  orbMesh.userData.rt = true; orbMesh.frustumCulled = false; initColor(orbMesh, 90); orbMesh.count = 0; dyn.add(orbMesh);
 }
 function buildParticles() {
   pPos = new Float32Array(PN_MAX * 3); pCol = new Float32Array(PN_MAX * 3); pBase = new Float32Array(PN_MAX * 3); pVel = new Float32Array(PN_MAX * 4);
@@ -840,9 +842,11 @@ R.frame = function (dt, view) {
     if (u.kind === 'trooper' && !u.big && u.hp >= u.maxHp) continue;
     if (u.kind === 'stray' && u.hp >= u.maxHp) continue;
     if (u === pl && view.mode !== 'attract') continue;
-    const dx = u.x - camPos.x, dz = u.z - camPos.z; if (dx * dx + dz * dz > (u.struct || u.kind === 'ness' ? 150 * 150 : 75 * 75)) continue;
+    const dx = u.x - camPos.x, dz = u.z - camPos.z, d2 = dx * dx + dz * dz; if (d2 > (u.struct || u.kind === 'ness' ? 150 * 150 : 75 * 75) || d2 < 10) continue;
+    const near = u.struct ? 1 : Math.min(1, Math.max(0.4, Math.sqrt(d2) / 9));
     let w = u.big ? 2.8 : 1, hgt = u.big ? 0.22 : 0.11, y = u.y + u.h * (u.big ? 2.3 : 1) + 0.45;
     if (u.kind === 'hero') { w = 1.7; hgt = 0.2; y = u.y + u.h + 0.6; } else if (u.struct) { w = 5.5; hgt = 0.4; y = (u.team === 0 && u.kind !== 'patron') ? (u.kind === 'warden' ? 10.4 : 7.6) : u.h + 1.6; } else if (u.kind === 'stray') { w = 2.2; hgt = 0.16; y = 3.6; } else if (u.kind === 'ness') { w = 7; hgt = 0.45; y = 9; }
+    w *= near; hgt *= near;
     const f = Math.max(0, u.hp / u.maxHp);
     dummy.position.set(u.x, y, u.z); dummy.quaternion.copy(q); dummy.scale.set(w + 0.08, hgt + 0.08, 1); dummy.updateMatrix(); barBg.setMatrixAt(nb, dummy.matrix);
     const off = -(1 - f) * w * 0.5;
