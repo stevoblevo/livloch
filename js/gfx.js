@@ -346,18 +346,10 @@ function initColor(m, cap) { const a = new Float32Array(cap * 3).fill(1); m.inst
 function buildInstanced() {
   shadowI = new T.InstancedMesh(new T.PlaneGeometry(1, 1), shadowMat(0.42), 320); shadowI.userData.cap = 320; shadowI.frustumCulled = false; shadowI.count = 0; shadowI.renderOrder = 1; dyn.add(shadowI);
   bd = { trooper: new Boards('trooper', 90), hush: new Boards('hush', 110), hollow: new Boards('hollow', 40), thief: new Boards('thief', 40), pines: new Boards('pines', 400), rocks: new Boards('rocks', 400) };
-  const bodyG = cyl(0.42, 0.52, 1.0, 6); bodyG.translate(0, 0.75, 0);
-  tr[0] = new T.InstancedMesh(bodyG, new T.MeshLambertMaterial({ color: SRC_TEAM[0], emissive: SRC_TEAM[0], emissiveIntensity: 0.5 }), 90);
-  // the Hush: torn tissue paper, the coldest thing on screen, with pale lilac eyes (Reignfawn)
-  const hushG = new T.CylinderGeometry(0.1, 0.66, 1.4, 9, 3, true); { const hp = hushG.attributes.position; for (let i = 0; i < hp.count; i++) { const y = hp.getY(i); if (y < -0.2) { const k = (y < -0.6 ? 1 : 0.45), j = Math.sin(i * 12.9898) * 43758.5453, r = (j - Math.floor(j)) - 0.5; hp.setX(i, hp.getX(i) * (1 + r * 0.7 * k)); hp.setZ(i, hp.getZ(i) * (1 + r * 0.7 * k)); hp.setY(i, y + r * 0.42 * k); } } }
-  hushG.translate(0, 0.72, 0); const hushGeo = flat(hushG);
-  tr[1] = own(new T.InstancedMesh(hushGeo, new T.MeshLambertMaterial({ color: LK.hush || 0x1c1426, emissive: LK.hushEm || 0x6a5a9a, emissiveIntensity: LK.hushEmI || 0.3, side: T.DoubleSide }), 110));
-  const eyeG = new T.BoxGeometry(0.5, 0.15, 0.08); eyeG.translate(0, 0.96, 0.34);
-  hushEyes = own(new T.InstancedMesh(eyeG, new T.MeshBasicMaterial({ color: 0xf2e2ff, fog: false }), 110));
-  hushEyes.frustumCulled = false; hushEyes.count = 0; dyn.add(hushEyes);
-  for (let t = 0; t < 2; t++) { tr[t].frustumCulled = false; tr[t].count = 0; dyn.add(tr[t]); }
-  const hatG = flat(new T.ConeGeometry(0.66, 0.5, 6)); hatG.translate(0, 1.5, 0);
-  trHat = new T.InstancedMesh(hatG, mat(0x2b1b2f), 180); trHat.frustumCulled = false; trHat.count = 0; dyn.add(trHat);
+  /* 0.20 props (js/props.js): Reign lantern bearers (body with hat; trHat now holds the lit lantern core), Hush tissue
+     wraiths with lilac eyes. Hollows and the lantern glow points are built and driven inside props. */
+  { const PG = LL.props.troopers(T, LK, dyn, glowTex, tc, own); tr[0] = PG.reign; trHat = PG.lantern; tr[1] = PG.hush; hushEyes = PG.eyes; }
+  dyn.add(hushEyes); dyn.add(tr[0]); dyn.add(tr[1]); dyn.add(trHat);
   const pg = new T.PlaneGeometry(1, 1);
   barBg = new T.InstancedMesh(pg, new T.MeshBasicMaterial({ color: 0x120c18, transparent: true, opacity: 0.75, depthWrite: false, fog: false }), 170);
   barFill = new T.InstancedMesh(pg, new T.MeshBasicMaterial({ color: 0xffffff, depthWrite: false, fog: false, transparent: true }), 170);
@@ -680,14 +672,8 @@ function structModel(s) {
     g.spin = mesh(flat(new T.OctahedronGeometry(3, 0)), paper, 0, 7.2, 0, lit);
     g.halo = mesh(new T.TorusGeometry(4.4, 0.14, 5, 28), new T.MeshBasicMaterial({ color: tc }), 0, 7.2, 0, lit);
     g.glow = glowSprite(tc, 22, lit, 0, 7.2, 0);
-  } else {
-    const big = s.kind === 'warden', hh = big ? 7.5 : 5.5;
-    mesh(cyl(s.r * 0.8, s.r, 2, 6), stone, 0, 1, 0, g);
-    mesh(cyl(big ? 1.5 : 1.25, big ? 1.8 : 1.5, hh, 4), paper, 0, 2 + hh / 2, 0, lit);
-    mesh(box(big ? 3.4 : 2.9, 0.3, big ? 3.4 : 2.9), dark, 0, 2 + hh * 0.5, 0, lit).rotation.y = Math.PI / 4;
-    mesh(flat(new T.ConeGeometry(big ? 2.9 : 2.4, 2, 4)), dark, 0, 3 + hh, 0, lit);
-    if (big) mesh(flat(new T.ConeGeometry(1.5, 1.4, 4)), dark, 0, 4.4 + hh, 0, lit);
-    g.glow = glowSprite(tc, big ? 13 : 10, lit, 0, 2 + hh / 2, 0);
+  } else { // 0.20 props (js/props.js): a crooked spire of torn tissue clutching a hoard of cold light
+    const ht = LL.props.hushTower(T, s, g, lit, { glowSprite: glowSprite, teamCol: tc, LK: LK }); g.glow = ht.glow; paper = ht.paper;
   }
   g.add(lit); g.house = s.team === 0 && s.kind !== 'patron';
   const rub = new T.Group(); mesh(flat(new T.IcosahedronGeometry(1.4, 0)), stone, 0.6, 0.5, 0.3, rub); mesh(flat(new T.IcosahedronGeometry(1, 0)), dark, -0.9, 0.4, -0.5, rub); mesh(box(1.6, 0.4, 1.2), stone, 0, 0.2, 1.1, rub).rotation.y = 0.5; rub.visible = false; g.add(rub);
@@ -695,6 +681,7 @@ function structModel(s) {
   ward.position.y = (s.h + 1) / 2; g.add(ward);
   const wr = new T.Mesh(new T.RingGeometry(s.r + 1.1, s.r + 1.6, 40), new T.MeshBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.5, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide }));
   wr.material.userData.lk = true; wr.rotation.x = -Math.PI / 2; wr.position.y = 0.06; wr.visible = false; g.add(wr); g.wardRing = wr;
+  if (s.team === 1 && s.kind !== 'patron') { LL.props.hushWard(T, ward); LL.props.hushRuin(T, rub, s, LK); } // 0.20 props: a curtain of cold light for a ward, torn tissue for a ruin
   g.lit = lit; g.rub = rub; g.ward = ward; g.unit = s; g.paper = paper; g.position.set(s.x, 0, s.z); dyn.add(g);
   standFlat(lit, s.team === 0 ? 'house' : 'tower', s.kind === 'patron' ? 2 : (s.kind === 'warden' ? 1 : 0), 14.5, // the sheet draws the three sizes to scale in equal cells, so every cell gets the same height
     function () { return lit.children.filter(function (c) { return c !== g.glow; }).concat(g.children.filter(function (c) { return c.isMesh && c !== ward && c !== wr; })); });
@@ -821,11 +808,7 @@ function buildDecor() {
   if (R.decor) return;
   R.decor = true;
   const obs = W.obstacles, rocks = obs.filter(o => !o.tree), trees = obs.filter(o => o.tree);
-  const rm = new T.InstancedMesh(flat(new T.IcosahedronGeometry(1, 0)), new T.MeshLambertMaterial({ color: 0xffffff }), Math.max(1, rocks.length));
-  rocks.forEach(function (o, i) {
-    dummy.position.set(o.x, o.h * 0.32, o.z); dummy.rotation.set(o.seed * 3, o.seed * 17, o.seed * 7); dummy.scale.set(o.r * 1.12, o.h * 0.75, o.r * 1.12); dummy.updateMatrix();
-    rm.setMatrixAt(i, dummy.matrix); rm.setColorAt(i, tmpC.setHex(0x4a3d52).lerp(new T.Color(0x35454f), o.seed));
-  });
+  const rm = LL.props.rocks(T, rocks, LK, dummy); // 0.20 props (js/props.js): faceted boulders, snow or moss baked in (no separate caps)
   world.add(rm); decorPrims = [rm]; decorTrees = trees; decorRocks = rocks; decorHidden = false;
   const tg = cyl(0.3, 0.55, 3, 5); tg.translate(0, 1.5, 0);
   const c1 = flat(new T.ConeGeometry(2.6, 4.2, 6)); c1.translate(0, 4.6, 0);
@@ -852,9 +835,6 @@ function buildDecor() {
     const cm = new T.InstancedMesh(cg, mat(0xc8ccf0), Math.max(1, trees.length)), cm2 = new T.InstancedMesh(c3, mat(0xc8ccf0), Math.max(1, trees.length));
     trees.forEach(function (o, i) { const sc = 0.85 + o.seed * 0.5; dummy.position.set(o.x, 0, o.z); dummy.rotation.set(0, o.seed * 6, 0); dummy.scale.set(sc, sc, sc); dummy.updateMatrix(); cm.setMatrixAt(i, dummy.matrix); cm2.setMatrixAt(i, dummy.matrix); });
     world.add(cm); world.add(cm2); [cm, cm2].forEach(function (o) { o.userData.tree = true; decorPrims.push(o); });
-    const rs = new T.InstancedMesh(flat(new T.IcosahedronGeometry(1, 0)), mat(0xc8ccf0), Math.max(1, rocks.length));
-    rocks.forEach(function (o, i) { dummy.position.set(o.x, o.h * 0.62, o.z); dummy.rotation.set(o.seed * 3, o.seed * 17, o.seed * 7); dummy.scale.set(o.r * 0.95, o.h * 0.42, o.r * 0.95); dummy.updateMatrix(); rs.setMatrixAt(i, dummy.matrix); });
-    world.add(rs); decorPrims.push(rs);
   }
   dummy.rotation.set(0, 0, 0);
 }
@@ -1091,6 +1071,7 @@ R.frame = function (dt, view) {
   petStep(dt);
   // troopers
   let n0 = 0, n1 = 0, nh = 0; shadowN = 0;
+  LL.props.begin(time, R.reduced, renderer.domElement.height); // 0.20 props: sway clock, lantern glows and hollows start the frame
   for (i = 0; i < W.structs.length; i++) { const o = W.structs[i]; if (o.alive) shadowPut(o.x, o.z, o.r * 2.1, 1); }
   const bT = bd.trooper.begin(), bH = bd.hush.begin(), bB = bd.hollow.begin(), bS = bd.thief.begin();
   const ts = W.troopers;
@@ -1106,7 +1087,8 @@ R.frame = function (dt, view) {
       if (B) { let d = Math.atan2(camPos.x - t.x, camPos.z - t.z) - t.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
         B.put(Math.abs(d) < 1.57 ? 0 : 1, t.x, hop, t.z, (t.big ? 4.4 : (t.ranged ? 2.2 : 1.9)) * sc, d * PAPER_FLIP > 0, moving ? Math.sin(time * 9 + t.id) * 0.06 : 0); continue; } }
     dummy.position.set(t.x, hop, t.z); dummy.rotation.set(moving ? 0.08 : 0, t.yaw, t.team === 1 ? Math.sin(time * 5 + t.id) * 0.08 : 0); dummy.scale.set(sx * sc * (1 + sq * 0.6), sy * sc * (1 - sq), sx * sc * (1 + sq * 0.6)); dummy.updateMatrix();
-    if (t.team === 0) { if (n0 < 90) tr[0].setMatrixAt(n0++, dummy.matrix); if (nh < 180) trHat.setMatrixAt(nh++, dummy.matrix); }
+    if (t.team === 0) { if (n0 < 90) tr[0].setMatrixAt(n0++, dummy.matrix); if (nh < 180) trHat.setMatrixAt(nh++, dummy.matrix); LL.props.lantern(dummy.matrix, t); } // 0.20 props: the lantern's glow
+    else if (t.big && LL.props.hollow(dummy.matrix)) { /* 0.20 props: a hollow has its own shape */ }
     else if (n1 < 110) { hushEyes.setMatrixAt(n1, dummy.matrix); tr[1].setMatrixAt(n1++, dummy.matrix); }
   }
   for (i = 0; i < W.thieves.length; i++) {
@@ -1116,13 +1098,14 @@ R.frame = function (dt, view) {
       if (t.state === 1 && Math.random() < dt * 30) emit(t.x, 1.1, t.z, 1, t.carry ? 0xffd28a : 0xffe9a8, 1.2, 0.6, 1.5, 0); continue; }
     dummy.position.set(t.x, Math.abs(Math.sin(time * 14 + t.id)) * 0.3, t.z); dummy.rotation.set(0.35, t.yaw, 0); dummy.scale.set(sc, sc * 0.9, sc); dummy.updateMatrix();
     hushEyes.setMatrixAt(n1, dummy.matrix); tr[1].setMatrixAt(n1++, dummy.matrix);
+    if (t.state === 1) LL.props.stolen(dummy.matrix, t.carry); // 0.20 props: a thief carries the light it took
     if (t.state === 1 && Math.random() < dt * 30) emit(t.x, 1.1, t.z, 1, t.carry ? 0xffd28a : 0xffe9a8, 1.2, 0.6, 1.5, 0);
   }
   dummy.rotation.set(0, 0, 0);
   if (LK.weather === 'rain' && W.red <= 0 && !R.reduced) { const cx = camPos.x + camDir.x * 14, cz = camPos.z + camDir.z * 14; for (let k = 0; k < (R.low ? 2 : 5); k++) emit(cx + (Math.random() - 0.5) * 46, 10 + Math.random() * 8, cz + (Math.random() - 0.5) * 46, 1, 0x6a64d8, 0.3, 0.7, -22, 26); }
   if (LK.weather === 'snow' && W.red <= 0 && !R.reduced) { const cx = camPos.x + camDir.x * 14, cz = camPos.z + camDir.z * 14; for (let k = 0; k < (R.low ? 1 : 3); k++) emit(cx + (Math.random() - 0.5) * 50, 8 + Math.random() * 8, cz + (Math.random() - 0.5) * 50, 1, Math.random() < 0.16 ? 0xff9ac8 : 0xdfe6ff, 0.5, 2.4, -3.2, 1.2); }
   if (W.red > 0) { const cx = camPos.x + camDir.x * 14, cz = camPos.z + camDir.z * 14; for (let k = 0; k < (R.low ? 3 : 8); k++) emit(cx + (Math.random() - 0.5) * 44, 10 + Math.random() * 8, cz + (Math.random() - 0.5) * 44, 1, 0xff3a3a, 0.3, 0.75, -20, 26); }
-  tr[0].count = n0; tr[1].count = n1; hushEyes.count = n1; trHat.count = nh;
+  tr[0].count = n0; tr[1].count = n1; hushEyes.count = n1; trHat.count = nh; LL.props.end(); // 0.20 props
   if (shadowI) { shadowI.count = shadowN; shadowI.instanceMatrix.needsUpdate = true; }
   bd.trooper.end(); bd.hush.end(); bd.hollow.end(); bd.thief.end();
   { const bp = bd.pines.begin(), br = bd.rocks.begin(); // painted scenery, once its sheets exist
