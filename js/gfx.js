@@ -16,6 +16,7 @@
 'use strict';
 const LL = window.LL, C = LL.C, S = LL.sim, U = LL.U;
 const R = LL.gfx = { ok: false, low: false };
+const SCN = LL.scenery || null; // js/scenery.js: trees, the loch, pools of light, plants, moon, mist, fireflies, petals (null: the old cone trees and flat loch)
 let T, renderer, scene, camera, W = null, glowTex, time = 0;
 let dummy, tmpC, v1, v2, v3;
 let world, dyn, sky, stars;
@@ -152,9 +153,12 @@ function construct() {
   scene.add(new T.HemisphereLight(LK.hemi[0], LK.hemi[1], LK.hemi[2]));
   const moon = new T.DirectionalLight(LK.dir[0], LK.dir[1]); moon.position.set(-40, 80, 60); scene.add(moon);
   world = new T.Group(); scene.add(world); dyn = new T.Group(); scene.add(dyn);
+  if (SCN) SCN.begin(scx()); // scenery: this look's palette, before the ground is tinted
   buildSky(); buildGround(); buildThreads(); buildInstanced(); buildParticles(); buildPools(); buildCreaseArt();
+  if (SCN) SCN.build(scx()); // scenery: the loch, moon, mist and stars (trees wait for the world, in buildDecor)
   applyLook();
 }
+function scx() { let id = 'snow'; for (const k in LOOKS) if (LOOKS[k] === LK) id = k; return { T: T, scene: scene, world: world, sky: sky, renderer: renderer, LK: LK, id: id, R: R, groundH: groundH, ground: groundM }; }
 R.setLook = function (id) {
   if (!LOOKS[id] || !R.ok) return;
   LK = LOOKS[id]; R.look = LK; C.TEAM_CSS = LK.css;
@@ -266,10 +270,16 @@ function buildSky() {
   const sun = glowSprite(LK.sun[0], 260, sky, 0, 210, 900); sun.material.fog = false; sun.material.userData.lk = true;
   const core = glowSprite(LK.sun[1], 90, sky, 0, 210, 895); core.material.fog = false; core.material.userData.lk = true;
 }
+let wallK = 1, groundM = null;
+/* Height of the valley floor: flat in the field, rising to the walls outside it. Scenery stands trees on it. */
+function groundH(x, z) {
+  const ox = Math.max(0, Math.abs(x) - C.HALF_X), oz = Math.max(0, Math.abs(z) - C.HALF_Z), out = Math.hypot(ox, oz); if (out <= 0) return 0;
+  return (Math.pow(out, 1.3) * 0.5 * (0.55 + noise(x * 0.06, z * 0.06) * 1.1) + noise(x * 0.31 + 9, z * 0.31) * 1.5) * wallK;
+}
 function buildGround() {
   const sx = 2 * C.HALF_X + 190, sz = 2 * C.HALF_Z + 190;
   let g = new T.PlaneGeometry(sx, sz, 100, 150); g.rotateX(-Math.PI / 2);
-  const wallK = FLATS.backdrop && !R.noPaper && LK !== LOOKS.origami ? 0.24 : 1; // with a painted backdrop the valley walls drop to foothills so the painting shows (Origami is daylight: no night ridge)
+  wallK = FLATS.backdrop && !R.noPaper && LK !== LOOKS.origami ? 0.24 : 1; // with a painted backdrop the valley walls drop to foothills so the painting shows (Origami is daylight: no night ridge)
   const p = g.attributes.position, cols = new Float32Array(p.count * 3), q = { s: 0, d: 0 };
   const G = LK.ground, jungA = new T.Color(G.a), jungB = new T.Color(G.b), lane = new T.Color(G.lane), laneC = new T.Color(G.laneC);
   const ember = new T.Color(LK.team[0]), mint = new T.Color(LK.team[1]), rock = new T.Color(G.rock), c = new T.Color();
@@ -278,7 +288,7 @@ function buildGround() {
     let d = 1e9; for (let l = 0; l < 3; l++) { LL.laneNearest(l, x, z, q); if (q.d < d) d = q.d; }
     const ox = Math.max(0, Math.abs(x) - C.HALF_X), oz = Math.max(0, Math.abs(z) - C.HALF_Z), out = Math.hypot(ox, oz);
     const n = noise(x * 0.06, z * 0.06), n2 = noise(x * 0.31 + 9, z * 0.31);
-    p.setY(i, out > 0 ? (Math.pow(out, 1.3) * 0.5 * (0.55 + n * 1.1) + n2 * 1.5) * wallK : 0);
+    p.setY(i, groundH(x, z));
     c.copy(jungA).lerp(jungB, n);
     const base = Math.min(Math.hypot(x, z + C.SPAWN_Z), Math.hypot(x, z - C.SPAWN_Z));
     const lt = Math.max(U.clamp((9.5 - d) / 4.5, 0, 1), U.clamp((30 - base) / 8, 0, 1));
@@ -286,6 +296,7 @@ function buildGround() {
     c.lerp(z < 0 ? ember : mint, 0.05 + 0.1 * U.clamp((Math.abs(z) - 70) / 60, 0, 1));
     if (out > 0) c.lerp(rock, U.clamp(out / 14, 0, 1));
     const ld = Math.hypot(x - C.LOCH.x, z - C.LOCH.z); if (ld < 14) c.lerp(rock, U.clamp((14 - ld) / 4, 0, 1) * 0.75);
+    if (SCN) SCN.groundTint(c, x, z, d, lt, out, n); // scenery: darker, cooler floor away from the threads
     const j = 0.9 + n2 * 0.22;
     cols[i * 3] = c.r * j; cols[i * 3 + 1] = c.g * j; cols[i * 3 + 2] = c.b * j;
   }
@@ -294,18 +305,20 @@ function buildGround() {
   // a painted grain multiplied over the vertex colours (0.8 to 1.0), so the snow is not one flat sheet; from the Ford study's snow texture
   const gm = new T.MeshLambertMaterial({ vertexColors: true });
   if (!R.noPaper) { if (!groundTex) { groundTex = new T.TextureLoader().load('art/ground-detail.webp'); groundTex.wrapS = groundTex.wrapT = T.MirroredRepeatWrapping; groundTex.repeat.set(26, 36); } gm.map = groundTex; }
-  world.add(own(new T.Mesh(g, gm)));
+  world.add(groundM = own(new T.Mesh(g, gm)));
   if (LK.grid) { const gh = new T.GridHelper(360, 90, LK.team[0], 0x4a3150); gh.position.y = 0.05; gh.material.transparent = true; gh.material.opacity = 0.5; world.add(own(gh)); }
   // fountains
   for (let t = 0; t < 2; t++) {
     const ring = new T.Mesh(new T.RingGeometry(C.FOUNT_R - 0.5, C.FOUNT_R, 48), new T.MeshBasicMaterial({ color: SRC_TEAM[t], transparent: true, opacity: 0.5, side: T.DoubleSide, depthWrite: false }));
     ring.rotation.x = -Math.PI / 2; ring.position.set(0, 0.06, (t ? 1 : -1) * C.SPAWN_Z); world.add(ring);
   }
-  // the loch
+  // the loch (scenery draws its own shader water)
+  if (!SCN) {
   const water = new T.Mesh(new T.CircleGeometry(C.LOCH.r, 44), new T.MeshBasicMaterial({ color: LK.ground.water, transparent: true, opacity: 0.88, depthWrite: false }));
   own(water); water.rotation.x = -Math.PI / 2; water.position.set(C.LOCH.x, 0.07, C.LOCH.z); world.add(water);
   const shore = new T.Mesh(new T.RingGeometry(C.LOCH.r - 0.35, C.LOCH.r + 0.25, 48), new T.MeshBasicMaterial({ color: 0x7fe0ff, transparent: true, opacity: 0.4, side: T.DoubleSide, depthWrite: false }));
   shore.rotation.x = -Math.PI / 2; shore.position.set(C.LOCH.x, 0.08, C.LOCH.z); world.add(shore);
+  }
   // camp rings
   C.CAMPS.forEach(function (cp) {
     const ring = new T.Mesh(new T.RingGeometry(4.6, 5, 32), new T.MeshBasicMaterial({ color: 0xc9a0ff, transparent: true, opacity: 0.28, side: T.DoubleSide, depthWrite: false }));
@@ -827,6 +840,8 @@ function buildDecor() {
     rm.setMatrixAt(i, dummy.matrix); rm.setColorAt(i, tmpC.setHex(0x4a3d52).lerp(new T.Color(0x35454f), o.seed));
   });
   world.add(rm); decorPrims = [rm]; decorTrees = trees; decorRocks = rocks; decorHidden = false;
+  if (SCN) SCN.trees(W, trees).forEach(function (o) { o.userData.tree = true; decorPrims.push(o); }); // scenery: blossom and pine trees replace the cones
+  if (!SCN) {
   const tg = cyl(0.3, 0.55, 3, 5); tg.translate(0, 1.5, 0);
   const c1 = flat(new T.ConeGeometry(2.6, 4.2, 6)); c1.translate(0, 4.6, 0);
   const c2 = flat(new T.ConeGeometry(1.9, 3.6, 6)); c2.translate(0, 7.2, 0);
@@ -852,6 +867,9 @@ function buildDecor() {
     const cm = new T.InstancedMesh(cg, mat(0xc8ccf0), Math.max(1, trees.length)), cm2 = new T.InstancedMesh(c3, mat(0xc8ccf0), Math.max(1, trees.length));
     trees.forEach(function (o, i) { const sc = 0.85 + o.seed * 0.5; dummy.position.set(o.x, 0, o.z); dummy.rotation.set(0, o.seed * 6, 0); dummy.scale.set(sc, sc, sc); dummy.updateMatrix(); cm.setMatrixAt(i, dummy.matrix); cm2.setMatrixAt(i, dummy.matrix); });
     world.add(cm); world.add(cm2); [cm, cm2].forEach(function (o) { o.userData.tree = true; decorPrims.push(o); });
+  }
+  } // end of the cone trees
+  if (LK.snowcaps) {
     const rs = new T.InstancedMesh(flat(new T.IcosahedronGeometry(1, 0)), mat(0xc8ccf0), Math.max(1, rocks.length));
     rocks.forEach(function (o, i) { dummy.position.set(o.x, o.h * 0.62, o.z); dummy.rotation.set(o.seed * 3, o.seed * 17, o.seed * 7); dummy.scale.set(o.r * 0.95, o.h * 0.42, o.r * 0.95); dummy.updateMatrix(); rs.setMatrixAt(i, dummy.matrix); });
     world.add(rs); decorPrims.push(rs);
@@ -864,6 +882,7 @@ R.build = function (w) {
   if (!nessM) nessM = nessModel(); nessY = -11;
   heroM = W.heroes.map(heroModel); structM = W.structs.map(structModel); strayM = W.strays.map(strayModel);
   buildDecor(); buildCues(); buildFruitArt(); buildPet();
+  if (SCN) SCN.world(W); // scenery: pools of light for this match's structures
   for (let i = 0; i < PN_MAX; i++) { pLife[i] = 0; pPos[i * 3 + 1] = -999; }
   rings.forEach(r => { r.life = 0; r.m.visible = false; });
   applyLook();
@@ -1286,9 +1305,11 @@ R.frame = function (dt, view) {
     nb++;
   }
   drawCues();
+  if (SCN) SCN.frame(dt, time, camera); // scenery: shared time, camera and point scale; pools dim with their structures
   barBg.count = barFill.count = nb; barBg.instanceMatrix.needsUpdate = barFill.instanceMatrix.needsUpdate = true;
   if (barFill.instanceColor) barFill.instanceColor.needsUpdate = true;
   draw();
 };
 R.cam = function () { return camPos; };
+R._calls = function () { return renderer ? renderer.info.render.calls : 0; }; // for tools: draw calls in the last pass rendered (the final post quad when post is on)
 })();
