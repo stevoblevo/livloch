@@ -206,7 +206,7 @@ R.init = function (canvas) {
   try { renderer = new T.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: 'high-performance' }); }
   catch (e) { return false; }
   camera = new T.PerspectiveCamera(64, 1, 0.15, 1400);
-  dummy = new T.Object3D(); tmpC = new T.Color(); v1 = new T.Vector3(); v2 = new T.Vector3(); v3 = new T.Vector3();
+  dummy = new T.Object3D(); dummy.rotation.order = 'YXZ'; /* tilt and roll in the unit's own frame, after its facing */ tmpC = new T.Color(); v1 = new T.Vector3(); v2 = new T.Vector3(); v3 = new T.Vector3();
   glowTex = makeGlow(); shadowTex = makeShadow();
   R.ok = true; construct();
   R.resize(); return true;
@@ -1243,15 +1243,22 @@ R.frame = function (dt, view) {
   for (i = 0; i < ts.length; i++) {
     const t = ts[i]; if (!t.alive) continue;
     const moving = Math.abs(t.vx) + Math.abs(t.vz) > 0.1;
-    /* A trooper hops. At the bottom of each hop it squashes, at the top it stretches; hollows are slow and heavy. */
-    const rate = t.big ? 5.5 : 9, ph = time * rate + t.id, hs = Math.abs(Math.sin(ph)), hop = moving ? hs * (t.big ? 0.12 : 0.2) : 0;
-    const sq = moving && !R.reduced ? (1 - hs) * (t.big ? 0.16 : 0.1) : 0, sc = (t.flash > 0 ? 1.2 : 1) * (W.great[t.team] > 0 ? 1.2 : 1);
+    /* GAITS (0.20). A Reign trooper marches: a hop per step, squashing at the bottom and waddling side to side with it.
+       A Hush wraith does not step at all: it glides a hand above the snow, bobbing slowly, leaning into its way and
+       swaying like cloth in water. A hollow lumbers: slow heavy steps, the weight rolling from side to side. */
+    const hush = t.team === 1, rate = t.big ? 3.4 : 9, ph = time * rate + t.id, hs = Math.abs(Math.sin(ph)), red = R.reduced ? 0 : 1;
+    let hop = moving ? hs * (t.big ? 0.1 : 0.2) : 0, sq = moving && !R.reduced ? (1 - hs) * (t.big ? 0.12 : 0.1) : 0, tilt = moving ? 0.08 : 0, roll = 0;
+    if (hush && !t.big) { hop = 0.16 + 0.1 * Math.sin(time * 2.6 + t.id * 1.7) * red; sq = -0.035 * Math.sin(time * 3.1 + t.id) * red; tilt = moving ? 0.2 : 0.04; roll = Math.sin(time * 2.2 + t.id) * 0.1 * red; }
+    else if (t.big) { roll = (moving ? Math.sin(ph) * 0.09 : Math.sin(time * 1.3 + t.id) * 0.03) * red; tilt = moving ? 0.12 : 0.03; }
+    else roll = (moving ? Math.sin(ph) * 0.07 : 0) * red;
+    if (t.flash > 0) tilt -= 0.25 * red; // a hit rocks it back
+    const sc = (t.flash > 0 ? 1.2 : 1) * (W.great[t.team] > 0 ? 1.2 : 1);
     shadowPut(t.x, t.z, (t.big ? 2.3 : 1.15) * (1 - hop * 0.6), 1);
     const sx = t.big ? 2.1 : (t.ranged ? 0.78 : 1), sy = t.big ? 2.3 : (t.ranged ? 1.35 : 1);
     { const B = t.team === 0 ? (bT ? bd.trooper : null) : (t.big ? (bB ? bd.hollow : null) : (bH ? bd.hush : null));
       if (B) { let d = Math.atan2(camPos.x - t.x, camPos.z - t.z) - t.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
         B.put(Math.abs(d) < 1.57 ? 0 : 1, t.x, hop, t.z, (t.big ? 4.4 : (t.ranged ? 2.2 : 1.9)) * sc, d * PAPER_FLIP > 0, moving ? Math.sin(time * 9 + t.id) * 0.06 : 0); continue; } }
-    dummy.position.set(t.x, hop, t.z); dummy.rotation.set(moving ? 0.08 : 0, t.yaw, t.team === 1 ? Math.sin(time * 5 + t.id) * 0.08 : 0); dummy.scale.set(sx * sc * (1 + sq * 0.6), sy * sc * (1 - sq), sx * sc * (1 + sq * 0.6)); dummy.updateMatrix();
+    dummy.position.set(t.x, hop, t.z); dummy.rotation.set(tilt, t.yaw, roll); dummy.scale.set(sx * sc * (1 + sq * 0.6), sy * sc * (1 - sq), sx * sc * (1 + sq * 0.6)); dummy.updateMatrix();
     if (t.team === 0) { if (n0 < 90) tr[0].setMatrixAt(n0++, dummy.matrix); if (nh < 180) trHat.setMatrixAt(nh++, dummy.matrix); LL.props.lantern(dummy.matrix, t); } // 0.20 props: the lantern's glow
     else if (t.big && LL.props.hollow(dummy.matrix)) { /* 0.20 props: a hollow has its own shape */ }
     else if (n1 < 110) { hushEyes.setMatrixAt(n1, dummy.matrix); tr[1].setMatrixAt(n1++, dummy.matrix); }
