@@ -23,6 +23,7 @@ const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split
   await pg.route('**/*', rt => { const u = rt.request().url(); if (u.includes('three.min.js')) return rt.fulfill({ path: '/tmp/t/node_modules/three/build/three.min.js', contentType: 'text/javascript' }); if (u.startsWith('http://localhost')) return rt.continue(); return rt.abort(); });
   await pg.goto('http://localhost:' + port + '/'); await pg.waitForTimeout(1800);
   await pg.evaluate((look) => { LL.cfg.mode = 'match'; LL.cfg.look = look; LL.cfg.petUnlocked = LL.cfg.pet = true; }, look);
+  if (process.env.STANDIN) await pg.evaluate(() => { const F = LL.gfx.FLATS, d = 'art/heroes/dora.png'; ['tower', 'trooper', 'hush', 'hollow', 'thief', 'rocks'].forEach(k => F[k] = { src: d, cells: 4 }); }); // the painted-cutout paths, with a stand-in picture
   await pg.click('#bPlay'); await pg.waitForTimeout(2500);
   await pg.evaluate((T) => { LL.input.lockFailed = true; const S = LL.sim, W = S.W; W.player.useAI = true; for (let i = 0; i < T * 30; i++) { S.step(1 / 30); W.heroes.forEach(h => { if (h.team === 0 && h.alive) h.hp = h.maxHp; }); } W.fx.length = 0; }, +(process.env.T || 60));
   const count = async (low) => {

@@ -248,8 +248,7 @@ function reignGeo() {
   S.skirt(r, { seg: 9, rot: 0.2, cx: 0, cz: 0, yTop: 1.16, rTop: 0.19, yMid: 0.6, rMid: 0.36, yBot: 0.2, rBot: 0.44, tear: 0.07, notch: 0.04, colTop: cloak, colHem: cloak.clone().lerp(trim, 0.35), glwTop: 0.05, glwMid: 0.05, glwHem: 0.25, swayHem: 0.35 });
   S.geo(new T.CylinderGeometry(0.205, 0.19, 0.5, 9, 1, false), mtx(0, 0.92, 0), cloak, 0.05, 0); // fills the cloak's top
   // the mantle and scarf: the team's colour, so a crowd reads warm from far off
-  S.geo(new T.CylinderGeometry(0.17, 0.3, 0.16, 9, 1, false), mtx(0, 1.2, 0.0), team, 0.55, 0);
-  S.geo(new T.TorusGeometry(0.16, 0.065, 4, 9), mtx(0, 1.31, 0, Math.PI / 2, 0, 0), team, 0.6, 0);
+  S.skirt(r, { seg: 7, rot: 0.25, cx: 0, cz: 0, yTop: 1.37, rTop: 0.12, yMid: 1.25, rMid: 0.25, yBot: 1.1, rBot: 0.33, tear: 0.12, notch: 0.03, colTop: team, colMid: team, colHem: team, glwTop: 0.7, glwMid: 0.6, glwHem: 0.5, swayHem: 0.4 }); // a torn capelet
   // scarf tails streaming behind, in the exact team colour so every look swaps it; they show from behind, where the player stands
   S.strip(r, [-0.1, 1.3, -0.15], [-0.25, -0.62, -0.74], [0.94, 0, -0.3], [0, 0.35, -1], 0.82, 0.2, 4, team, team, 1.2, 0.5, 0.25);
   S.strip(r, [0.07, 1.28, -0.16], [0.08, -0.8, -0.6], [1, 0, 0.1], [0, 0.3, -1], 0.62, 0.15, 3, team, team, 1, 0.4, 0.15);
@@ -273,7 +272,6 @@ function lanternGeo() { const g = new T.BoxGeometry(0.15, 0.24, 0.15); g.transla
 function hushGeo(LK, hollow) {
   const S = new Soup(), r = rng(hollow ? 29 : 23), hc = hushCols(LK);
   const body = hollow ? hc.body.clone().multiplyScalar(0.72) : hc.body, edge = hollow ? hc.edge.clone().lerp(hc.body, 0.35) : hc.edge, deep = body.clone().multiplyScalar(0.55);
-  const k = hollow ? 1 : 1;
   if (!hollow) {
     S.skirt(r, { seg: 9, rot: 0.3, cx: 0, cz: 0.05, yTop: 1.3, rTop: 0.15, yMid: 0.86, rMid: 0.3, yBot: 0.4, rBot: 0.47, tear: 0.36, notch: 0.1, colTop: body, colMid: body, colHem: edge, glwTop: 0.02, glwMid: 0.06, glwHem: 0.9, swayHem: 1.0 });
     // the head deep in a big hood whose point folds back and down
@@ -321,7 +319,7 @@ function GlowLayer(tex, cap, LK) {
   this.pos = new Float32Array(cap * 3); this.col = new Float32Array(cap * 3); this.size = new Float32Array(cap); this.cap = cap; this.n = 0;
   g.setAttribute('position', new T.BufferAttribute(this.pos, 3)); g.setAttribute('gcol', new T.BufferAttribute(this.col, 3)); g.setAttribute('gsize', new T.BufferAttribute(this.size, 1));
   const day = !LK.add, m = new T.ShaderMaterial({
-    uniforms: { map: { value: tex }, uH: U_H, uOp: { value: day ? 0.35 : 0.9 } },
+    uniforms: { map: { value: tex }, uH: U_H, uOp: { value: day ? 0.35 : 0.88 } },
     vertexShader: 'attribute vec3 gcol; attribute float gsize; uniform float uH; varying vec3 vC; void main(){ vC = gcol; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = gsize * projectionMatrix[1][1] * uH * 0.5 / max(0.2, -mv.z); gl_Position = projectionMatrix * mv; }',
     fragmentShader: 'uniform sampler2D map; uniform float uOp; varying vec3 vC; void main(){ float a = texture2D(map, gl_PointCoord).a; gl_FragColor = vec4(vC, a * uOp); }',
     transparent: true, depthWrite: false, blending: day ? T.NormalBlending : T.AdditiveBlending
@@ -357,7 +355,7 @@ P.begin = function (time, reduced, h) { U_T.value = time; U_AMP.value = reduced 
 P.lantern = function (m, u) {
   if (!crowd) return; _v.set(LANT.x, LANT.y, LANT.z).applyMatrix4(m);
   const fl = crowd.reduced ? 1 : 0.9 + 0.1 * Math.sin(crowd.time * 11 + u.id * 1.7) * Math.sin(crowd.time * 7.3 + u.id);
-  crowd.glow.put(_v.x, _v.y, _v.z, (u.ranged ? 2.3 : 2.0) * fl, crowd.cLant);
+  crowd.glow.put(_v.x, _v.y, _v.z, (u.ranged ? 2.6 : 2.3) * fl, crowd.cLant);
 };
 P.hollow = function (m) {
   if (!crowd || crowd.nh >= 40) return false;
@@ -406,7 +404,8 @@ P.rocks = function (t, rocks, LK, dummy) {
   init(t);
   const night = !!LK.snowcaps, day = !LK.add, cols = night
     ? { body: new T.Color(0x3d3c66), foot: new T.Color(0x24223f), top: new T.Color(0xe4e6ff) } // Cobalt Snow: slate indigo under lilac snow, as on the plate
-    : { body: new T.Color(0x575266), foot: new T.Color(0x34303f), top: new T.Color(day ? 0xf2f4ee : 0x56743e) }; // others: stone and moss, recoloured by the look
+    : day ? { body: new T.Color(0x8c8a9a), foot: new T.Color(0xb0aebd), top: new T.Color(0x18181c) } // Origami's map turns near-greys light for dark: authored inverted, so the tops come out white paper
+    : { body: new T.Color(0x575266), foot: new T.Color(0x34303f), top: new T.Color(0x56743e) }; // others: stone and moss, recoloured by the look
   const grp = new T.Group(), shapes = [[[0, 0, 1, 1, 1], [0.78, 0.25, 0.48, 0.5, 0.5]], [[0, 0, 1.05, 0.85, 0.92], [-0.7, 0.35, 0.55, 0.62, 0.55], [0.35, -0.75, 0.38, 0.4, 0.4]]];
   shapes.forEach(function (sh, vi) {
     const list = rocks.filter(function (o) { return (o.seed * 7.13 % 1 < 0.5 ? 0 : 1) === vi; }); if (!list.length) return;
