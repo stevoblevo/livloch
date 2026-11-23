@@ -304,7 +304,7 @@ function buildGround() {
   g = g.toNonIndexed(); g.computeVertexNormals();
   // a painted grain multiplied over the vertex colours (0.8 to 1.0), so the snow is not one flat sheet; from the Ford study's snow texture
   const gm = new T.MeshLambertMaterial({ vertexColors: true });
-  if (!R.noPaper) { if (!groundTex) { groundTex = new T.TextureLoader().load('art/ground-detail.webp'); groundTex.wrapS = groundTex.wrapT = T.MirroredRepeatWrapping; groundTex.repeat.set(26, 36); } gm.map = groundTex; }
+  if (!R.noPaper && LK !== LOOKS.origami) { if (!groundTex) { groundTex = new T.TextureLoader().load('art/ground-detail.webp'); groundTex.wrapS = groundTex.wrapT = T.MirroredRepeatWrapping; groundTex.repeat.set(26, 36); } gm.map = groundTex; }
   world.add(groundM = own(new T.Mesh(g, gm)));
   if (LK.grid) { const gh = new T.GridHelper(360, 90, LK.team[0], 0x4a3150); gh.position.y = 0.05; gh.material.transparent = true; gh.material.opacity = 0.5; world.add(own(gh)); }
   // fountains
