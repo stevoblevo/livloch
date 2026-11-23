@@ -153,6 +153,46 @@ test('First Rain ends when the first red rain ends and counts five stars', () =>
   assert.deepStrictEqual(Object.keys(o.stars).sort(), LL.STARS.map(s => s.id).sort()); assert.strictEqual(o.n, LL.STARS.filter(s => o.stars[s.id]).length); assert.strictEqual(o.stars.mood, false, 'bots answer no mood');
   const L = world(); run(L, 400, keepAlive); assert.ok(!L.over && !L.short, 'the long match does not end at the rain');
 });
+test('guardian fox unlock: the events main.js listens for carry what it asks', () => {
+  // main.js feats() unlocks the fox on (thiefdown with p && carry) or (relit with recovered), and only for a person.
+  // The sim half of that contract is what can be proven here: the flags must be set exactly in those cases.
+  let W = world(), g = W.st[0][1].outer, t = thiefOn(W, g);
+  run(W, 3, w => { w.thiefT = 1e9; keepAlive(w); }); assert.ok(g.dark && t.carry === g, 'thief carries the guardian light');
+  W.fx.length = 0; S._t.kill(t, W.player, W.player); let ev = W.fx.find(e => e.k === 'thiefdown');
+  assert.ok(ev && ev.p === true && ev.carry === g, 'the player catching a laden thief flags p and carry');
+  W = world(); g = W.st[0][1].outer; t = thiefOn(W, g); run(W, 3, w => { w.thiefT = 1e9; keepAlive(w); }); assert.ok(t.carry === g);
+  const bot = W.heroes.find(h => !h.isPlayer); W.fx.length = 0; S._t.kill(t, bot, bot); ev = W.fx.find(e => e.k === 'thiefdown');
+  assert.ok(ev && ev.p === false && ev.carry === g, 'a bot making the same catch does not flag p');
+  W = world(); W.thiefT = 1e9; S._t.spawnThief(); t = W.thieves[W.thieves.length - 1]; assert.ok(!t.carry, 'a fresh thief carries nothing');
+  W.fx.length = 0; S._t.kill(t, W.player, W.player); ev = W.fx.find(e => e.k === 'thiefdown');
+  assert.ok(ev && ev.p === true && !ev.carry, 'catching an empty-handed thief flags no carry');
+});
+test('guardian fox unlock: an Ever Fallen rescue relights as recovered; a timer relight does not', () => {
+  let W = world({ mode: 'fallen' }); W.thiefT = 1e9; W.hollowT = [1e9, 1e9, 1e9]; W.waveT = 1e9; W.redNext = 1e9;
+  S._t.spawnThief(); const th = W.thieves[0]; th.x = -48; th.z = -60; W.fx.length = 0;
+  S._t.kill(th, W.player, W.player); const ev = W.fx.find(e => e.k === 'relit');
+  assert.ok(ev && ev.recovered === true && ev.u && ev.u.team === 0 && !ev.u.dark, 'the rescue relight is flagged recovered');
+  W = world(); const g = W.st[0][1].outer; g.dark = true; g.darkT = 0.05;
+  const relit = run(W, 1, w => { w.thiefT = 1e9; keepAlive(w); }).find(e => e.k === 'relit' && e.u === g);
+  assert.ok(relit && !relit.recovered, 'a guardian whose dark timer runs out relights with no recovered flag');
+});
+test('motion rig: stride follows distance walked, not time', () => {
+  const M = require(path.join(__dirname, '..', 'js', 'motion.js')), u = { x: 0, z: 0, yaw: 0, onGround: true, def: { id: 'dora' }, lastShotT: -99 };
+  const a = M.create(), b = M.create(); M.pose(a, u, 0.02, 0, false); M.pose(b, u, 0.02, 0, false);
+  for (let i = 0; i < 40; i++) { u.z += 0.1; M.pose(a, u, 0.02, i * 0.02, false); } // 4 m in 0.8 s
+  const u2 = Object.assign({}, u, { z: 0 }); for (let i = 0; i < 80; i++) { u2.z += 0.05; M.pose(b, u2, 0.02, i * 0.02, false); } // 4 m in 1.6 s
+  assert.ok(Math.abs(a.phase - b.phase) < 1e-9, 'same distance, same stride phase: ' + a.phase.toFixed(3) + ' vs ' + b.phase.toFixed(3));
+  assert.ok(Math.abs(a.phase - (4 / M.RIGS.dora.cycle * 2 * Math.PI) % (2 * Math.PI)) < 1e-9);
+  const c = M.create(); M.pose(c, u, 0.02, 0, false); for (let i = 0; i < 30; i++) M.pose(c, u, 0.02, i * 0.02, false); assert.ok(c.mix < 0.01, 'standing still settles to no stride');
+});
+test('motion rig: aim rises fast and lets go slower; a landing squashes; a teleport is not a stride', () => {
+  const M = require(path.join(__dirname, '..', 'js', 'motion.js')), u = { x: 0, z: 0, yaw: 0, onGround: true, def: { id: 'anna' }, lastShotT: -99 }, m = M.create();
+  M.pose(m, u, 0.016, 0, false); u.lastShotT = 1; let p = M.pose(m, u, 0.05, 1.02, false); const up = p.aim; assert.ok(up > 0.7, 'aim up in one frame: ' + up.toFixed(2));
+  p = M.pose(m, u, 0.05, 1.4, false); assert.ok(p.aim > 0.4 && p.aim < up, 'aim holds a moment after the burst');
+  u.onGround = false; M.pose(m, u, 0.05, 2, false); u.onGround = true; p = M.pose(m, u, 0.016, 2.05, false); assert.ok(p.squash > 0.4, 'landing squashes'); for (let i = 0; i < 30; i++) p = M.pose(m, u, 0.02, 2.1 + i * 0.02, false); assert.ok(p.squash < 0.05, 'and recovers');
+  const ph = m.phase; u.z += 30; M.pose(m, u, 0.016, 3, false); assert.strictEqual(m.phase, ph, 'a respawn jump does not advance the stride');
+  const r = M.pose(M.create(), u, 0.016, 3, true); assert.strictEqual(r.sway + r.body + r.roll + r.squash, 0, 'reduced motion is still');
+});
 test('the model never reads the look: sim and core have no presentation references', () => {
   for (const f of ['core.js', 'sim.js']) { const src = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8').replace(/typeof window !== 'undefined' \? window : globalThis/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/.*$/gm, '$1'); // comments may talk about the rule; code may not break it
     for (const bad of [/\bLL\.gfx\b/, /\bLL\.ui\b/, /\bdocument\b/, /\bwindow\b/, /\blook\b/i, /\bLK\b/, /localStorage/]) assert.ok(!bad.test(src), f + ' mentions ' + bad); }

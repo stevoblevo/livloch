@@ -25,7 +25,7 @@ Every script, source picture and decision lives in this repository, not in a tem
 | Command | What it tells you |
 |---|---|
 | `for f in js/*.js tools/*.js; do node --check $f; done` | syntax only |
-| `node tools/test.js` | rule regressions: no Hush heroes, Last Breath once per life, Mercy threshold, theft refund, guardian blackout timing, hollow respawn, red-rain cycle, fruit, view-bound fruit, moods, model independent of the renderer |
+| `node tools/test.js` | rule regressions and the motion rig: no Hush heroes, Last Breath once per life, Mercy threshold, theft refund, guardian blackout timing, hollow respawn, red-rain cycle, fruit, view-bound fruit, moods, model independent of the renderer |
 | `node tools/soak.js [n]` | bot-only win rates per difficulty |
 | `node tools/timeline.js [difficulty] [seed]` | one bot match as a timeline |
 | `node tools/redrain.js [n]` | red-rain experiment variants, bots only |
@@ -45,5 +45,5 @@ Bot results are simulator results. Never report them as human play.
 
 ## Publishing
 - This repo is the source. The Claude artifact and `stevoblevo.github.io/livloch/` are hand copies of a tagged state; record which commit each one matches in `README.md`.
-- Do not deploy to saelion.co or change its routing from here. That needs separate publisher authorisation through `stevoblevo/saelion-relay-canary`, as a candidate branch and pull request.
+- saelion.co/livloch: the owner gave standing approval on 18 November to publish Livloch there. It is built from a `release/livloch-*` branch of `stevoblevo/saelion-relay-canary` (not its `main`) through the closed manifest `scripts/public-files.json`, and deployed to Vercel by commit. Touch only the `livloch/` folder and its manifest lines; other people's routes and unmerged work stay out.
 - No force-pushes. Changes to `main` go through a pull request.

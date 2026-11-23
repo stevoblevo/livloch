@@ -1,6 +1,15 @@
-# Dora pass, 18 November 2026
+# Dora pass, 18 November 2026 (updated 23 November)
 
 "Dora" is the owner's word for: go back through the whole conversation and list what was missed, dropped or left half done. This is that list as of Livloch 0.14. Update it rather than starting a new one.
+
+## Work by others since 18 November (checked 23 November)
+All authored as the owner's account; at least one is signed "Muse".
+| Where | What | What 0.19 did with it |
+|---|---|---|
+| PR #6, `feature/guardian-fox-v011` | Guardian fox: unlock by rescuing stolen light, Settings toggle, thread to laden thieves; two unlock tests | Taken into 0.19 with its rules, shapes and tests; given a trot, spring follow, sitting, a shadow; moved to the hero's right so it never blocks the camera. The PR itself is left for its author to close |
+| Issue #7 | QA lane; Dreamwalk did not show the director's view | Dreamwalk fixed in 0.19 and checked with `tools/shots/dreamlook.js`. Real-device and human-play items still open |
+| Issue #8 | Trailer plan with truth gates | Not started here |
+| `work/lantern-ford-foldlight`, `work/lantern-ford-wick-aviator` | A single-lane "Lantern Ford" study: a canvas renderer, the real Storeybrook pen, Depthfield tokens and Hypermetapunk materials vendored, a shared motion rig, a painted ridge and snow texture, Rook the Wick Aviator and Wind School | Its author asked that production stay unchanged, so the branches are not merged. 0.19 took the motion rig (`js/motion.js`), the ridge (`art/backdrop-ridge.webp`) and a grain made from the snow texture (`art/ground-detail.webp`), with credit in the code. The vendored toolkits have no licence file upstream; that needs the owner's word before they ship |
 
 ## Never done
 | Thread | Asked | State |

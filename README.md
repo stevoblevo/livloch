@@ -8,7 +8,7 @@ A third-person lane game in the Saelion valley. The Reign keeps the lanterns lit
 
 | Place | State |
 |---|---|
-| Claude artifact "Livloch" | current, 0.18 |
+| Claude artifact "Livloch" | current, 0.19 |
 | https://stevoblevo.github.io/livloch/ | 0.6 live; 0.9 with every version waits on stevoblevo.github.io pull request 23 |
 | saelion.co | not published |
 
@@ -51,6 +51,7 @@ Serve the folder with any static server and open `index.html`. Fonts and Three.j
 - 0.16 goals (one thing to do next, with pay), links to the other worlds, a frame-rate report in the pause screen
 - 0.17 First Rain: a six-minute match scored in five stars. Roadmap in `docs/ROADMAP.md`
 - 0.18 all four heroes and the Reign houses are painted; arms swing and aim; concept videos in the Cabinet
+- 0.19 motion: distance-driven rig, paper-card turns, squash and stretch, lean, contact shadows, smoother camera; guardian fox; painted far ridge; Dreamwalk view fix
 
 ## Known gaps
 
