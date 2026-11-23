@@ -13,7 +13,7 @@ The owner played and did not want to finish a match. Fix that before anything el
 |---|---|---|
 | 0.16 | Goals: one thing to do next, with pay | Done |
 | 0.17 | **First Rain:** a six-minute match that ends when the first rain ends and counts five stars. It is where the title now starts | Done |
-| 0.18 | Feel: what a shot, a hit and a kill look and sound like; camera kick; the hero's shooting pose once the arm sheets arrive | Next |
+| 0.18 | Feel: what a shot, a hit and a kill look and sound like; camera kick; the hero's shooting pose once the arm sheets arrive | Aim pose done (0.18); motion pass done (0.19); shot, hit and kill feel next |
 | 0.19 | Rewards you can see: stars and goals unlock things worn or carried (a scarf colour, a lantern trail), not only numbers | |
 | 0.20 | Tune against the agreed target: Even winnable with two of the five lessons, Cruel only with four | |
 
@@ -24,7 +24,7 @@ The owner played and did not want to finish a match. Fix that before anything el
 |---|---|---|
 | A | Lantern houses painted (**done, 0.18**); Hush towers | Sheet B |
 | B | Troopers, hollows, small ones painted, with legs that walk | Sheets C to F |
-| C | The backdrop: far castle, mountains, floating islands | Painting G |
+| C | The backdrop: a painted far ridge is in (0.19, from the Ford study). The castle and floating islands still need painting G | Painting G |
 | D | Myra Belle, Skein Doll (**done, 0.18**); the Ness, pines, rocks | Sheets K to M |
 | E | Heroes' arms swing and aim (**done, 0.18**; shoulder positions want the owner's eye) | |
 | F | Geometry per view: Origami re-cut into facets and folds; Knight Night as paper-theatre flats; ridgelines for the Depthfield views | Nothing; agent work |
@@ -44,6 +44,7 @@ The owner played and did not want to finish a match. Fix that before anything el
 **Gate:** the owner can explain the loop to someone else in one sentence after playing it.
 
 ## Phase 4. Depth
+The guardian fox from PR #6 is in since 0.19 as a built low-poly fox with a trot; a painted fox sheet would replace it.
 The fox is in every piece of key art sent on 18 November and the poster names it ("Guardian Flow: pets, helpers and more"), so it belongs to Livloch and comes first here. Then: the Hush folding back, a second valley, the radial view toggle, and the co-op decision. Order to be set after Phase 1's gate; some of these may belong to Reignfawn.
 
 ## Phase 5. Ready for strangers, then Steam

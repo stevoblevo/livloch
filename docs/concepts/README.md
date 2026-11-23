@@ -15,3 +15,5 @@ Supplied by the owner on 17 November 2026 as `saelion_concepts_5k_bundle.zip` (f
 The first plate in the project, `art/title.jpg`, is the game's title screen.
 
 Two concept videos (a 15-second trailer and an 18-second animatic) are in `art/video/` at 960 px, re-encoded from the owner's files. Their lines: "Three threads. One stalemate." "The Hush takes what is lit." "The loch remembers." "Keep the little light." The trailer shows the valley as a low-poly paper diorama, which is a usable target for the built geometry.
+
+`art/backdrop-ridge.webp` (the far ridge) and `art/ground-detail.webp` (snow grain) come from the Lantern Ford study branch, where the ridge is described as "an original generated backdrop for this study". No generator or licence is recorded.

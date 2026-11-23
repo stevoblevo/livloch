@@ -32,6 +32,7 @@ All of this happened 15 to 17 November 2026.
 | 0.16 | **A reason to keep playing.** The owner played and did not want to finish a match. Goals: one small thing to do next is always on screen, each pays souls, and the list walks through the hidden systems. Always-open links to Everfallen, AND SO, Reignfawn, kk and the Peachfall on the title. A frame-rate report in the pause screen | `release/0.16` |
 | 0.17 | **First Rain.** A six-minute match scored in five stars, now the default on the title. The roadmap is in `docs/ROADMAP.md` | `release/0.17` |
 | 0.18 | **The valley is painted.** All four heroes are painted cutouts. Motion sheets give them armless bodies, arms that swing and an aiming pose. The Reign's three houses are painted. New key art in the gallery, the two concept videos in the Cabinet, the animatic's line on the title | `release/0.18` |
+| 0.19 | **Motion.** A shared motion rig (`js/motion.js`, started from the Lantern Ford study's) drives every painted hero and the fox by distance walked. A change of view is a paper card turning over, not a pop; views have hysteresis; heroes squash on landing, stretch going up, lean across the screen into their movement and shift weight foot to foot. Soft contact shadows under heroes, troopers, thieves and houses. The camera's follow height and wall pull-in ease. Troopers squash at each hop. The guardian fox from PR #6, with a trot. The painted far ridge and a snow grain from the Ford study; night pines in Cobalt Snow. Dreamwalk now shows the view its director picks (issue #7) | `release/0.19` |
 
 ## Where it stands
 | Thing | State |
@@ -105,6 +106,15 @@ The valley is paper, so its people can be paper. Since 0.11 a hero can be a flat
 **Limits to be honest about:** arms do not move, there is no shooting or hit pose, they look flat from directly above, and they ignore the views' recolouring, so Dora looks the same in every view. If that last one matters, the fix is a tint per view.
 
 **3D later, if wanted:** glTF models through `GLTFLoader` with the cutouts as fallback. Only worth it if the paper style is rejected after play.
+
+## Motion (0.19)
+Owner, 23 November: "motion is currently subpar". What changed and where:
+- `js/motion.js`: one rig, `create()` and `pose(rig, unit, dt, t, reduced)`. Stride phase is distance over a per-hero stride length, so feet do not slide. Aim rises in a frame and lets go over about a third of a second. Landing gives a squash value that decays; vertical speed gives stretch; turning gives roll. Tested in `tools/test.js`.
+- Paper turn: in `R.frame`, a change of painted cell narrows the cutout to an edge, swaps the picture at the midpoint and opens again (0.15 s; 0.09 s for the aim pose). Reduced motion swaps instantly.
+- Shadows: `shadowBlob` per hero and fox; one instanced mesh (`shadowI`) for troopers, thieves and structures.
+- Camera: only the follow height and the wall pull-in are smoothed. Yaw and pitch are never smoothed, so aim stays exact.
+- `tools/shots/motion.js` records a scripted walk, turn, jump, burst and camera orbit frame by frame; that is how motion is checked here.
+Not done: cutouts still have no knees or elbows; troopers are still built shapes until their sheets arrive.
 
 ## Views and the style kits
 The owner's note on 0.11: "every view is the same, just a different colour scheme". True then. Since 0.12 the last render pass (`mComp` in `js/gfx.js`, uniform `m`) draws each view its own way. The kits are on `saelion.co/toolkit`: **Storeybrook** (paper, watercolour, pages, origami, comic, stickers), **Depthfield** (layered ridges, glass, weather, a ledger in the dark), **Hypermetapunk** (dusk, chrome and neon, tape, stamps, zine).
