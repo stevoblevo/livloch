@@ -123,4 +123,27 @@ test('the model never reads the look: sim and core have no presentation referenc
     for (const bad of [/\bLL\.gfx\b/, /\bLL\.ui\b/, /\bdocument\b/, /\bwindow\b/, /\blook\b/i, /\bLK\b/, /localStorage/]) assert.ok(!bad.test(src), f + ' mentions ' + bad); }
   assert.strictEqual(typeof LL.gfx, 'undefined', 'sim ran with no renderer loaded');
 });
+test('guardian fox unlock: the events main.js listens for carry what it asks', () => {
+  // main.js feats() unlocks the fox on (thiefdown with p && carry) or (relit with recovered), and only for a person.
+  // The sim half of that contract is what can be proven here: the flags must be set exactly in those cases.
+  let W = world(), g = W.st[0][1].outer, t = thiefOn(W, g);
+  run(W, 3, w => { w.thiefT = 1e9; keepAlive(w); }); assert.ok(g.dark && t.carry === g, 'thief carries the guardian light');
+  W.fx.length = 0; S._t.kill(t, W.player, W.player); let ev = W.fx.find(e => e.k === 'thiefdown');
+  assert.ok(ev && ev.p === true && ev.carry === g, 'the player catching a laden thief flags p and carry');
+  W = world(); g = W.st[0][1].outer; t = thiefOn(W, g); run(W, 3, w => { w.thiefT = 1e9; keepAlive(w); }); assert.ok(t.carry === g);
+  const bot = W.heroes.find(h => !h.isPlayer); W.fx.length = 0; S._t.kill(t, bot, bot); ev = W.fx.find(e => e.k === 'thiefdown');
+  assert.ok(ev && ev.p === false && ev.carry === g, 'a bot making the same catch does not flag p');
+  W = world(); W.thiefT = 1e9; S._t.spawnThief(); t = W.thieves[W.thieves.length - 1]; assert.ok(!t.carry, 'a fresh thief carries nothing');
+  W.fx.length = 0; S._t.kill(t, W.player, W.player); ev = W.fx.find(e => e.k === 'thiefdown');
+  assert.ok(ev && ev.p === true && !ev.carry, 'catching an empty-handed thief flags no carry');
+});
+test('guardian fox unlock: an Ever Fallen rescue relights as recovered; a timer relight does not', () => {
+  let W = world({ mode: 'fallen' }); W.thiefT = 1e9; W.hollowT = [1e9, 1e9, 1e9]; W.waveT = 1e9; W.redNext = 1e9;
+  S._t.spawnThief(); const th = W.thieves[0]; th.x = -48; th.z = -60; W.fx.length = 0;
+  S._t.kill(th, W.player, W.player); const ev = W.fx.find(e => e.k === 'relit');
+  assert.ok(ev && ev.recovered === true && ev.u && ev.u.team === 0 && !ev.u.dark, 'the rescue relight is flagged recovered');
+  W = world(); const g = W.st[0][1].outer; g.dark = true; g.darkT = 0.05;
+  const relit = run(W, 1, w => { w.thiefT = 1e9; keepAlive(w); }).find(e => e.k === 'relit' && e.u === g);
+  assert.ok(relit && !relit.recovered, 'a guardian whose dark timer runs out relights with no recovered flag');
+});
 console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);
