@@ -112,6 +112,10 @@ A.fx = function (e, W, cam) {
     case 'toll': bell(0, 0.4 * near(e.x, e.z, 90), 3.5); noise(0.7, 0.3 * near(e.x, e.z, 90), 500, 0.6, 'lowpass', 0, 80); break;
     case 'cast': if (e.u === pl) { noise(0.25, 0.12, 600, 1.2, 'bandpass', 0, 3200); tone(edo(e.i === 2 ? 49 : 62 + e.i * 5), 0.25, 'triangle', 0.1, edo(e.i === 2 ? 80 : 72)); } break;
     case 'blink': noise(0.2, 0.15 * near(e.x, e.z, 50), 3000, 3, 'bandpass', 0, 400); break;
+    case 'wicklift': if(e.u===pl){noise(.25,.07,1150,.8,'lowpass',0,2400);tone(edo(28),.30,'sine',.08,edo(52));} break;
+    case 'wickthread': if(e.u===pl){tone(edo(62),.22,'triangle',.11);tone(edo(73),.24,'sine',.08,0,.09);} break;
+    case 'wicksupply': if(e.u===pl)tone(edo(81),.12,'triangle',.09); break;
+    case 'wickdry': case 'wickwear': if(e.u===pl)tone(edo(22),.16,'triangle',.09,edo(17)); break;
     case 'zip': if (e.u === pl) tone(edo(31), 0.5, 'sawtooth', 0.06, edo(62)); break;
     case 'jump': if (e.u === pl) noise(0.07, 0.05, e.dbl ? 2400 : 1200, 1); break;
     case 'dash': if (e.u === pl) noise(0.16, 0.1, 1800, 0.8, 'bandpass', 0, 500); break;

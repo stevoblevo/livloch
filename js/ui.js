@@ -45,6 +45,13 @@ UI.init = function (handlers) {
     });
   });
   UI.lookChips();
+  // The Ford shop is a scoped, repeatable supply shelf, not a normal item build.
+  for (const [id,it] of Object.entries(LL.FORD_SUPPLIES)) {
+    const b=document.createElement('button'); b.className='item'; b.id='wickBuy-'+id;
+    b.innerHTML='<b>'+esc(it.name)+'</b><span class="c">'+it.cost+'</span><small>'+esc(it.desc)+'</small>';
+    b.addEventListener('click',()=>H.buyFord(id)); $('wickShop').appendChild(b);
+  }
+  UI.fordFlyerReady();
   // shop
   const sc = $('shopCols');
   LL.CATS.forEach(function (cat, ci) {
@@ -63,7 +70,7 @@ UI.init = function (handlers) {
   mctx = $('mini').getContext('2d');
   // buttons
   const on = (id, f) => $(id).addEventListener('click', f);
-  on('bTrial', H.trial); on('bPlay', () => H.play(false)); on('bWatch', () => H.play(true));
+  on('bTrial', H.trial); on('bFlyer', H.flyer); on('bFlyerOver', H.flyer); on('bPlay', () => H.play(false)); on('bWatch', () => H.play(true));
   on('bFull', H.full); on('bFull2', H.full);
   on('bShop', () => UI.toggleShop()); on('bDeadShop', () => UI.toggleShop(true)); on('bShopClose', () => UI.toggleShop(false));
   on('bPause', H.pause); on('bResume', H.resume); on('bQuit', H.quit); on('bAgain', H.again); on('bTitle', H.quit);
@@ -147,9 +154,25 @@ function show(name) {
   if (name && LL.input.device !== 'touch') { const b = $(name).querySelector('.btn.primary, .btn'); if (b) try { b.focus({ preventScroll: true }); } catch (e) {} }
   else if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
 }
-UI.showTitle = function () { $('hud').hidden = true; document.body.classList.remove('lean'); show('title'); UI.record(); if (UI.modeLine) UI.modeLine(); };
+UI.fordFlyerReady = function () {
+  $('bFlyer').hidden = LL.cfg.fordFlyerUnlocked !== true;
+};
+UI.fordFlyerFX = function (e) {
+  const el=$('wickHint');
+  if (e.k==='wickthread') el.textContent='Thread caught · +0.27 s lift and 8 integrity';
+  else if (e.k==='wickwear') el.textContent='Hush scuffed the pack · move clear';
+  else if (e.k==='wickdry') el.textContent='Pack is damaged · find Gum or open Shhhop (B)';
+  else if (e.k==='wicksupply') el.textContent=LL.FORD_SUPPLIES[e.id].name+' · '+LL.FORD_SUPPLIES[e.id].desc;
+  else return;
+  el.dataset.until=String(W.t+4.2);
+};
+UI.showTitle = function () { $('wickHud').hidden=true; UI.fordFlyerReady(); $('hud').hidden = true; document.body.classList.remove('lean'); show('title'); UI.record(); if (UI.modeLine) UI.modeLine(); };
 UI.startHUD = function (w) {
   W = w; const p = W.player, d = p.def;
+  $('wickHud').hidden=!W.trial?.supplies; $('wickHint').textContent=''; $('wickHint').dataset.until='0';
+  $('bShop').textContent=W.trial?.supplies?'Shhhop':'Shop';
+  if (W.trial?.supplies) $('wickHint').textContent='E · Lift • B · Shhhop • Collect gum on the path';
+  $('wickHint').dataset.until='5';
   $('hud').hidden = false; show(null);
   $('hud').style.setProperty('--hc', d.css);
   for (let i = 0; i < 3; i++) { const b = $('ab' + i); b.querySelector('span').textContent = d.ab[i].name; b.title = d.ab[i].name + ': ' + d.ab[i].desc; }
@@ -324,6 +347,12 @@ function refreshShop(force) {
   const p = W.player; const s = Math.floor(p.souls);
   if (!force && s === lastSouls) return; lastSouls = s;
   $('shopSouls').textContent = s + ' souls';
+  const pilot=!!W.trial?.supplies;
+  $('shopH').textContent=pilot?'Shhhop':'The stall';
+  $('wickShop').hidden=!pilot; $('shopCols').hidden=pilot;
+  if (pilot) Object.entries(LL.FORD_SUPPLIES).forEach(([id,it])=>{
+    const b=$('wickBuy-'+id);b.disabled=s<it.cost;b.classList.toggle('can',s>=it.cost);
+  });
   LL.ITEMS.forEach(function (it, i) {
     const b = $('item' + i), own = p.items.indexOf(i) >= 0;
     b.classList.toggle('own', own); b.classList.toggle('can', !own && s >= it.cost);
@@ -344,10 +373,13 @@ UI.showOver = function () {
   const win = W.winner === 0, t = U.fmtTime(W.t);
   document.body.classList.remove('lean'); $('calls').hidden = !(W.dream || dreamSeen.length) || !dreamSeen.length; if (dreamSeen.length) { callsDraw(); $('copyNote').textContent = ''; }
   $('stars').hidden = !W.short || !!W.trial;
+  $('bFlyerOver').hidden = !(W.trial && LL.cfg.fordFlyerUnlocked===true && W.player.def.id!=='rook');
+  $('wickHud').hidden = true;
   if (W.trial) {
     const r = W.trial.result;
     $('overH').textContent = r === 'recovered' ? 'The light came back.' : r === 'protected' ? 'You held the ford.' : 'The ford went dark.';
     $('overP').textContent = r === 'recovered' ? 'You caught the Hush with the stolen light. The guardian is lit again.' : r === 'protected' ? 'You stopped the Hush before it reached the shrine.' : 'The Hush made it to its gate. Try following the golden wake.';
+    if (W.trial.newFlyer) $('overP').textContent += ' Rook Vale, the Wick Aviator, is unlocked.';
     $('sbOver').innerHTML = ''; $('hud').hidden = true; show('over'); return;
   }
   if (W.short && W.stars) { const n = LL.STARS.filter(function (x) { return W.stars[x.id]; }).length, cf = LL.cfg;
@@ -458,6 +490,11 @@ UI.frame = function (dt, w, view, info) {
     pm.hidden = false; pm.innerHTML = p.zip ? '<b>' + (dev === 'pad' ? 'A' : 'Space') + '</b> · let go' : '<b>' + key + '</b> · ride the thread';
     tz.hidden = false; tz.textContent = p.zip ? 'Let go' : 'Ride thread';
   } else { pm.hidden = true; tz.hidden = true; }
+  if (W.trial?.supplies) {
+    $('wickPack').value = Math.round(p.pack);
+    $('wickStatus').textContent=Math.round(p.pack)+'%'+(p.mastic?' · Mastic lined':'')+(p.mintT>0?' · Mint wind':'');
+    if ($('wickHint').textContent && W.t > +$('wickHint').dataset.until) $('wickHint').textContent='';
+  }
   if (UI.screen === 'shop') refreshShop(false);
 };
 })();

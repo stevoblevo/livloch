@@ -494,6 +494,7 @@ const PAPER = R.PAPER = { // h: height in metres. hem: where the legs start (0 t
   dora: { src: 'art/heroes/dora.png', h: 2.45, hem: 0.2, motion: 'art/heroes/dora-motion.png' }, // her cloak hides her arms; they appear only when she aims
   anna: { src: 'art/heroes/anna.png', h: 2.4, hem: 0.3, motion: 'art/heroes/anna-motion.png', arms: { y: 0.685, x: 0.105, len: 0.367 } },
   myra: { src: 'art/heroes/myra.png', h: 1.95, hem: 0.22, motion: 'art/heroes/myra-motion.png', arms: { y: 0.6, x: 0.19, len: 0.356 } },
+  rook: { src: 'art/heroes/wick-aviator.svg', h: 2.42, hem: .28 },
   skein: { src: 'art/heroes/skein.png', h: 2.2, hem: 0.27, motion: 'art/heroes/skein-motion.png', arms: { y: 0.66, x: 0.13, len: 0.352 } }
 };
 const paperTex = {}, PAPER_FLIP = -1;
@@ -554,6 +555,13 @@ function heroModel(h) {
     mesh(new T.SphereGeometry(0.24, 8, 6), skin, 0, 1.72, 0, body);
     mesh(new T.SphereGeometry(0.12, 6, 5), hm(0xe9b44c, 0.4), 0, 2.0, 0, body);
     gun = mesh(cyl(0.16, 0.1, 0.6, 7), hm(0xe9b44c, 0.25), 0, 0, 0.4, arm); gun.rotation.x = Math.PI / 2;
+  } else if (d.id === 'rook') {
+    mesh(cyl(.27,.49,.96,7),hm(0x3d5a7f),0,1.03,0,body);
+    mesh(new T.SphereGeometry(.30,9,7),hm(0xd5d5b7),0,1.74,0,body);
+    mesh(box(.47,.14,.09),hm(0x86e6c9,.45),0,1.76,.26,body);
+    mesh(box(.52,.53,.25),hm(0xa77353),0,1.25,-.31,body);
+    mesh(new T.OctahedronGeometry(.22),hm(0x98f2ce,.5),0,1.28,-.46,body);
+    gun=mesh(box(.12,.12,.48),hm(0xe3ba83),0,0,.30,arm);
   } else {
     mesh(cyl(0.16, 0.3, 0.95, 5), hm(0x8fd8c0), 0, 0.98, 0, body);
     mesh(flat(new T.IcosahedronGeometry(0.32, 0)), hm(0xe8c4a0), 0, 1.68, 0, body);
@@ -813,8 +821,14 @@ function makeFordArt() {
   const lantern = glowSprite(0xffbc69,2.4,g,0,2,0);
   const core = mesh(new T.OctahedronGeometry(.19),new T.MeshBasicMaterial({color:0xffe3a4}),0,2,0,g);
   const trail = Array.from({length:26}, () => { const p = glowSprite(0xffb85d,.5,g,0,0,0); p.visible = false; return p; });
-  lantern.visible = core.visible = false; world.add(g);
-  return { g, halo, ember, lantern, core, trail, grove, style: null, coating: null, trees: null, trailT:0, i:0, born: new Array(trail.length).fill(-100) };
+  lantern.visible = core.visible = false;
+  const supplies=(W.trial.supplies||[]).map(o=>{
+    const token=mesh(new T.BoxGeometry(.52,.23,.67),new T.MeshBasicMaterial({color:LL.FORD_SUPPLIES[o.id].color}),o.x,.22,o.z,g);
+    token.rotation.y=Math.PI/4;
+    return {o,token,mark:glowSprite(LL.FORD_SUPPLIES[o.id].color,1.1,g,o.x,.27,o.z)};
+  });
+  world.add(g);
+  return { g, halo, ember, lantern, core, trail, supplies, grove, style: null, coating: null, trees: null, trailT:0, i:0, born: new Array(trail.length).fill(-100) };
 }
 function updateFordArt() {
   const a = fordArt, tr = W.trial, t = tr.thief;
@@ -842,6 +856,8 @@ function updateFordArt() {
     }else{a.halo.material.color.setHex(0xffb169);a.lantern.material.color.setHex(0xffbc69);a.trail.forEach(o=>o.material.color.setHex(0xffb85d));}
   }
   a.halo.visible = !tr.guard.dark;
+  a.supplies.forEach(({o,token,mark})=>{token.visible=mark.visible=!o.used;if(!R.reduced){token.rotation.y=.78+time*.4;token.position.y=.22+Math.sin(time*2)*.05;}});
+
   const live = !!(t && t.alive), carries = live && !!t.carry;
   a.ember.visible = live; a.lantern.visible = a.core.visible = carries;
   if (live) {
@@ -884,6 +900,9 @@ function ring(x, y, z, r0, r1, col, life) {
 }
 R.fx = function (e) {
   switch (e.k) {
+    case 'wicklift': case 'wickthread': case 'wicksupply': case 'wickwear':
+      if (!R.reduced) emit(e.u.x, e.u.y+.2, e.u.z, e.k==='wicklift'?16:8, e.col,5,.52,1.8);
+      break;
     case 'echo': case 'echoend': for (let k = 0; k < 14; k++) emit(e.x, 0.4 + Math.random() * 1.6, e.z, 1, 0x9fd0ff, 2.2, 0.6, 1.5, 0); break;
     case 'echoshot': emit(e.x, e.y, e.z, 2, 0x9fd0ff, 1.5, 0.25, 0, 0); break;
     case 'hit': {
@@ -1018,6 +1037,8 @@ R.frame = function (dt, view) {
     const sw = h.zip ? 0.55 : (h.onGround ? stride.sway * 0.8 : 0.5);
     m.legL.rotation.x = sw; m.legR.rotation.x = h.zip ? -0.35 : -sw;
     m.body.rotation.x = h.dashT > 0 || h.zip ? 0.45 : Math.min(0.22, sp * 0.02);
+    if (h.liftT > 0 && Math.random() < dt * 25 && !R.reduced)
+      emit(h.x-Math.sin(h.yaw)*.4,h.y+.78,h.z-Math.cos(h.yaw)*.4,1,0x90e4c6,2.1,.5,-4,3);
     if (h.zip && Math.random() < dt * 40) emit(h.x, 0.25, h.z, 1, 0xffe2a0, 1.5, 0.6, 1.2, 0);
     m.body.position.y = h.onGround ? stride.body : 0;
     if (m.recoil > 0) m.recoil = Math.max(0, m.recoil - dt * 9);

@@ -286,10 +286,10 @@ function buildHeroes(o) {
   rest.sort(() => r() - 0.5);
   const t0 = [rest[0], pick, rest[1]];
   const all = [0, 1, 2, 3].sort(() => r() - 0.5).slice(0, 3);
-  for (let s = 0; s < 3; s++) mkHero(t0[s], 0, s, s === 1);
+  for (let s = 0; s < 3; s++) mkHero(t0[s], 0, s, s === 1, o.fordFlyer === true && !W.auto && s === 1 ? LL.FORD_FLYER : null);
 }
-function mkHero(defIdx, team, slot, isPlayer) {
-  const d = LL.HEROES[defIdx], sp = spawnPos(team, slot);
+function mkHero(defIdx, team, slot, isPlayer, bonus) {
+  const d = bonus || LL.HEROES[defIdx], sp = spawnPos(team, slot);
   const h = mk('hero', team, sp.x, sp.z, 0.6, 1.9, d.hp);
   const diff = W.diff;
   Object.assign(h, {
@@ -438,6 +438,7 @@ function damage(t, amt, src, kind, crit) {
     amt *= (1 - t.st.resist);
     if (t.shield > 0) { const a = Math.min(t.shield, amt); t.shield -= a; amt -= a; }
     t.lastHurt = W.t;
+    if (t.def.id === 'rook' && W.trial && amt > 0) fordWear(t, amt * 0.19);
     if (hero) { t.hurtBy[hero.id] = W.t; hero.lastDmgHeroT = W.t; }
     if (!t.breath && t.hp - amt > 0 && (t.hp - amt) / t.maxHp <= 0.3) lastBreath(t);
   } else if (t.kind === 'stray') {
@@ -577,6 +578,10 @@ function fireGun(h) {
 }
 function cast(h, i) {
   const a = h.def.ab[i], c = h.ctl, st = h.st;
+  if (a.kind === 'lift' && W.trial && (h.pack < 17 || h.liftT > 0)) {
+    if (h.pack < 17) fx({k:'wickdry', u:h});
+    return;
+  }
   let cd = a.cd * (1 - st.cdr); if (a.ult) cd *= (1 - st.ultCdr);
   h.cds[i] = cd; h.cdMax[i] = cd;
   const ap = st.ap * h.botMul * (W.great[h.team] > 0 ? 1.25 : 1) * (h.furyT > 0 ? 1.3 : 1);
@@ -602,6 +607,13 @@ function cast(h, i) {
     case 'nova':
       aoeDamage(h.x, h.y + 1, h.z, a.r, a.dmg * ap, h, a);
       fx({ k: 'nova', x: h.x, y: h.y, z: h.z, r: a.r, col: h.def.col });
+      break;
+    case 'lift':
+      h.zip = null; h.dashT = 0; h.liftT = a.duration + (h.mastic ? .32 : 0); h.threadCaught = false;
+      fordWear(h, h.mastic ? 17 : 26); h.mastic = false;
+      h.vy = Math.max(h.vy, 8.9); h.onGround = false; h.jumps = 2;
+      h.vx = mvx * spLift(h); h.vz = mvz * spLift(h);
+      fx({ k:'wicklift', u:h, x:h.x, y:h.y, z:h.z, col:h.def.col });
       break;
     case 'dash':
       h.dashX = mvx * (a.dist / 0.3); h.dashZ = mvz * (a.dist / 0.3); h.dashT = 0.3; h.zip = null;
@@ -745,6 +757,7 @@ function tryZip(h) {
   h.zip = { lane: lane, dir: dir, s: Q.s }; h.dashT = 0; h.onGround = false;
   fx({ k: 'zip', u: h });
 }
+function spLift(h) { return h.def.speed * h.st.speed * 1.45; }
 function heroStep(h, dt) {
   const c = h.ctl, st = h.st, d = h.def;
   h.fireT -= dt; for (let i = 0; i < 3; i++) if (h.cds[i] > 0) h.cds[i] -= dt;
@@ -759,7 +772,8 @@ function heroStep(h, dt) {
   if (fd < C.FOUNT_R) heal(h, h.maxHp * 0.14 * dt);
   if (hyp(h.x, h.z + sgn * C.SPAWN_Z) < C.FOUNT_R) damage(h, 160 * dt, null, 'dot');
   if (!h.alive) return;
-  const sp = d.speed * st.speed * (h.slowT > 0 ? 1 - h.slowAmt : 1) * (h.zestT > 0 ? 1.3 : 1);
+  if (h.mintT > 0) h.mintT = Math.max(0, h.mintT - dt);
+  const sp = d.speed * st.speed * (h.mintT > 0 ? 1.18 : 1) * (h.slowT > 0 ? 1 - h.slowAmt : 1) * (h.zestT > 0 ? 1.3 : 1);
   if (h.zip) {
     const zp = h.zip, L = lanes[zp.lane];
     zp.s += zp.dir * (h.team === 0 ? 1 : -1) * C.ZIP_SPEED * dt;
@@ -781,9 +795,29 @@ function heroStep(h, dt) {
       let ddx = mx, ddz = mz; if (m < 0.2) { ddx = Math.sin(h.yaw); ddz = Math.cos(h.yaw); } else { ddx = mx / Math.min(1, m) ; ddz = mz / Math.min(1, m); const n = hyp(ddx, ddz); ddx /= n; ddz /= n; }
       h.dashX = ddx * 24; h.dashZ = ddz * 24; h.dashT = 0.2; h.stamina--; fx({ k: 'dash', u: h });
     }
-    if (!h.onGround) h.vy -= C.GRAV * dt;
+    if (h.liftT > 0) {
+      // A single updraft from an existing ground thread. It favors following the current, not hover-spamming.
+      if (!h.threadCaught && W.trial && h.y > .48) {
+        const lane = LL.nearestLane(h.x,h.z);
+        LL.laneNearest(lane,h.x,h.z,Q); LL.lanePoint(lane,Q.s,P);
+        const vel = hyp(h.vx,h.vz);
+        if (Q.d < 1.85 && vel>3 && Math.abs(h.vx*P.dx+h.vz*P.dz)>vel*.68) {
+          h.threadCaught=true; h.liftT+=.27; h.pack=Math.min(100,h.pack+8);
+          fx({k:'wickthread',u:h,col:0xa0f3d0});
+        }
+      }
+      h.liftT = Math.max(0, h.liftT - dt);
+      if (h.y < 3.2 && h.liftT > 0.45) h.vy = Math.max(1.4, h.vy - C.GRAV * dt * 0.53);
+      else h.vy += (Math.min(0.4, 3.7 - h.y) - h.vy) * Math.min(1, dt * 8.5);
+      if (m > .03) {
+        const k = Math.min(1, dt * 5);
+        h.vx += (mx * spLift(h) - h.vx) * k;
+        h.vz += (mz * spLift(h) - h.vz) * k;
+      }
+    } else if (!h.onGround) h.vy -= C.GRAV * dt;
     h.x += h.vx * dt; h.z += h.vz * dt; h.y += h.vy * dt;
     if (h.y <= 0) { h.y = 0; h.vy = 0; h.onGround = true; h.jumps = 0; }
+    if (h.def.id === 'rook' && h.y > 4.1) { h.y = 4.1; h.vy = Math.min(0, h.vy); }
     collide(h);
   }
   if (h.stamina < st.stam) { h.stamT += dt * (h.zestT > 0 ? 3 : 1); if (h.stamT >= 2.6) { h.stamT = 0; h.stamina++; } } else h.stamT = 0;
@@ -799,7 +833,7 @@ function heroStep(h, dt) {
 function respawn(h) {
   const sp = spawnPos(h.team, h.slot);
   h.alive = true; h.hp = h.maxHp; h.x = sp.x; h.z = sp.z; h.y = 0; h.vx = h.vy = h.vz = 0; h.onGround = true;
-  h.ammo = h.magSize; h.reloadT = 0; h.shield = 0; h.slowT = 0; h.dotT = 0; h.stamina = h.st.stam; h.zip = null; h.lastHurt = -99;
+  h.ammo = h.magSize; h.reloadT = 0; h.liftT = 0; h.shield = 0; h.slowT = 0; h.dotT = 0; h.stamina = h.st.stam; h.zip = null; h.lastHurt = -99;
   h.ai.mode = 'lane'; h.breath = false; h.zestT = h.furyT = h.hipsT = 0;
   fx({ k: 'respawn', u: h });
 }
@@ -1047,10 +1081,51 @@ S.beginLanternTrial = function () {
   W.strays.forEach(u => { u.alive = false; });
   W.waveT = Infinity; W.thiefT = Infinity; W.hollowT.fill(0); W.redNext = Infinity;
   guard.scanT = Infinity; guard.dark = false;
+  if (p.def.id === 'rook') {
+    p.pack = 72; p.liftT = 0; p.mastic = false; p.mintT = 0; p.rubT = 0;
+    p.souls = 42;
+    W.trial.supplies = [
+      {id:'gum', x:guard.x-5.4,z:guard.z-7.8},
+      {id:'mastic', x:guard.x-7,z:guard.z+1.7},
+      {id:'doublemint', x:guard.x-4,z:guard.z+12}
+    ];
+  }
   p.x = guard.x - 6.8; p.z = guard.z - 13; p.yaw = 0.24;
 };
+S.earnsFordFlyer = function (trial, player) {
+  return !!(trial && trial.result === 'recovered' && player?.alive && !player.useAI);
+};
+function fordWear(h, n) {
+  if (!W.trial || !Number.isFinite(h.pack)) return;
+  h.pack = U.clamp(h.pack - n, 0, 100);
+}
+function fordSupply(h, id) {
+  const s = LL.FORD_SUPPLIES[id];
+  if (!s) return false;
+  h.pack = Math.min(100, h.pack + s.repair);
+  if (id === 'mastic') h.mastic = true;
+  else if (id === 'doublemint') { h.mintT = 6; h.cds[1] = 0; }
+  fx({k:'wicksupply', id:id,u:h,col:s.color}); return true;
+}
+S.buyFordSupply = function (id) {
+  if (!W || W.over || !W.trial?.supplies || !Object.hasOwn(LL.FORD_SUPPLIES,id)) return false;
+  const h = W.player, s = LL.FORD_SUPPLIES[id];
+  if (!h.alive || h.souls < s.cost) return false;
+  h.souls -= s.cost;
+  return fordSupply(h, id);
+};
 function trialStep(dt) {
-  const tr = W.trial, g = tr.guard;
+  const tr = W.trial, g = tr.guard, h = W.player;
+  if (tr.supplies && h.alive) {
+    for (const s of tr.supplies) {
+      if (!s.used && h.y < 1.35 && hyp(h.x-s.x,h.z-s.z) < 1.35) { s.used=true; fordSupply(h,s.id); }
+    }
+    h.rubT = Math.max(0,h.rubT - dt);
+    const shadow = tr.thief;
+    if (!h.rubT && shadow?.alive && shadow.carry && h.y < 3 && hyp(h.x-shadow.x,h.z-shadow.z) < 3.2) {
+      h.rubT = 1.1; fordWear(h,16); fx({k:'wickwear',u:h,col:0xbe9be8});
+    }
+  }
   if (!tr.thief && W.t >= tr.intro) {
     const u = mk('thief', 1, g.x + 0.6, g.z + 10, 0.6, 1.5, 100);
     u.speed = 7.2; u.state = 0; u.mark = g; u.loot = 0; u.victim = null; u.carry = null;

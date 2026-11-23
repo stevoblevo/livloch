@@ -13,7 +13,8 @@ R.enableFordPaper = function (gl) {
   const heroSheets=['dora','anna','myra','skein'].map(n=>img('art/heroes/'+n+'.png'));
   const orig=R.camPose, cam={x:0,y:0,z:0,dx:0,dy:0,dz:1,dist:5};
   let W,w,h,fx,fy,cx,sx,sp,cp, yard=[],stamps=[],tick=0,lastTrail=-10,stamp=0, flashes=[], snow=[];
-  const mot=LL.paperMotion; let motion=mot.create(), depth=null, inkRidge=null, cueFrame='protected';
+  const mot=LL.paperMotion; let motion=mot.create(), depth=null, inkRidge=null, cueFrame='protected', flightThreads=[];
+  const wickAviator=img('art/heroes/wick-aviator.svg');
   const motionSheets=['dora','anna','myra','skein'].map(n=>img('art/heroes/'+n+'-motion.png'));
   const heights=[2.45,2.4,1.95,2.2];
   const ready=i=>i.complete && i.naturalWidth>0;
@@ -27,9 +28,12 @@ R.enableFordPaper = function (gl) {
     // The native camPose closes over gfx's world, so feed it through the minimal setter.
     R.setCameraWorld(world); W=world;
     const rnd=LL.rng(571); motion=mot.create(); depth=null; cueFrame='protected';
-    tick=0; lastTrail=-10; yard=[]; stamps=[]; flashes=[]; snow=[];
+    tick=0; lastTrail=-10; yard=[]; flightThreads=[]; stamps=[]; flashes=[]; snow=[];
     if (!W.trial) return;
     const g=W.trial.guard;
+    if(W.trial.supplies)flightThreads=LL.lanes.map((lane,i)=>{
+      const points=[];for(let s=0;s<lane.len;s+=3){const pt={};LL.lanePoint(i,s,pt);points.push(pt);}return points;
+    });
     for(let i=0;i<90;i++){
       const x=g.x+(i%2?1:-1)*(10+rnd()*44), z=g.z-12+rnd()*118;
       if(i<55) yard.push({x,z,h:3+rnd()*9,seed:rnd(),kind:'tree'});
@@ -114,10 +118,21 @@ R.enableFordPaper = function (gl) {
       const x=g.x-5.3+.85*Math.sin((z-g.z)*.21), a=p(x-1.7,.01,z),b=p(x+1.7,.01,z),d=p(x+1.8,.01,z-2.55),e=p(x-1.8,.01,z-2.55);
       if([a,b,d,e].every(k=>k.d>.4))poly([[a.x,a.y],[b.x,b.y],[d.x,d.y],[e.x,e.y]], Math.floor(z)%3?'#35485f30':'#28384e50');
     }
+    if (flightThreads.length) {
+      for (const thread of flightThreads) {
+        let prev=null; for (const node of thread) {
+          const n=p(node.x,.035,node.z);
+          if (prev&&n.d>1.3&&prev.d>1.3&&n.d<105&&((n.x>=-40&&n.x<=w+40)||(prev.x>=-40&&prev.x<=w+40)))
+            line(prev,n,pl.liftT>0&&pl.threadCaught?'#b9f7dbb9':'#8dddc780',Math.min(4,Math.max(1,50/n.d)));
+          prev=n;
+        }
+      }
+    }
     const gb=p(g.x,0,g.z); if(!g.dark && gb.d>.2)glow(gb.x,gb.y,Math.min(230,7*fy/gb.d),'#e9a864',.37);
     if(t?.alive && t.carry && tick-lastTrail>.085){ yard.push({x:t.x,z:t.z,kind:'mote',birth:tick});lastTrail=tick; }
     yard=yard.filter(o=>o.kind!=='mote'||(tick-o.birth<2 && t?.alive && t.carry));
     const chart=[...yard,{...g,kind:'house'},{x:pl.x,y:pl.y,z:pl.z,kind:'hero'}];
+    for(const o of W.trial.supplies||[])if(!o.used)chart.push({...o,kind:'supply'});
     if(t?.alive)chart.push({...t,kind:'thief'});
     chart.map(o=>({o,b:p(o.x,o.y||0,o.z)})).filter(({b})=>b.d>.29 && b.x>-480&&b.x<w+480).sort((a,b)=>b.b.d-a.b.d).forEach(({o,b})=>{
       const s=Math.min(260,fy/b.d);
@@ -134,7 +149,32 @@ R.enableFordPaper = function (gl) {
           ctx.filter=g.dark?'brightness(.35) saturate(.38)':'none';ctx.drawImage(house,0,0,sw,sh,b.x-wd/2,b.y-ht,wd,ht);ctx.filter='none'; }
         return;
       }
+      if(o.kind==='supply'){
+        const label=LL.FORD_SUPPLIES[o.id],r=Math.max(5,.31*s),x=b.x,y=b.y-.23*s;
+        glow(x,y,r*2,label.tint,.45);
+        poly([[x-r,y],[x,y-r*.54],[x+r,y],[x,y+r*.54]],label.tint);
+        if(b.d<12){ctx.font='12px monospace';ctx.textAlign='center';ctx.fillStyle='#111b28';ctx.fillText(label.name,x+1,y-r*.8+1);ctx.fillStyle='#effaf3';ctx.fillText(label.name,x,y-r*.8);}
+        return;
+      }
       if(o.kind==='hero'){
+        if(pl.def.id==='rook'&&ready(wickAviator)){
+          const tt=2.42*s,ww=tt*176/288,yaw=Math.atan2(cam.x-pl.x,cam.z-pl.z)-pl.yaw;
+          const a=Math.atan2(Math.sin(yaw),Math.cos(yaw)),ad=Math.abs(a);
+          const i=ad<.5?0:ad<1.2?3:ad<2.2?1:2;
+          const floor=p(pl.x,0,pl.z);shadow(floor.x,floor.y,tt*.23,.20);
+          ctx.save();ctx.translate(b.x,b.y);
+          if(pl.liftT>0){
+            for(let j=0;j<2;j++){
+              const x=(j?1:-1)*tt*.066,y=-tt*.39,l=tt*(.19+(reduced?.0:Math.sin(tick*34+j)*.05));
+              glow(x,y+l*.37,tt*.105,'#81e6cb',.55);
+              poly([[x-tt*.022,y],[x+tt*.024,y],[x,y+l]],'#cdf6d980');
+            }
+            ctx.rotate(.095);
+          }else ctx.rotate(move.roll);
+          if((i===1||i===3)&&a>0)ctx.scale(-1,1);
+          ctx.drawImage(wickAviator,i*176,0,176,288,-ww/2,-tt*.93,ww,tt);
+          ctx.restore();return;
+        }
         const hero=LL.cfg.hero, fallback=heroSheets[hero]||heroSheets[0], orig=motionSheets[hero]||motionSheets[0], ht=(heights[hero]||2.32)*s;
         const yawToCam=Math.atan2(cam.x-pl.x,cam.z-pl.z)-pl.yaw, d=Math.atan2(Math.sin(yawToCam),Math.cos(yawToCam)), ad=Math.abs(d);
         const side=ad>=.62&&ad<2.12, flip=side&&d>0, v=ad<.62?0:side?1:2;

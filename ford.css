@@ -32,3 +32,10 @@
 #bFordArt{display:none}
 .ford-trial #bFordArt{display:inline-block;border-color:#bd977a93;color:#f9e5ce;min-width:86px}
 .ford-trial[data-ford-art=rainprint] #fordObjective{background:#1c142ce8;color:#fbe9dc;border-color:#deb0ac}
+.wick-btn { border-color:#91e5c6; color:#d5fff1; background:#24453d; }
+#wickHud { position:absolute; z-index:2; left:var(--sl); top:calc(var(--st) + 110px); padding:.45rem .6rem; color:#eff7ef; background:rgba(11,22,30,.89); border:1px solid #8cd2bc; font:clamp(.64rem,1.2vw,.85rem) 'DM Mono',monospace; pointer-events:none; }
+#wickPack { width:5.2rem; vertical-align:middle; }
+#wickHint { color:#a7f0d5; max-width:23ch; min-height:1em; margin-top:.3rem; }
+#wickShop:not([hidden]) { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:.65rem; margin:.75rem 0; }
+.ford-trial.ford-flyer #bShop { display:inline-block; border-color:#91e5c6; color:#ccffef; }
+.ford-trial.ford-flyer:has(#shop:not([hidden])) #wickHud { display:none; }

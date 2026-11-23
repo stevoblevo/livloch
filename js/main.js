@@ -11,7 +11,7 @@
 'use strict';
 const LL = window.LL, C = LL.C, S = LL.sim, U = LL.U, R = LL.gfx, A = LL.audio, I = LL.input, UI = LL.ui;
 const KEY = 'livloch.ford-study.v1';
-const cfg = LL.cfg = { sens: 1, vol: 0.6, invert: false, autoFire: null, assist: true, low: false, hero: 0, diff: 1, wins: 0, losses: 0, look: 'snow', lookPrev: 'snow', coached: false, v6: false, mode: 'short', bestStars: 0, v17: false, lean: false, dream: false, calls: {}, bestT: 0, bestL: 0, unl: {}, all: false, snuffBest: 0 };
+const cfg = LL.cfg = { sens: 1, vol: 0.6, invert: false, autoFire: null, assist: true, low: false, hero: 0, diff: 1, wins: 0, losses: 0, look: 'snow', lookPrev: 'snow', coached: false, v6: false, mode: 'short', bestStars: 0, v17: false, lean: false, dream: false, calls: {}, bestT: 0, bestL: 0, unl: {}, all: false, snuffBest: 0, fordFlyerUnlocked: false };
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) for (const k in cfg) if (k in s) cfg[k] = s[k]; } catch (e) {}
 if (!cfg.v6) { cfg.v6 = true; cfg.look = 'snow'; }
 cfg.hero = U.clamp(cfg.hero | 0, 0, LL.HEROES.length - 1); cfg.diff = U.clamp(cfg.diff | 0, 0, 2);
@@ -47,14 +47,15 @@ function attract() {
   W.fx.length = 0; R.build(W);
   view.mode = 'attract'; view.target = null; state = 'title'; I.play = false;
 }
-let repeatTrial = true, steadyAim = false;
-function play(auto, trial) {
-  repeatTrial = !auto && !!trial; steadyAim = false;
+let repeatTrial = true, repeatFlyer = false, steadyAim = false;
+function play(auto, trial, flyer) {
+  repeatTrial = !auto && !!trial; repeatFlyer = repeatTrial && flyer===true && cfg.fordFlyerUnlocked===true; steadyAim = false;
+  document.body.classList.toggle('ford-flyer', repeatFlyer);
   document.body.classList.remove('ford-focus');
   document.body.classList.toggle('ford-trial', repeatTrial);
   if (repeatTrial) setLook('snow');
   A.init(); A.setVol(cfg.vol); A.ui('ok');
-  W = S.newWorld({ heroPick: cfg.hero, difficulty: cfg.diff, auto: !!auto, seed: (Date.now() & 0xfffff) + 11, lens: cfg.look, mode: repeatTrial ? 'match' : cfg.mode, lean: !repeatTrial && !auto && cfg.lean, dream: !repeatTrial && !auto && cfg.dream }); speed = 1;
+  W = S.newWorld({ fordFlyer: repeatFlyer, heroPick: cfg.hero, difficulty: cfg.diff, auto: !!auto, seed: (Date.now() & 0xfffff) + 11, lens: cfg.look, mode: repeatTrial ? 'match' : cfg.mode, lean: !repeatTrial && !auto && cfg.lean, dream: !repeatTrial && !auto && cfg.dream }); speed = 1;
   if (repeatTrial) S.beginLanternTrial();
   lens0 = W.lens; R.build(W); UI.startHUD(W);
   view.mode = 'play'; view.target = W.player; view.yaw = repeatTrial ? 0.30 : 0; view.pitch = repeatTrial ? -0.055 : -0.08; view.zoom = 0;
@@ -64,7 +65,7 @@ function play(auto, trial) {
 }
 function pause() { if (state !== 'play' || W.over) return; if (UI.screen === 'shop') UI.toggleShop(false); state = 'pause'; pausedAt = performance.now(); I.play = false; UI.showPause(true); I.unlock(); }
 function resume() { if (state !== 'pause') return; state = 'play'; I.play = true; UI.showPause(false); I.lock(); last = performance.now(); }
-function quit() { document.body.classList.remove('ford-trial'); I.unlock(); UI.showTitle(); attract(); }
+function quit() { document.body.classList.remove('ford-trial','ford-flyer'); I.unlock(); UI.showTitle(); attract(); }
 
 function playerControl(dt) {
   const p = W.player, c = p.ctl, menu = UI.screen !== null;
@@ -167,7 +168,7 @@ function frame(now) {
   if (state === 'play') {
     const esc = I.take('esc');
     if (I.take('pause') || esc || (UI.screen === 'shop' && I.take('navBack'))) { if (UI.screen === 'shop') UI.toggleShop(false); else pause(); }
-    else if (I.take('shop') && !W.trial) UI.toggleShop();
+    else if (I.take('shop') && (!W.trial || !!W.trial.supplies)) UI.toggleShop();
     if (I.take('fordArt')) nextFordArt();
     if (I.take('fordAim') && W.trial) { steadyAim = !steadyAim; document.body.classList.toggle('ford-focus', steadyAim); }
     if (I.take('ink') && !W.trial) toggleInk();
@@ -183,10 +184,11 @@ function frame(now) {
       const e = W.fx[i];
       R.fx(e);
       if (state === 'play') {
-        A.fx(e, W, cam); if (!W.trial) UI.fx(e);
+        A.fx(e, W, cam); if (!W.trial) UI.fx(e); else if (W.trial.supplies) UI.fordFlyerFX(e);
         if (e.k === 'respawn' && e.u === W.player && !W.player.useAI) { view.yaw = 0; view.pitch = -0.06; }
         if (!W.trial) feats(e);
-        if (e.k === 'over') { overT = 2.6; I.unlock(); if (e.short && W.auto === W.lean && e.n > (cfg.bestStars || 0)) { cfg.bestStars = e.n; save(); }
+        if (e.k === 'over') { overT = 2.6; I.unlock();
+          if (!cfg.fordFlyerUnlocked && S.earnsFordFlyer(W.trial,W.player)) { cfg.fordFlyerUnlocked = true; W.trial.newFlyer = true; save(); } if (e.short && W.auto === W.lean && e.n > (cfg.bestStars || 0)) { cfg.bestStars = e.n; save(); }
           if (e.fallen && W.auto === W.lean && e.t > cfg.bestT) { cfg.bestT = e.t; cfg.bestL = e.lights; save(); } if (counted && !e.trial && !e.fallen && !e.short && !W.lean) { if (e.winner === 0) cfg.wins++; else cfg.losses++; save(); } }
       }
     }
@@ -216,9 +218,10 @@ function frame(now) {
 
 function boot() {
   UI.init({
-    play: play, trial: () => play(false, true), again: () => play(false, repeatTrial), pause: pause, resume: resume, quit: quit, save: save,
+    play: play, trial: () => play(false, true), flyer: () => play(false, true, true), again: () => play(false, repeatTrial, repeatFlyer), pause: pause, resume: resume, quit: quit, save: save,
     apply: function () { A.setVol(cfg.vol); R.setQuality(cfg.low); },
     buy: function (i) { UI.afterBuy(S.buy(W.player, i)); },
+    buyFord: function (id) { UI.afterBuy(S.buyFordSupply(id)); },
     look: setLook, ink: () => { if (!W.trial) toggleInk(); }, view: () => { if (!W.trial) nextView(); },
     call: function (l) { if (state === 'play') S.call(l); }, echo: function () { if (state === 'play') S.echo(); }, fast: function () { speed = speed >= 4 ? 1 : speed * 2; return speed; }, leanFold: function () { if (state === 'play') S.leanFold(); },
     relock: function () { if (state === 'play') I.lock(); },

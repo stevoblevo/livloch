@@ -333,13 +333,14 @@ body[data-look="glow"] #app::after { content: ""; position: absolute; inset: 0; 
   </div>
 
   <div id="fordObjective" role="status"></div>
+  <div id="wickHud" hidden><label for="wickPack">Lantern pack</label> <meter id="wickPack" min="0" low="17" max="100" value="72"></meter> <b id="wickStatus"></b><div id="wickHint" aria-live="polite"></div></div>
   <div id="fordControls"><span>WASD move</span><span>Click shoot</span><span>X aim assist <b id="fordAimOn">ON</b></span><span>L art view</span></div>
   <section id="title" class="screen">
     <div class="col">
       <div class="ford-kicker">LIVLOCH  /  PLAYABLE ART STUDY</div>
       <h1>The Lantern <em>Ford</em></h1>
       <p class="ford-logline">The shrine is still lit. Something is coming through the snow.</p>
-      <div class="ford-entry"><button class="btn primary" id="bTrial">Enter the ford</button><span>WASD to move · Click to shoot · X for aim assist</span></div>
+      <div class="ford-entry"><button class="btn primary" id="bTrial">Enter the ford</button><button class="btn wick-btn" id="bFlyer" hidden>Fly as Rook Vale</button><span>WASD to move · Click to shoot · X for aim assist</span></div>
       <p class="tag">Three threads. One stalemate. Keep the little light.</p>
       <p class="sub">The Reign keeps the lanterns lit. The Hush puts them out. Their paper troopers meet on three threads every 24 seconds and cancel each other exactly. That is called a livelock, and it has been going on for some time. You are the part that isn't symmetrical.</p>
       <p id="paper-note">Paper mode · same playable 3D scene, drawn without WebGL. Full matches require WebGL.</p>
@@ -392,9 +393,9 @@ body[data-look="glow"] #app::after { content: ""; position: absolute; inset: 0; 
 
   <section id="shop" class="screen" hidden>
     <div class="panel">
-      <div id="shopHead"><h2>The stall</h2><div class="row"><span id="shopSouls">0</span><button class="btn" id="bShopClose">Back to it</button></div></div>
+      <div id="shopHead"><h2 id="shopH">The stall</h2><div class="row"><span id="shopSouls">0</span><button class="btn" id="bShopClose">Back to it</button></div></div>
       <p class="sub">The valley does not wait while you browse.</p>
-      <div id="shopCols"></div>
+      <div id="wickShop" hidden></div><div id="shopCols"></div>
     </div>
   </section>
 
@@ -440,7 +441,7 @@ body[data-look="glow"] #app::after { content: ""; position: absolute; inset: 0; 
       <div id="stars" hidden></div>
       <div id="calls" hidden><h3>Your calls</h3><p class="sub">Each hidden system the walk showed you. Keep it, change it, or cut it. Then copy the list and send it.</p><div id="callList"></div><div class="row"><button class="btn" id="bCopyCalls">Copy my calls</button><span id="copyNote" style="color:var(--paper-dim);font-size:14px"></span></div></div>
       <div id="sbOver"></div>
-      <div class="row" style="margin-top:14px"><button class="btn primary" id="bAgain">Again</button><button class="btn" id="bTitle">Change hero</button></div>
+      <div class="row" style="margin-top:14px"><button class="btn primary" id="bAgain">Again</button><button class="btn wick-btn" id="bFlyerOver" hidden>Take flight as Rook</button><button class="btn" id="bTitle">Change hero</button></div>
     </div>
   </section>
 </div>

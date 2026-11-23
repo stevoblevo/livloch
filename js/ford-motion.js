@@ -2,7 +2,7 @@
 (function(root){
 'use strict';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-const rigs={dora:{cycle:3.75,hem:.20},anna:{cycle:3.25,hem:.30},myra:{cycle:2.95,hem:.22},skein:{cycle:3.6,hem:.27}};
+const rigs={rook:{cycle:3.5,hem:.28},dora:{cycle:3.75,hem:.20},anna:{cycle:3.25,hem:.30},myra:{cycle:2.95,hem:.22},skein:{cycle:3.6,hem:.27}};
 function create(){return {x:null,z:null,phase:0,mix:0,aim:0,ground:true,land:0};}
 function pose(m,u,dt,t,still){
   const step=m.x==null ? 0 : Math.hypot(u.x-m.x,u.z-m.z), r=rigs[u.def.id]||rigs.dora;

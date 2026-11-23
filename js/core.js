@@ -132,6 +132,25 @@ LL.HEROES = [
     ] }
 ];
 
+/* Ford bonus pilot, deliberately separate from the canonical four-hero roster. */
+LL.FORD_FLYER = {
+  id: 'rook', name: 'Rook Vale', title: 'The Wick Aviator', col: 0x91e5c6, css: '#91e5c6',
+  blurb: 'A loch courier with a glazed lantern-kite. Take the high line, then land clean.',
+  hp: 610, speed: 7.1, aiRange: 31, build: [0, 5, 3, 7],
+  gun: { name: 'Wick sparks', dmg: 17, rate: 5, mag: 18, reload: 1.35, speed: 100, spread: 0.011, pellets: 1, range: 47, size: 0.19 },
+  ab: [
+    { key: 'Q', name: 'Wick Skip', kind: 'line', cd: 6.5, dmg: 58, speed: 65, r: 0.72, range: 29, desc: 'Send a slow-burning stitch along your sightline.' },
+    { key: 'E', name: 'Lantern Lift', kind: 'lift', cd: 7.5, duration: 1.02, desc: 'Rise and steer for a moment, then glide down. Aim and fire while aloft.' },
+    { key: 'F', name: 'Landing Bell', kind: 'zone', cd: 14, range: 13, r: 5.7, life: .55, delay: .34, burst: 66, fx: 'toll', desc: 'Ring a warning at the spot you are looking at; a short pulse follows.' }
+  ]
+};
+
+LL.FORD_SUPPLIES = Object.freeze({
+  gum: Object.freeze({name:'Gum', cost:18, repair:38, color:0xffae75, tint:'#ffae75', desc:'Quick patch · +38 pack integrity.'}),
+  mastic: Object.freeze({name:'Mastic', cost:25, repair:14, color:0xe9d086, tint:'#e9d086', desc:'Sap lining · +14 integrity and one longer, lower-wear lift.'}),
+  doublemint: Object.freeze({name:'Doublemint', cost:30, repair:11, color:0x83f1cd, tint:'#83f1cd', desc:'Cool restart · +11 integrity, reset Lift, and six seconds of speed.'})
+});
+
 /* Items. mod keys are added to the hero stat block. */
 LL.ITEMS = [
   { id: 'wax', cat: 0, tier: 1, cost: 500, name: 'Hot Wax', desc: '+16% gun damage', mod: { dmg: 0.16 } },
