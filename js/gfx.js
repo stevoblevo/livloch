@@ -1106,6 +1106,34 @@ function ghost(m, h, P, pt) {
   gh.scale.set(wd * (m.paper.sign || 1), P.h, 1); gh.material.color.setHex(LK.team[h.team]).multiplyScalar(LK.add ? 0.55 : 1); gh.life = 0.24; gh.t = 0; gh.visible = true;
 }
 function stepGhosts(dt) { for (let i = 0; i < ghosts.length; i++) { const g = ghosts[i]; if (!g || !g.visible) continue; g.t += dt; const f = g.t / g.life; if (f >= 1) { g.visible = false; continue; } g.material.opacity = (LK.add ? 0.7 : 0.35) * (1 - f) * (1 - f); g.scale.y *= 1 + dt * 0.3; } }
+/* TITLE CAMERA (0.20). The title screen used to circle the valley from high up. Now it is a slow trailer: a run of
+   shots, each a gentle move with eased ends — gliding low along the middle thread, craning up over the loch, circling a
+   lantern house, drifting past the Hush side, then the wide view — cut together, about twelve seconds each. Reduced
+   motion keeps the old wide circle, slowed. */
+let shotI = 0, shotT = 0;
+const cpos = { x: 0, y: 0, z: 0 }, clook = { x: 0, y: 0, z: 0 }, LP = { x: 0, z: 0, dx: 0, dz: 1 };
+const SHOTS = [
+  { d: 13, fov: 52, f: function (k) { const L = LL.lanes[1].len, s = L * (0.18 + 0.22 * k); LL.lanePoint(1, s, LP); cpos.x = LP.x + 4.5; cpos.y = 2.6 + k * 1.4; cpos.z = LP.z;
+      LL.lanePoint(1, s + 38, LP); clook.x = LP.x; clook.y = 3.2; clook.z = LP.z; } },
+  { d: 12, fov: 50, f: function (k) { const lx = C.LOCH.x, lz = C.LOCH.z, a = 2.4 + k * 0.5; cpos.x = lx + Math.cos(a) * (22 - k * 4); cpos.y = 1.6 + k * k * 15; cpos.z = lz + Math.sin(a) * (22 - k * 4);
+      clook.x = lx; clook.y = 1 + k * 2; clook.z = lz; } },
+  { d: 12, fov: 46, f: function (k) { const ss = W && W.structs.filter(function (o) { return o.alive && o.team === 0 && o.kind !== 'patron'; }), o = ss && ss.length ? ss[Math.floor(shotI / SHOTS.length) % ss.length] : { x: 0, z: -60 };
+      const a = k * 1.1 + 0.4; cpos.x = o.x + Math.cos(a) * 17; cpos.y = 4.5 + Math.sin(k * 3.14) * 2; cpos.z = o.z + Math.sin(a) * 17; clook.x = o.x; clook.y = 4; clook.z = o.z; } },
+  { d: 12, fov: 54, f: function (k) { const z0 = 40 + k * 46; cpos.x = -30 + k * 14; cpos.y = 6 + k * 3; cpos.z = z0; clook.x = 10; clook.y = 4; clook.z = z0 + 40; } },
+  { d: 16, fov: 58, f: function (k) { const a = shotI * 0.7 + k * 0.6, fz = Math.sin(shotI * 1.3) * 30; cpos.x = Math.sin(a) * 66; cpos.y = 26 - k * 6; cpos.z = fz + Math.cos(a) * 66; clook.x = 0; clook.y = 3; clook.z = fz; } }
+];
+function attractCam(dt) {
+  if (R.reduced || !LL.lanes) {
+    const a = time * 0.03, fz = Math.sin(time * 0.02) * 40;
+    camPos.x = Math.sin(a) * 62; camPos.y = 24; camPos.z = fz + Math.cos(a) * 62; camera.position.set(camPos.x, camPos.y, camPos.z); camera.lookAt(0, 3, fz); camera.fov = R.portrait ? 78 : 58; return;
+  }
+  shotT += dt; let S = SHOTS[shotI % SHOTS.length]; if (shotT >= S.d) { shotT = 0; shotI++; S = SHOTS[shotI % SHOTS.length]; }
+  const u = shotT / S.d, k = u * u * (3 - 2 * u) * 0.7 + u * 0.3; // eased ends, never quite stopped
+  S.f(k); camPos.x = cpos.x; camPos.y = cpos.y; camPos.z = cpos.z;
+  camera.position.set(cpos.x, cpos.y, cpos.z); camera.lookAt(clook.x, clook.y, clook.z);
+  const dd = Math.hypot(clook.x - cpos.x, clook.z - cpos.z) || 1; camDir.x = (clook.x - cpos.x) / dd; camDir.z = (clook.z - cpos.z) / dd;
+  camera.fov = (R.portrait ? 1.35 : 1) * S.fov;
+}
 R.frame = function (dt, view) {
   if (!R.ok || !W) return;
   time += dt;
@@ -1380,10 +1408,7 @@ R.frame = function (dt, view) {
   // camera
   const pl = view.target;
   if (view.mode === 'attract' || !pl) {
-    const a = time * 0.05, fz = Math.sin(time * 0.031) * 40;
-    camPos.x = Math.sin(a) * 62; camPos.y = 24 + Math.sin(time * 0.07) * 6; camPos.z = fz + Math.cos(a) * 62;
-    camera.position.set(camPos.x, camPos.y, camPos.z); camera.lookAt(0, 3, fz);
-    camera.fov = R.portrait ? 78 : 58;
+    attractCam(dt);
   } else {
     /* CAMERA. Aim stays exact (yaw and pitch are never smoothed); the follow height lags a little behind jumps and landings,
        a wall pulls the camera in at once and lets it out slowly, and a dash or a thread ride widens the view a touch. */
