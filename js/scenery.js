@@ -38,10 +38,10 @@ const MOON_DIR = [-Math.sin(27 * DEG) * Math.cos(17 * DEG), Math.sin(17 * DEG), 
    mist: low, high, alpha. fly: colour, share. petal: two colours, share. grass: base, tip. flowers: four.
    ground: far colour, how far toward it, brightness by the threads, brightness far from them (null: the floor as built). */
 const PAL = {
-  snow: { bl: [0x5e1450, 0xc8468a, 0xff8cc4, 0xffd2ea], blGlow: 0.3, trunk: 0x2a1830, pine: [0x0c1426, 0x1a2a44, 0x2e4870], pineGlow: 0.05, snow: 0xd6dcff,
+  snow: { bl: [0x541a4c, 0xb8508a, 0xf090c0, 0xffd8ec], blGlow: 0.3, trunk: 0x2a1830, pine: [0x0c1426, 0x1a2a44, 0x2e4870], pineGlow: 0.05, snow: 0xd6dcff,
     rimB: [0xc8a8ff, 0.3, 2.8], rimP: [0x8ea8ff, 0.32, 3.0], water: [0x030b20, 0x16a8ae, 0x8af8ff], pool: [0xffa24c, 0x9a84ff, [0.85, 0.5, 0.24]],
-    moon: [0xfff0e0, 0xc9a8ff, 0xffd0ec, [1, 0.25]], mist: [0x4b3c92, 0xc584c4, 0.4], fly: [0xffe08a, 1], petal: [0xff8fc4, 0xffd6ea, 1],
-    grass: [0x23204a, 0x7a80c8], flowers: [0xff5fae, 0xb084ff, 0x6ff0ff, 0xffc870], shroom: 0x6af0ff, litter: [0xff86c0, 0.75], glint: [0xeef2ff, 0.06], ground: [0x1a1640, 0.4, 0.86, 0.5] },
+    moon: [0xfff0e0, 0xc9a8ff, 0xffd0ec, [1, 0.25]], mist: [0x46408a, 0xb888bc, 0.4], fly: [0xffe08a, 1], petal: [0xff8fc4, 0xffd6ea, 1],
+    grass: [0x23204a, 0x7a80c8], flowers: [0xff5fae, 0xb084ff, 0x6ff0ff, 0xffc870], shroom: 0x6af0ff, litter: [0xff86c0, 0.75], glint: [0xeef2ff, 0.06], ground: [0x181a38, 0.4, 0.86, 0.52] },
   lantern: { bl: [0x5a1838, 0xb8406a, 0xf07a9a, 0xffc0c8], blGlow: 0.32, trunk: 0x2a1a20, pine: [0x0f2226, 0x1c3a40, 0x2c565a], pineGlow: 0.04, snow: 0,
     rimB: [0xffb890, 0.35, 2.6], rimP: [0xffc8a0, 0.2, 3.0], water: [0x041418, 0x1a7a80, 0x7ff0d8], pool: [0xffa850, 0x5fe6b6, [0.75, 0.35, 0.22]],
     moon: [0xffe8c8, 0xffa070, 0xffd0a0, [1, 0.2]], mist: [0x3a2040, 0x8a3a50, 0.38], fly: [0xffc860, 1], petal: [0xff9ab0, 0xffd0d0, 0.8],
@@ -50,7 +50,7 @@ const PAL = {
     rimB: [0xf0e0a0, 0.3, 2.8], rimP: [0xf0e0a0, 0.22, 3.0], water: [0x0a1830, 0x3d7aa8, 0xc0e4ff], pool: [0xf0c75e, 0x8fb4e8, [0.5, 0.38, 0.16]],
     moon: [0xfff4d8, 0xf0c75e, 0xf0d890, [1, 0.2]], mist: [0x263a57, 0x5a7aa0, 0.4], fly: [0xf0d070, 0.8], petal: [0xe8d8f0, 0xfff4e8, 0.5],
     grass: [0x1a2a3a, 0x4e7090], flowers: [0xf0c75e, 0x8fb4e8, 0xf4efe6, 0xf0c75e], shroom: 0x8fd0f0, litter: [0xe8dcf0, 0.5], glint: [0xf0e0a0, 0.03], ground: [0x18263a, 0.25, 0.92, 0.7] },
-  origami: { bl: [0xd88a9c, 0xf0b0bc, 0xfad4da, 0xfff0f2], blGlow: 0.05, trunk: 0x6a5a5a, pine: [0x4f7268, 0x6a8f80, 0x8fb0a0], pineGlow: 0, snow: 0,
+  origami: { bl: [0xe09aaa, 0xf4bcc6, 0xfcdce2, 0xfff4f6], blGlow: 0.05, blDetail: 0.25, trunk: 0x6a5a5a, pine: [0x4f7268, 0x6a8f80, 0x8fb0a0], pineGlow: 0, snow: 0,
     rimB: [0xffffff, 0.12, 3.0], rimP: [0xffffff, 0.1, 3.0], water: [0x3a78b0, 0x8cc2e6, 0xffffff], pool: null,
     moon: null, mist: [0xffffff, 0xf6f8f3, 0.32], fly: null, petal: [0xf4a8b8, 0xffe0e6, 0.7],
     grass: [0x8fae7a, 0xc8dca8], flowers: [0xb8311a, 0xf0cf78, 0x2a4c86, 0xffffff], shroom: 0xf0e0c0, litter: [0xf0a0b0, 0.55], ground: null, plantGlow: 0.2 },
@@ -679,8 +679,5 @@ SC.frame = function (dt, time, camera) {
   }
 };
 SC.moonDir = MOON_DIR;
-SC._pools = function () { return pools; }; // for tools
-SC._gm = function () { return X && X.ground ? X.ground.material : null; }; // for tools
-SC._ground = function () { const g = X && X.ground; return g ? { patched: g.material.onBeforeCompile.toString().slice(0, 60), key: g.material.customProgramCacheKey(), glint: P.glint, prog: g.material.version, same: X.ground === g } : null; };
-SC._dbg = function () { return { built: built, pools: pools ? pools.count : -1, inScene: !!(pools && pools.parent && pools.parent.parent), list: poolList.length, lv: poolList.slice(0, 4).map(function (p) { return +p.lv.toFixed(2); }), m0: pools ? Array.from(pools.instanceMatrix.array.slice(0, 16)).map(function (v) { return +v.toFixed(1); }) : null, c0: pools ? Array.from(pools.instanceColor.array.slice(0, 6)) : null, vis: pools ? pools.visible : null, sceneOK: pools ? pools.parent === X.world && X.world.parent === X.scene : null }; }; // for tools
+SC._dbg = function () { return { built: built, pools: pools ? pools.count : -1, trees: treesFor ? treesFor.blossom.length + treesFor.pine.length : 0 }; }; // for tools
 })();

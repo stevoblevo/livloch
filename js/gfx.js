@@ -155,7 +155,7 @@ function construct() {
   world = new T.Group(); scene.add(world); dyn = new T.Group(); scene.add(dyn);
   if (SCN) SCN.begin(scx()); // scenery: this look's palette, before the ground is tinted
   buildSky(); buildGround(); buildThreads(); buildInstanced(); buildParticles(); buildPools(); buildCreaseArt();
-  if (SCN) SCN.build(scx()); // scenery: the loch, moon, mist and stars (trees wait for the world, in buildDecor)
+  if (SCN) SCN.build(scx()); // scenery: the loch, moon, mist and stars (the trees wait for the world, in R.build)
   applyLook();
 }
 function scx() { let id = 'snow'; for (const k in LOOKS) if (LOOKS[k] === LK) id = k; return { T: T, scene: scene, world: world, sky: sky, renderer: renderer, LK: LK, id: id, R: R, groundH: groundH, ground: groundM }; }
@@ -840,8 +840,6 @@ function buildDecor() {
     rm.setMatrixAt(i, dummy.matrix); rm.setColorAt(i, tmpC.setHex(0x4a3d52).lerp(new T.Color(0x35454f), o.seed));
   });
   world.add(rm); decorPrims = [rm]; decorTrees = trees; decorRocks = rocks; decorHidden = false;
-  if (SCN) SCN.trees(W, trees).forEach(function (o) { o.userData.tree = true; decorPrims.push(o); }); // scenery: blossom and pine trees replace the cones
-  if (!SCN) {
   const tg = cyl(0.3, 0.55, 3, 5); tg.translate(0, 1.5, 0);
   const c1 = flat(new T.ConeGeometry(2.6, 4.2, 6)); c1.translate(0, 4.6, 0);
   const c2 = flat(new T.ConeGeometry(1.9, 3.6, 6)); c2.translate(0, 7.2, 0);
@@ -867,21 +865,25 @@ function buildDecor() {
     const cm = new T.InstancedMesh(cg, mat(0xc8ccf0), Math.max(1, trees.length)), cm2 = new T.InstancedMesh(c3, mat(0xc8ccf0), Math.max(1, trees.length));
     trees.forEach(function (o, i) { const sc = 0.85 + o.seed * 0.5; dummy.position.set(o.x, 0, o.z); dummy.rotation.set(0, o.seed * 6, 0); dummy.scale.set(sc, sc, sc); dummy.updateMatrix(); cm.setMatrixAt(i, dummy.matrix); cm2.setMatrixAt(i, dummy.matrix); });
     world.add(cm); world.add(cm2); [cm, cm2].forEach(function (o) { o.userData.tree = true; decorPrims.push(o); });
-  }
-  } // end of the cone trees
-  if (LK.snowcaps) {
     const rs = new T.InstancedMesh(flat(new T.IcosahedronGeometry(1, 0)), mat(0xc8ccf0), Math.max(1, rocks.length));
     rocks.forEach(function (o, i) { dummy.position.set(o.x, o.h * 0.62, o.z); dummy.rotation.set(o.seed * 3, o.seed * 17, o.seed * 7); dummy.scale.set(o.r * 0.95, o.h * 0.42, o.r * 0.95); dummy.updateMatrix(); rs.setMatrixAt(i, dummy.matrix); });
     world.add(rs); decorPrims.push(rs);
   }
   dummy.rotation.set(0, 0, 0);
 }
+/* Scenery: blossom and pine trees replace the cones buildDecor made (their geometry is freed; materials are shared). */
+function sceneryTrees() {
+  decorPrims = decorPrims.filter(function (o) { if (!o.userData.tree) return true; world.remove(o); o.geometry.dispose(); return false; });
+  SCN.trees(W, decorTrees).forEach(function (o) { o.userData.tree = true; decorPrims.push(o); });
+}
 R.build = function (w) {
   W = w;
   heroM.concat(structM, strayM).forEach(function (g) { dyn.remove(g); });
   if (!nessM) nessM = nessModel(); nessY = -11;
   heroM = W.heroes.map(heroModel); structM = W.structs.map(structModel); strayM = W.strays.map(strayModel);
+  const freshDecor = !R.decor;
   buildDecor(); buildCues(); buildFruitArt(); buildPet();
+  if (SCN && freshDecor) sceneryTrees();
   if (SCN) SCN.world(W); // scenery: pools of light for this match's structures
   for (let i = 0; i < PN_MAX; i++) { pLife[i] = 0; pPos[i * 3 + 1] = -999; }
   rings.forEach(r => { r.life = 0; r.m.visible = false; });
