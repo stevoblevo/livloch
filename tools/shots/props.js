@@ -78,6 +78,7 @@ const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split
       const g = W.structs.find(s => s.team === 1 && s.kind === 'guardian' && s.lane === 0 && s.alive) || W.structs.find(s => s.team === 1 && s.kind !== 'patron' && s.alive);
       p.x = g.x + 2.5; p.z = g.z - 10; p.y = 0; const v = LL.dbg.view; v.yaw = Math.atan2(g.x - p.x, g.z - p.z) + 0.42; v.pitch = 0.36; p.yaw = v.yaw; });
     await shot('eyes');
+    if (shots.includes('ruin')) { await place(() => { const W = LL.sim.W; W.structs.forEach(s => { if (s.team === 1 && s.kind === 'guardian' && s.lane === 0) { s.alive = false; s.hp = 0; } }); }); await shot('ruin'); } // the same guardian, fallen
   }
   console.log(errs.length ? errs.join('\n') : 'no page errors'); await b.close(); srv.close();
 })().catch(e => { console.error('RUNFAIL', e); process.exit(1); });
