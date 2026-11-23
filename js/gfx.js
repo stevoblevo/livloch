@@ -18,7 +18,7 @@ const LL = window.LL, C = LL.C, S = LL.sim, U = LL.U;
 const R = LL.gfx = { ok: false, low: false };
 let T, renderer, scene, camera, W = null, glowTex, time = 0;
 let dummy, tmpC, v1, v2, v3;
-let world, dyn, sky, stars;
+let world, dyn, sky, stars, fordMatte, fordArt = null, groundMap;
 let tr = [null, null], hushEyes, trHat, barBg, barFill, projMesh, orbMesh, parts, staticGlow;
 let nessM = null, nessY = -11, creaseM = [], cueDash = null, cueRings = [], fruitM = [];
 R.reduced = false; try { R.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
@@ -151,6 +151,8 @@ function construct() {
   scene.add(new T.HemisphereLight(LK.hemi[0], LK.hemi[1], LK.hemi[2]));
   const moon = new T.DirectionalLight(LK.dir[0], LK.dir[1]); moon.position.set(-40, 80, 60); scene.add(moon);
   world = new T.Group(); scene.add(world); dyn = new T.Group(); scene.add(dyn);
+  if(fordArt?.coating)fordArt.coating.material.map.dispose(); if(fordArt?.treeTextures)fordArt.treeTextures.forEach(t=>t.dispose());
+  fordMatte = null; fordArt = null;
   buildSky(); buildGround(); buildThreads(); buildInstanced(); buildParticles(); buildPools(); buildCreaseArt();
   applyLook();
 }
@@ -219,10 +221,15 @@ function buildSky() {
   g.setAttribute('color', new T.BufferAttribute(cols, 3));
   sky = new T.Mesh(g, new T.MeshBasicMaterial({ vertexColors: true, side: T.BackSide, fog: false, depthWrite: false }));
   own(sky); scene.add(sky);
-  flatLoad('backdrop', function (t) { // the far ridge: one wide painting wrapped round the valley, mirrored so the seam never shows
+  const activeScene = scene;
+  if (LK === LOOKS.snow) flatLoad('backdrop', function (t) { // the far ridge: one wide painting wrapped round the valley, mirrored so the seam never shows
     t.wrapS = T.MirroredRepeatWrapping; t.repeat.x = 2; t.needsUpdate = true;
-    const mt = new T.MeshBasicMaterial({ map: t, side: T.BackSide, fog: false }); // opaque and depth-writing, so the sky dome behind it cannot paint over it mt.userData.lk = true; mt.userData.solid = true; mt.userData.bl = true;
-    const hgt = 2 * Math.PI * 560 / 2 * (t.image.height / t.image.width), c = new T.Mesh(new T.CylinderGeometry(560, 560, hgt, 48, 1, true), mt); c.position.y = hgt * 0.4; c.scale.x = -1; scene.add(c);
+    if (scene !== activeScene) return; // no stale callbacks when changing looks
+    const mt = new T.MeshBasicMaterial({ map: t, side: T.BackSide, fog: false });
+    mt.userData.lk = mt.userData.solid = mt.userData.bl = true;
+    fordMatte = new T.Mesh(new T.CylinderGeometry(500, 500, 370, 56, 1, true), mt);
+    fordMatte.position.y = 98; fordMatte.rotation.y = Math.PI / 2.5;
+    fordMatte.visible = !!(W && W.trial); if(R.fordArtStyle==='rainprint'&&fordMatte.visible)mt.color.setHex(0xc4a9c6); scene.add(fordMatte);
   });
   const n = 420, sp = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) {
@@ -253,7 +260,7 @@ function buildSky() {
 function buildGround() {
   const sx = 2 * C.HALF_X + 190, sz = 2 * C.HALF_Z + 190;
   let g = new T.PlaneGeometry(sx, sz, 100, 150); g.rotateX(-Math.PI / 2);
-  const wallK = FLATS.backdrop && !R.noPaper ? 0.2 : 1; // with a painted backdrop the valley walls drop to foothills so the painting shows
+  const wallK = LK === LOOKS.snow && !R.noPaper ? 0.42 : 1; // with a painted backdrop the valley walls drop to foothills so the painting shows
   const p = g.attributes.position, cols = new Float32Array(p.count * 3), q = { s: 0, d: 0 };
   const G = LK.ground, jungA = new T.Color(G.a), jungB = new T.Color(G.b), lane = new T.Color(G.lane), laneC = new T.Color(G.laneC);
   const ember = new T.Color(LK.team[0]), mint = new T.Color(LK.team[1]), rock = new T.Color(G.rock), c = new T.Color();
@@ -270,12 +277,20 @@ function buildGround() {
     c.lerp(z < 0 ? ember : mint, 0.05 + 0.1 * U.clamp((Math.abs(z) - 70) / 60, 0, 1));
     if (out > 0) c.lerp(rock, U.clamp(out / 14, 0, 1));
     const ld = Math.hypot(x - C.LOCH.x, z - C.LOCH.z); if (ld < 14) c.lerp(rock, U.clamp((14 - ld) / 4, 0, 1) * 0.75);
-    const j = 0.9 + n2 * 0.22;
+    if (LK === LOOKS.snow) c.lerp(new T.Color(0x91a9cc), Math.max(0, (n2 - 0.33) * 0.85) * (1 - lt * 0.42));
+    const j = 0.88 + n2 * 0.23;
     cols[i * 3] = c.r * j; cols[i * 3 + 1] = c.g * j; cols[i * 3 + 2] = c.b * j;
   }
   g.setAttribute('color', new T.BufferAttribute(cols, 3));
   g = g.toNonIndexed(); g.computeVertexNormals();
-  world.add(own(new T.Mesh(g, new T.MeshLambertMaterial({ vertexColors: true }))));
+  const groundMat = new T.MeshLambertMaterial({ vertexColors: true });
+  if (LK === LOOKS.snow) {
+    if (!groundMap) groundMap = new T.TextureLoader().load('art/ford-snow.webp', t => {
+      t.wrapS = t.wrapT = T.MirroredRepeatWrapping; t.repeat.set(33,44); t.needsUpdate=true;
+    });
+    groundMat.bumpMap = groundMap; groundMat.bumpScale = .15;
+  }
+  world.add(own(new T.Mesh(g, groundMat)));
   if (LK.grid) { const gh = new T.GridHelper(360, 90, LK.team[0], 0x4a3150); gh.position.y = 0.05; gh.material.transparent = true; gh.material.opacity = 0.5; world.add(own(gh)); }
   // fountains
   for (let t = 0; t < 2; t++) {
@@ -423,7 +438,8 @@ function hm(col, em) { const m = new T.MeshLambertMaterial({ color: col, emissiv
      pines    3 cells: three trees               scenery
      rocks    3 cells: three rocks               scenery
      backdrop one wide painting (jpg)            the far ridge and sky line, wrapped round the valley
-   To switch one on, add a line:  FLATS.house = { src: 'art/flats/house.png', cells: 3 };  See art/flats/README.md. */
+   To switch one on, add a line:  FLATS.house = { src: 'art/flats/house.png', cells: 3 };
+FLATS.backdrop = { src: 'art/ford-ridge.webp', cells: 1 };  See art/flats/README.md. */
 const FLATS = R.FLATS = {};
 FLATS.house = { src: 'art/flats/house.png', cells: 3 };
 R.info = function () { // for the frame-rate report
@@ -552,7 +568,7 @@ function heroModel(h) {
   ring.rotation.x = -Math.PI / 2; ring.position.y = 0.05; g.add(ring);
   const shield = new T.Mesh(new T.SphereGeometry(1.25, 12, 8), new T.MeshBasicMaterial({ color: 0xfff0c8, transparent: true, opacity: 0.16, blending: T.AdditiveBlending, depthWrite: false }));
   shield.position.y = 1; shield.visible = false; g.add(shield);
-  g.body = body; g.legL = legL; g.legR = legR; g.arm = arm; g.ring = ring; g.shield = shield; g.phase = 0; g.recoil = 0; g.unit = h;
+  g.body = body; g.legL = legL; g.legR = legR; g.arm = arm; g.ring = ring; g.shield = shield; g.phase = 0; g.motion = LL.paperMotion.create(); g.recoil = 0; g.unit = h;
   dyn.add(g); paperFor(g, d.id); return g;
 }
 let deerT = null;
@@ -764,8 +780,91 @@ function buildDecor() {
   }
   dummy.rotation.set(0, 0, 0);
 }
+function makeFordArt() {
+  const g = new T.Group(), h = W.trial.guard, rnd = LL.rng(781);
+  // Painted depth in three values, with collision-free silhouettes kept well outside the action.
+  const pine = new T.ConeGeometry(1, 1, 6, 1);
+  const grove = new T.InstancedMesh(pine, new T.MeshBasicMaterial({color: 0xffffff}), 3 * 72);
+  grove.userData.ilk = true;
+  for (let i = 0; i < 72; i++) {
+    const side = i % 2 ? 1 : -1, x = h.x + side * (17 + rnd() * 38), z = h.z - 6 + rnd() * 114;
+    const ht = 3.6 + rnd()*9.2;
+    for (let j = 0; j < 3; j++) {
+      dummy.position.set(x, ht * (0.28 + j * 0.25), z);
+      dummy.rotation.set(0, i * 2.4, 0); dummy.scale.set(ht * (0.31 - j * 0.059), ht * (0.65 - j * 0.095), ht * (0.26 - j * 0.042));
+      dummy.updateMatrix(); grove.setMatrixAt(i * 3 + j, dummy.matrix);
+      grove.setColorAt(i * 3 + j, tmpC.setHex([0x101929,0x1b2b44,0x253c58,0x354c67][i % 4]));
+    }
+  }
+  dummy.rotation.set(0,0,0); g.add(grove);
+  const halo = new T.Mesh(new T.CircleGeometry(9, 48), new T.MeshBasicMaterial({
+    color:0xffb169, transparent:true, map:glowTex, opacity:.62, depthWrite:false, polygonOffset:true, polygonOffsetFactor:-1
+  }));
+  halo.rotation.x = -Math.PI/2; halo.position.set(h.x,0.065,h.z); g.add(halo);
+  const ember = new T.Group(), cut = new T.Shape();
+  cut.moveTo(-.7,.03); cut.lineTo(-.53,.38); cut.lineTo(-.38,.96); cut.lineTo(-.31,1.53); cut.lineTo(-.08,1.25);
+  cut.lineTo(.11,1.36); cut.lineTo(.36,1.55); cut.lineTo(.40,.92); cut.lineTo(.63,.19); cut.lineTo(.34,.32); cut.lineTo(.23,.025);
+  cut.lineTo(.04,.18); cut.lineTo(-.24,.01); cut.lineTo(-.37,.23); cut.closePath();
+  const paper = new T.Mesh(new T.ShapeGeometry(cut), new T.MeshBasicMaterial({color:0x151024,side:T.DoubleSide}));
+  const rim = new T.LineLoop(new T.BufferGeometry().setFromPoints(cut.getPoints().map(v => new T.Vector3(v.x,v.y,.005))), new T.LineBasicMaterial({color:0xa295bf,transparent:true,opacity:.8}));
+  ember.add(paper,rim);
+  for (const x of [-.16,.15]) mesh(new T.CircleGeometry(.057,8),new T.MeshBasicMaterial({color:0xffddf5,side:T.DoubleSide}),x,1.03,.017,ember);
+  g.add(ember); ember.visible = false;
+  const lantern = glowSprite(0xffbc69,2.4,g,0,2,0);
+  const core = mesh(new T.OctahedronGeometry(.19),new T.MeshBasicMaterial({color:0xffe3a4}),0,2,0,g);
+  const trail = Array.from({length:26}, () => { const p = glowSprite(0xffb85d,.5,g,0,0,0); p.visible = false; return p; });
+  lantern.visible = core.visible = false; world.add(g);
+  return { g, halo, ember, lantern, core, trail, grove, style: null, coating: null, trees: null, trailT:0, i:0, born: new Array(trail.length).fill(-100) };
+}
+function updateFordArt() {
+  const a = fordArt, tr = W.trial, t = tr.thief;
+  const style = R.fordArtStyle, lib = LL.fordStage;
+  if (lib && a.style!==style) {
+    a.style=style;
+    if(fordMatte)fordMatte.material.color.setHex(style==='rainprint'?0xc4a9c6:0xffffff);
+    if(a.coating){ a.g.remove(a.coating); a.coating.geometry.dispose(); a.coating.material.map.dispose();a.coating.material.dispose();a.coating=null; }
+    if(a.trees){ a.g.remove(a.trees); a.trees.traverse(o=>{if(o.isSprite)o.material.dispose();});a.treeTextures.forEach(t=>t.dispose());a.trees=null;}
+    a.grove.visible=true;
+    const st=lib.kit.cache(style);
+    if(st){
+      const p=lib.palettes[style], map=new T.CanvasTexture(st.bg), g=tr.guard;
+      a.coating = new T.Mesh(new T.PlaneGeometry(84,114),new T.MeshBasicMaterial({map,transparent:true,opacity:style==='rainprint'?.41:.31,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1}));
+      a.coating.rotation.x=-Math.PI/2;a.coating.position.set(g.x,.015,g.z+28);a.g.add(a.coating);
+      a.treeTextures=st.tree.map(c=>new T.CanvasTexture(c));a.trees=new T.Group();
+      const rnd=LL.rng(781);
+      for(let i=0;i<56;i++){
+        const side=i%2?1:-1,x=g.x+side*(17+rnd()*38),z=g.z-6+rnd()*114,ht=3.6+rnd()*9.2;
+        const tree=new T.Sprite(new T.SpriteMaterial({map:a.treeTextures[i%3],alphaTest:.45,fog:true}));
+        tree.position.set(x,ht*.49,z);tree.scale.set(ht*.78,ht,1);a.trees.add(tree);
+      }
+      a.g.add(a.trees);a.grove.visible=false;
+      a.halo.material.color.set(p.keep);a.lantern.material.color.set(p.carry);a.trail.forEach(o=>o.material.color.set(p.carry));
+    }else{a.halo.material.color.setHex(0xffb169);a.lantern.material.color.setHex(0xffbc69);a.trail.forEach(o=>o.material.color.setHex(0xffb85d));}
+  }
+  a.halo.visible = !tr.guard.dark;
+  const live = !!(t && t.alive), carries = live && !!t.carry;
+  a.ember.visible = live; a.lantern.visible = a.core.visible = carries;
+  if (live) {
+    const y = 0.1 + (R.reduced ? .1 : Math.abs(Math.sin(time*10))*.21);
+    a.ember.position.set(t.x,y,t.z);
+    a.ember.rotation.set(0,Math.atan2(camPos.x-t.x,camPos.z-t.z),R.reduced ? 0 : Math.sin(time*10)*.08);
+    if (carries) {
+      a.lantern.position.set(t.x,y+1.84,t.z); a.core.position.copy(a.lantern.position); a.core.rotation.y = time*.85;
+      if (time >= a.trailT) {
+        const j=a.i++%a.trail.length, p=a.trail[j]; p.position.set(t.x,0.24,t.z);
+        a.trailT=time+.091; a.born[j]=time; p.visible=true;
+      }
+    }
+  }
+  a.trail.forEach((p,j)=>{ const age=time-a.born[j]; p.visible=carries && age<2.1; if(p.visible) {
+    p.material.opacity=1-age/2.1; p.scale.setScalar(0.28+(1-age/2.1)*.67);
+  }});
+}
 R.build = function (w) {
   W = w;
+  if (fordMatte) { fordMatte.visible = !!W.trial; fordMatte.material.color.setHex(W.trial&&R.fordArtStyle==='rainprint'?0xc4a9c6:0xffffff); }
+  if (fordArt) { if(fordArt.coating)fordArt.coating.material.map.dispose(); if(fordArt.treeTextures)fordArt.treeTextures.forEach(t=>t.dispose()); world.remove(fordArt.g); fordArt.g.traverse(o => { if (o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); }); fordArt = null; }
+  if (W.trial) fordArt = makeFordArt();
   heroM.concat(structM, strayM).forEach(function (g) { dyn.remove(g); });
   if (!nessM) nessM = nessModel(); nessY = -11;
   heroM = W.heroes.map(heroModel); structM = W.structs.map(structModel); strayM = W.strays.map(strayModel);
@@ -875,6 +974,7 @@ function draw() {
 function dist2cam(x, z) { return Math.hypot(x - camPos.x, z - camPos.z); }
 
 /* ---------- camera ---------- */
+R.setCameraWorld = function (w) { W = w; };
 R.camPose = function (h, yaw, pitch, zoom, out) {
   const cp = Math.cos(pitch), fx = Math.sin(yaw) * cp, fy = Math.sin(pitch), fz = Math.cos(yaw) * cp;
   const rx = -Math.cos(yaw), rz = Math.sin(yaw);
@@ -913,20 +1013,21 @@ R.frame = function (dt, view) {
     m.visible = h.alive; if (!h.alive) continue;
     m.position.set(h.x, h.y, h.z); m.rotation.y = h.yaw;
     const sp = Math.hypot(h.vx, h.vz);
-    m.phase += dt * Math.min(sp, 9) * 1.7;
-    const sw = h.zip ? 0.55 : (h.onGround ? Math.sin(m.phase) * Math.min(1, sp / 5) * 0.8 : 0.5);
+    const stride=LL.paperMotion.pose(m.motion,h,dt,W.t,R.reduced);
+    m.phase=stride.phase;
+    const sw = h.zip ? 0.55 : (h.onGround ? stride.sway * 0.8 : 0.5);
     m.legL.rotation.x = sw; m.legR.rotation.x = h.zip ? -0.35 : -sw;
     m.body.rotation.x = h.dashT > 0 || h.zip ? 0.45 : Math.min(0.22, sp * 0.02);
     if (h.zip && Math.random() < dt * 40) emit(h.x, 0.25, h.z, 1, 0xffe2a0, 1.5, 0.6, 1.2, 0);
-    m.body.position.y = h.onGround ? Math.abs(Math.sin(m.phase)) * 0.05 * Math.min(1, sp / 5) : 0;
+    m.body.position.y = h.onGround ? stride.body : 0;
     if (m.recoil > 0) m.recoil = Math.max(0, m.recoil - dt * 9);
     m.arm.rotation.x = -h.pitch - m.body.rotation.x - m.recoil * 0.25;
     m.arm.position.z = 0.1 - m.recoil * 0.12;
     if (m.paper) { // face the camera; pick the painted view from the angle between the hero's facing and the camera
       const toCam = Math.atan2(camera.position.x - h.x, camera.position.z - h.z); let d = toCam - h.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
       const ad = Math.abs(d), v = ad < 0.5 ? 0 : (ad < 1.2 ? 3 : (ad < 2.2 ? 1 : 2));
-      const pp = m.paper, P_ = pp.parts, mv = Math.min(1, sp / 5), sw = h.onGround ? Math.sin(m.phase) * mv : 0.7, side = v === 1;
-      const flip = (v === 1 || v === 3) && d * PAPER_FLIP > 0 ? -1 : 1, firing = W.t - h.lastShotT < 0.32;
+      const pp = m.paper, P_ = pp.parts, mv = stride.mix, sw = h.onGround ? stride.sway : 0.40, side = v === 1;
+      const flip = (v === 1 || v === 3) && d * PAPER_FLIP > 0 ? -1 : 1, firing = stride.aim > 0.54;
       // which picture and which cell: the motion sheet for front, side and back once it has loaded; the aiming pose while firing
       let useM = !!pp.mat2 && v !== 3, cell = v, wide = 1;
       if (useM) { cell = v === 0 ? 0 : (v === 1 ? 1 : 2); if (firing && v === 2) cell = 5; else if (firing && v === 1) cell = 6; wide = pp.r2; }
@@ -945,8 +1046,8 @@ R.frame = function (dt, view) {
       if (side) { P_.legA.position.y = P_.legB.position.y = pp.hem; P_.legA.rotation.z = sw * 0.62; P_.legB.rotation.z = -sw * 0.62; }
       else { const lift = pp.hem * 0.42; P_.legL.position.y = pp.hem + Math.max(0, sw) * lift; P_.legR.position.y = pp.hem + Math.max(0, -sw) * lift; P_.legL.rotation.z = sw * 0.07; P_.legR.rotation.z = sw * 0.07; }
       // the body rides the step: up twice per stride, a little sway, a breath when standing
-      P_.body.position.y = pp.h + (h.onGround ? Math.abs(Math.sin(m.phase)) * 0.07 * mv : 0.05);
-      P_.body.rotation.z = Math.sin(m.phase) * 0.045 * mv; P_.body.scale.y = 1 + Math.sin(time * 2.1) * 0.008 * (1 - mv);
+      P_.body.position.y = pp.h + (h.onGround ? stride.body - stride.recoil * .045 : 0.05);
+      P_.body.rotation.z = stride.roll; P_.body.scale.y = 1 + Math.sin(time * 2.1) * 0.008 * (1 - mv);
     }
     m.ring.visible = h.onGround || !!h.zip; m.ring.position.y = h.zip ? 0.05 - h.y : 0.05; m.shield.visible = h.shield > 0;
     const sc = h.flash > 0 ? 1.06 : 1; m.scale.set(sc, sc, sc);
@@ -982,7 +1083,7 @@ R.frame = function (dt, view) {
     else if (n1 < 110) { hushEyes.setMatrixAt(n1, dummy.matrix); tr[1].setMatrixAt(n1++, dummy.matrix); }
   }
   for (i = 0; i < W.thieves.length; i++) {
-    const t = W.thieves[i]; if (!t.alive || n1 >= 110) continue;
+    const t = W.thieves[i]; if (!t.alive || n1 >= 110 || W.trial) continue;
     const sc = t.flash > 0 ? 1.05 : 0.85;
     if (bS) { let d = Math.atan2(camPos.x - t.x, camPos.z - t.z) - t.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); bd.thief.put(Math.abs(d) < 1.57 ? 0 : 1, t.x, Math.abs(Math.sin(time * 14 + t.id)) * 0.3, t.z, 1.5 * sc, d * PAPER_FLIP > 0, 0.12);
       if (t.state === 1 && Math.random() < dt * 30) emit(t.x, 1.1, t.z, 1, t.carry ? 0xffd28a : 0xffe9a8, 1.2, 0.6, 1.5, 0); continue; }
@@ -1004,8 +1105,9 @@ R.frame = function (dt, view) {
   // structures
   for (i = 0; i < structM.length; i++) {
     const m = structM[i], s = m.unit;
+    m.visible = !W.trial || s === W.trial.guard;
     m.lit.visible = s.alive; m.rub.visible = !s.alive;
-    m.ward.visible = s.alive && !S.vuln(s);
+    m.ward.visible = !W.trial && s.alive && !S.vuln(s);
     if (s.alive) {
       if (m.spin) { m.spin.rotation.y += dt * 0.7; m.spin.position.y = 7.2 + Math.sin(time * 1.3 + s.team) * 0.4; m.halo.rotation.x = Math.PI / 2 + Math.sin(time * 0.8) * 0.3; m.halo.rotation.y += dt * 0.5; }
       const pulse = 1 + Math.sin(time * 2 + i) * 0.06 + (s.flash > 0 ? 0.35 : 0);
@@ -1127,6 +1229,7 @@ R.frame = function (dt, view) {
     camera.fov = (R.portrait ? 82 : 64) * (1 - view.zoom * 0.3);
     heroM.forEach(m => { if (m.unit === pl && cp.dist < 1.4) m.visible = false; });
   }
+  if (fordArt) updateFordArt();
   camera.updateProjectionMatrix(); camera.updateMatrixWorld();
   sky.position.copy(camera.position);
   // bars

@@ -1,0 +1,37 @@
+/* Isolated Storeybrook Knight Night pen tokens; source retained in vendor. */
+i[data-theme="knight"] {
+  --paper: #1c2838;
+  --surface: #24334a;
+  --page: #2a3a52;
+  --line: #3d4f6b;
+  --ink: #f4efe6;
+  --ink-muted: #b7c2d2;
+  --accent: var(--gamboge);
+  --accent-soft: var(--gamboge-soft);
+  --cue: var(--cerulean);
+  --cue-soft: var(--cerulean-soft);
+  --link: var(--cue);
+  --wash-sky: #2f4a6e;
+  --wash-meadow: #2c4a3d;
+  --wash-rose: #5a3a52;
+  --wash-sun: #6b5a2e;
+  --wash-brook: #3d6a8c;
+  --art-line: #0f1724;
+  --art-light: #f4efe6;
+  --art-shade: #16202e;
+  --art-stone: #4a5a73;
+  --art-water: #5a8fbf;
+  --paper-kami: #e9b84a;
+  --paper-washi: #3a4a63;
+  --paper-kraft: #8b6a48;
+  --paper-foil: #d4b26a;
+  --tex-grain-size: 160px;
+  --tex-deckle: 6;
+  --tex-bleed: 14;
+  --tex-halftone: 6px;
+  --tex-fold-light: 135;
+  --tex-fold-elevation: 48;
+  --tex-fold-crease: 0.5;
+  --tex-fold-shadow: 0.32;
+  --tex-fold-grain: 0.1;
+}

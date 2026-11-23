@@ -1,0 +1,34 @@
+#title {background:linear-gradient(90deg,#080e1e 2%,rgba(8,14,30,.94) 24%,rgba(8,14,30,.63) 49%,rgba(8,14,30,.06) 78%),url(art/ford-title.webp) center/cover no-repeat #080e1e}
+#title .col { max-width:600px }
+#title h1 {font-size:clamp(3.2rem,7vw,7rem);line-height:.82;letter-spacing:-.055em;margin:.22em 0 .2em;color:#fff0d4}
+#title h1 em {color:#f3b485}
+.ford-kicker,.ford-entry span,#fordObjective {font-family:'DM Mono',monospace}
+.ford-kicker {font-size:.75rem;letter-spacing:.21em;color:#edba87}
+.ford-logline {font-size:clamp(1.15rem,2vw,1.5rem);color:#f6e3cb;margin:.2rem 0 1.1rem;max-width:30ch}
+.ford-entry {display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 1rem}
+#bTrial {background:#f1c491;color:#211220;border-color:#f8dfad;border-radius:2px;padding:9px 26px;font-size:1.3rem}
+#bTrial:hover {background:#ffdfae}
+.ford-entry span {font-size:.69rem;color:#ecd5bb}
+#title .tag,#title .sub,#title #how {display:none}
+#fordObjective {display:none;position:absolute;z-index:2;top:calc(var(--st) + 45px);left:50%;transform:translateX(-50%);padding:.48em .9em;text-align:center;max-width:80%;width:max-content;background:rgba(8,14,30,.83);border-top:1px solid rgba(241,196,145,.7);color:#f8e1c4;font-size:clamp(.72rem,1.7vw,1rem);pointer-events:none}
+.ford-trial:has(#hud:not([hidden])) #fordObjective {display:block}
+.ford-trial #mini,.ford-trial #mission,.ford-trial #goal,.ford-trial #feed,.ford-trial #bShop,.ford-trial #souls,.ford-trial #score .t0,.ford-trial #score .t1 {display:none}
+@media(max-width:680px){#title {background:linear-gradient(0deg,#080e1e 27%,rgba(8,14,30,.82) 63%,rgba(8,14,30,.20) 93%),url(art/ford-title.webp) 62% top/auto 62% no-repeat #080e1e} .ford-entry{gap:8px}.ford-entry span{display:none}}
+#paper-ford {position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+#paper-ford + #gl {opacity:0}
+#paper-note {display:none;color:#d8c5a8;font-size:.875rem;margin:0 0 .75rem}
+.paper-ford #paper-note {display:block}
+.paper-ford #title [aria-label="Difficulty"],.paper-ford #title [aria-label="Mode"],.paper-ford #modeLine,.paper-ford #looks,.paper-ford #lookLine,.paper-ford #bPlay,.paper-ford #bWatch,.paper-ford #bAuto {display:none}
+.ford-trial #quest,.ford-trial #keys,.ford-trial #moons,.ford-trial #bEcho,.ford-trial #bInk,.ford-trial #lvl,.ford-trial #prompt {display:none !important}
+#fordControls {display:none;position:absolute;bottom:calc(var(--sb) + 3px);left:var(--sl);font:clamp(.67rem,1.3vw,.79rem) 'DM Mono', monospace;color:#f8e1c4;pointer-events:none;gap:8px;flex-wrap:wrap}
+#fordControls span {background:#080e1ebc;padding:4px 7px;border:1px solid #f1c49136}
+#fordAimOn {display:none;color:#ffcf8f}
+.ford-focus #fordAimOn {display:inline}
+.ford-trial:has(#hud:not([hidden])) #fordControls {display:flex}
+.ford-trial.touch #fordControls {display:none!important}
+@media (pointer:coarse) {#fordControls {display:none!important}}
+@media (max-width:625px) {.ford-trial #bottom {bottom:53px}}
+#bTrial:disabled {opacity:.5}
+#bFordArt{display:none}
+.ford-trial #bFordArt{display:inline-block;border-color:#bd977a93;color:#f9e5ce;min-width:86px}
+.ford-trial[data-ford-art=rainprint] #fordObjective{background:#1c142ce8;color:#fbe9dc;border-color:#deb0ac}

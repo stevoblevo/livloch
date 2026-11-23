@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Livloch</title>
+<title>Livloch | The Lantern Ford</title>
 <meta name="description" content="Livloch: a third-person lane war in the Saelion valley. Three threads, two patrons, three heroes a side, one monster in the loch. WebGL, plays on phone, desk and TV.">
 <meta property="og:image" content="https://saelion.co/livloch/art/card.jpg">
 <meta property="og:image:width" content="1280">
@@ -283,6 +283,8 @@ body[data-look="glow"] #app::after { content: ""; position: absolute; inset: 0; 
 }
 @media (prefers-reduced-motion: reduce) { #souls.can, #feed p { animation: none; } }
 </style>
+<link rel="stylesheet" href="vendor/play-stage/pen-tokens.css">
+<link rel="stylesheet" href="ford.css">
 </head>
 <body>
 <div id="app">
@@ -293,7 +295,7 @@ body[data-look="glow"] #app::after { content: ""; position: absolute; inset: 0; 
     <div id="nums"></div>
     <canvas id="mini" width="208" height="352" aria-label="Map"></canvas>
     <div id="score"><span class="t0"><span class="nm">Reign </span><b id="k0">0</b></span><span id="clock">0:00</span><span class="t1"><b id="k1">0</b><span class="nm"> Hush</span></span><div id="moons" title="The moons fill until the rain comes down red"><i></i><i></i><i></i><i></i><i></i></div></div>
-    <div id="topR"><span id="lvl">Lv 1</span><span id="souls"><i></i><span id="soulN">0</span></span><button class="btn small" id="bEcho" title="Replay your last seconds beside you (C)">Echo</button><button class="btn small" id="bInk" title="Change the view (V)">View</button><button class="btn small" id="bShop">Shop</button><button class="btn small" id="bPause" aria-label="Pause">II</button></div>
+    <div id="topR"><span id="lvl">Lv 1</span><span id="souls"><i></i><span id="soulN">0</span></span><button class="btn small" id="bEcho" title="Replay your last seconds beside you (C)">Echo</button><button class="btn small" id="bInk" title="Change the view (V)">View</button><button class="btn small" id="bShop">Shop</button><button class="btn small" id="bFordArt" aria-label="Cycle art treatment" title="Cycle art treatment (L)">Foldlight</button><button class="btn small" id="bPause" aria-label="Pause">II</button></div>
     <div id="feed"></div>
     <div id="banner"></div>
     <div id="cross"><u></u><i></i><div id="hitm"></div></div>
@@ -330,11 +332,17 @@ body[data-look="glow"] #app::after { content: ""; position: absolute; inset: 0; 
     <div id="dead" hidden><div><h2 id="deadH">You came apart.</h2><p>Re-threading in <b id="deadT">0</b></p><button class="btn" id="bDeadShop">Spend souls while you wait</button></div></div>
   </div>
 
+  <div id="fordObjective" role="status"></div>
+  <div id="fordControls"><span>WASD move</span><span>Click shoot</span><span>X aim assist <b id="fordAimOn">ON</b></span><span>L art view</span></div>
   <section id="title" class="screen">
     <div class="col">
-      <h1>Liv<em>loch</em></h1>
+      <div class="ford-kicker">LIVLOCH  /  PLAYABLE ART STUDY</div>
+      <h1>The Lantern <em>Ford</em></h1>
+      <p class="ford-logline">The shrine is still lit. Something is coming through the snow.</p>
+      <div class="ford-entry"><button class="btn primary" id="bTrial">Enter the ford</button><span>WASD to move · Click to shoot · X for aim assist</span></div>
       <p class="tag">Three threads. One stalemate. Keep the little light.</p>
       <p class="sub">The Reign keeps the lanterns lit. The Hush puts them out. Their paper troopers meet on three threads every 24 seconds and cancel each other exactly. That is called a livelock, and it has been going on for some time. You are the part that isn't symmetrical.</p>
+      <p id="paper-note">Paper mode · same playable 3D scene, drawn without WebGL. Full matches require WebGL.</p>
       <div id="heroes" role="group" aria-label="Choose a hero"></div>
       <div class="row" role="group" aria-label="Difficulty">
         <button class="chip" data-diff="0" aria-pressed="false">Gentle</button>
@@ -437,13 +445,18 @@ body[data-look="glow"] #app::after { content: ""; position: absolute; inset: 0; 
   </section>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="vendor/three.min.js"></script>
 <script src="js/core.js"></script>
 <script src="js/sim.js"></script>
+<script src="vendor/storeybrook/1.3.2/bundle.js"></script>
+<script src="vendor/storeybrook/1.3.2/paper.js"></script>
+<script src="js/ford-motion.js"></script>
 <script src="js/gfx.js"></script>
+<script src="js/ford-paper.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/input.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
+<script type="module" src="js/ford-stage-loader.mjs"></script>
 </body>
 </html>

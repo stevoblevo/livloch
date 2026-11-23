@@ -1037,6 +1037,31 @@ function spawnHollow(lane, extra) {
   u.dmg = [55, 72, 90][W.diff] + 2.5 * min; u.rate = 1.1; u.speed = 4.4; u.atkT = 0.6;
   W.troopers.push(u); fx({ k: 'hollow', lane: lane, extra: !!u.extra });
 }
+// A boxed opening: same aim, damage and real guardian theft/recovery as the full game.
+S.beginLanternTrial = function () {
+  const p = W.player, guard = W.st[0][1].outer;
+  W.trial = { guard: guard, thief: null, result: '', intro: 3.2 };
+  // Clear the stage, not its terrain or collision system. Use the middle guardian and its real position.
+  W.heroes.filter(h => h !== p).forEach(h => { h.alive = false; h.respT = Infinity; });
+  W.structs.filter(s => s !== guard).forEach(s => { s.alive = false; });
+  W.strays.forEach(u => { u.alive = false; });
+  W.waveT = Infinity; W.thiefT = Infinity; W.hollowT.fill(0); W.redNext = Infinity;
+  guard.scanT = Infinity; guard.dark = false;
+  p.x = guard.x - 6.8; p.z = guard.z - 13; p.yaw = 0.24;
+};
+function trialStep(dt) {
+  const tr = W.trial, g = tr.guard;
+  if (!tr.thief && W.t >= tr.intro) {
+    const u = mk('thief', 1, g.x + 0.6, g.z + 10, 0.6, 1.5, 100);
+    u.speed = 7.2; u.state = 0; u.mark = g; u.loot = 0; u.victim = null; u.carry = null;
+    tr.thief = u; W.thieves.push(u); fx({ k: 'thief', mark: g });
+  }
+  if (tr.thief && !tr.thief.alive) {
+    tr.result = g.dark ? 'escaped' : tr.thief.carry ? 'recovered' : 'protected';
+    W.over = true; W.winner = g.dark ? 1 : 0;
+    fx({ k: 'over', winner: W.winner, trial: true, t: W.t });
+  }
+}
 function pickMark() {
   let rich = null;
   for (let i = 0; i < W.heroes.length; i++) { const h = W.heroes[i]; if (h.alive && h.team === 0 && h.souls >= 150 && (!rich || h.souls > rich.souls)) rich = h; }
@@ -1298,6 +1323,7 @@ S.step = function (dt) {
     }
   }
   stepProjs(dt); stepZones(dt); stepOrbs(dt); separate();
+  if (W.trial) trialStep(dt);
   W.cleanT -= dt;
   if (W.cleanT <= 0) {
     W.cleanT = 1;

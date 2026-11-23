@@ -63,10 +63,10 @@ UI.init = function (handlers) {
   mctx = $('mini').getContext('2d');
   // buttons
   const on = (id, f) => $(id).addEventListener('click', f);
-  on('bPlay', () => H.play(false)); on('bWatch', () => H.play(true));
+  on('bTrial', H.trial); on('bPlay', () => H.play(false)); on('bWatch', () => H.play(true));
   on('bFull', H.full); on('bFull2', H.full);
   on('bShop', () => UI.toggleShop()); on('bDeadShop', () => UI.toggleShop(true)); on('bShopClose', () => UI.toggleShop(false));
-  on('bPause', H.pause); on('bResume', H.resume); on('bQuit', H.quit); on('bAgain', () => H.play(false)); on('bTitle', H.quit);
+  on('bPause', H.pause); on('bResume', H.resume); on('bQuit', H.quit); on('bAgain', H.again); on('bTitle', H.quit);
   { const w = $('worlds'); LL.WORLDS.forEach(function (x) { const a = document.createElement('a'); a.href = x.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = x.name + ' ↗'; w.appendChild(a); }); }
   { const t = $('perfT'); document.querySelector('#pause .panel').appendChild(t.content.cloneNode(true));
     on('bPerf', function () { const r = LL.perfReport(); if (!r) return; const done = function (ok) { $('perfNote').textContent = ok ? 'Copied. Paste it to Claude.' : 'Could not copy; read it off above.'; }; try { navigator.clipboard.writeText(r.text).then(function () { done(true); }, function () { done(false); }); } catch (err) { done(false); } }); }
@@ -140,7 +140,7 @@ function snuffStart() {
 }
 UI.showCab = function () { $('snuff').hidden = true; $('plates').hidden = true; $('plateBig').hidden = true; snuffRun = null; cabDraw(); show('cab'); };
 UI.record = function () { const c = LL.cfg; $('rec').textContent = (c.wins + c.losses) ? 'Your record: ' + c.wins + ' won, ' + c.losses + ' lost' : ''; };
-UI.error = function (msg) { const e = $('err'); e.hidden = false; e.textContent = msg; $('bPlay').disabled = true; $('bWatch').disabled = true; };
+UI.error = function (msg) { const e = $('err'); e.hidden = false; e.textContent = msg; $('bTrial').disabled = true; $('bPlay').disabled = true; $('bWatch').disabled = true; };
 function show(name) {
   UI.screen = name;
   ['title', 'shop', 'pause', 'over', 'cab'].forEach(function (s) { $(s).hidden = s !== name; });
@@ -158,7 +158,8 @@ UI.startHUD = function (w) {
   nums.forEach(n => { n.life = 0; n.el.style.opacity = 0; });
   document.body.classList.toggle('lean', !!W.lean); dreamSeen = []; dreamQ = []; dreamT = 0; wasMercy = false; $('dreamCard').hidden = true; $('lFast').hidden = !W.dream; $('lFast').textContent = '1×'; $('calls').hidden = true;
   document.querySelector('#score .t0 .nm').textContent = W.fallen ? 'Lights ' : 'Reign '; $('autoTag').textContent = W.lean ? 'Lean back · the view, the thread and the fold are yours' : 'Auto · the valley plays itself';
-  if (W.short && !W.dream) UI.banner('First rain.', 'Five minutes until it comes down red. Do the thing under the map', 6);
+  if (W.trial) { bannerT = 0; $('banner').classList.remove('on'); }
+  else if (W.short && !W.dream) UI.banner('First rain.', 'Five minutes until it comes down red. Do the thing under the map', 6);
   else if (W.dream) UI.banner('Dreamwalk.', 'Sit back. Each hidden thing is named the first time it happens. Faster is the last button', 7);
   else if (W.fallen) UI.banner('The valley is already lost.', 'Hold the last lantern. Every small one put down gives a light back for ' + C.LIT_T + ' seconds', 7);
   else if (W.lean) UI.banner('Sit back.', 'Your hero plays itself. Change the view, call a thread, fold when it lights', 6);
@@ -342,7 +343,13 @@ UI.showPause = function (onOff) {
 UI.showOver = function () {
   const win = W.winner === 0, t = U.fmtTime(W.t);
   document.body.classList.remove('lean'); $('calls').hidden = !(W.dream || dreamSeen.length) || !dreamSeen.length; if (dreamSeen.length) { callsDraw(); $('copyNote').textContent = ''; }
-  $('stars').hidden = !W.short;
+  $('stars').hidden = !W.short || !!W.trial;
+  if (W.trial) {
+    const r = W.trial.result;
+    $('overH').textContent = r === 'recovered' ? 'The light came back.' : r === 'protected' ? 'You held the ford.' : 'The ford went dark.';
+    $('overP').textContent = r === 'recovered' ? 'You caught the Hush with the stolen light. The guardian is lit again.' : r === 'protected' ? 'You stopped the Hush before it reached the shrine.' : 'The Hush made it to its gate. Try following the golden wake.';
+    $('sbOver').innerHTML = ''; $('hud').hidden = true; show('over'); return;
+  }
   if (W.short && W.stars) { const n = LL.STARS.filter(function (x) { return W.stars[x.id]; }).length, cf = LL.cfg;
     $('overH').innerHTML = n === 5 ? 'Five stars. <em>The rain found nothing.</em>' : (n >= 3 ? 'The rain has passed. <em>' + n + ' of 5.</em>' : 'The rain has passed. ' + n + ' of 5.');
     $('overP').textContent = 'First rain, ' + t + '. ' + (n >= (cf.bestStars || 0) && n > 0 ? 'Your best.' : 'Best is ' + (cf.bestStars || 0) + '.') + (n < 5 ? ' The ones you missed are the things worth finding.' : ' Try the livelock next; it does not end by itself.');
