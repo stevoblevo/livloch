@@ -16,7 +16,7 @@ R.enableFordPaper = function (gl) {
   const mot=LL.paperMotion; let motion=mot.create(), depth=null, inkRidge=null, cueFrame='protected', flightThreads=[];
   const wickAviator=img('art/heroes/wick-aviator.svg');
   const motionSheets=['dora','anna','myra','skein'].map(n=>img('art/heroes/'+n+'-motion.png'));
-  const heights=[2.45,2.4,1.95,2.2];
+  const heights=[2.45,2.4,1.95,2.2], windHint={},windNode={};
   const ready=i=>i.complete && i.naturalWidth>0;
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
   R.resize=()=>{ const scale=Math.min(devicePixelRatio||1,1.5); R.w=w=gl.clientWidth||innerWidth; R.h=h=gl.clientHeight||innerHeight; R.portrait=h>w;
@@ -127,6 +127,20 @@ R.enableFordPaper = function (gl) {
           prev=n;
         }
       }
+    }
+    if(W.trial.supplies && lib){
+      const n=LL.sim.fordWind(pl,pl.liftT>0?pl.vx:Math.sin(yaw),pl.liftT>0?pl.vz:Math.cos(yaw),windHint), glyph=lib.kit.windGlyph(style);
+      if(glyph){for(let j=1;j<=6;j++){
+        const lane=W.trial.windSchool?.lane ?? n.lane, along=n.s+n.direction*(j*2.6+1.25);
+        if(along<0||along>LL.lanes[lane].len)continue;
+        LL.lanePoint(lane,along,windNode);
+        const b=p(windNode.x,.12,windNode.z), top=p(windNode.x+windNode.dx*n.direction,.12,windNode.z+windNode.dz*n.direction);
+        if(b.d<1.25||top.d<1.15||b.y<-24||b.x<-80||b.x>w+80)continue;
+        const sz=Math.min(72,1.7*fy/b.d);
+        ctx.save();ctx.translate(b.x,b.y);ctx.rotate(Math.atan2(top.x-b.x,b.y-top.y));ctx.scale(1,.42);
+        ctx.globalAlpha=pl.threadCaught&&pl.liftT>0?.95:n.near&&n.aligned?.86:.57;
+        ctx.drawImage(glyph,-sz/2,-sz/2,sz,sz);ctx.restore();
+      }}
     }
     const gb=p(g.x,0,g.z); if(!g.dark && gb.d>.2)glow(gb.x,gb.y,Math.min(230,7*fy/gb.d),'#e9a864',.37);
     if(t?.alive && t.carry && tick-lastTrail>.085){ yard.push({x:t.x,z:t.z,kind:'mote',birth:tick});lastTrail=tick; }

@@ -21,3 +21,10 @@ a flat base is substituted. If the entire add-on is unavailable, the host contin
 thief distinct in shape and keep the golden wake plus text as non-color-only directions
 in every treatment. Do not use this module in the rules or change hitboxes, saves or outcomes
 when switching treatments. Do not use this adapter as an upstream release claim.
+
+`windGlyph(style)` returns a 96px shared alpha atlas for a directional current cue.
+It has a consistent double-chevron outline across Foldlight, Rainprint, Original;
+Foldlight calls the real pen for facets, Rainprint uses engraved linework.
+The host may project it at a path tangent and set opacity from confirmed state.
+Do not infer flight eligibility from the visual. The host owns any GPU texture
+copies; dispose of those separately.

@@ -609,7 +609,8 @@ function cast(h, i) {
       fx({ k: 'nova', x: h.x, y: h.y, z: h.z, r: a.r, col: h.def.col });
       break;
     case 'lift':
-      h.zip = null; h.dashT = 0; h.liftT = a.duration + (h.mastic ? .32 : 0); h.threadCaught = false;
+      h.zip = null; h.dashT = 0; h.liftT = a.duration + (h.mastic ? .32 : 0); h.liftMax=h.liftT; h.threadCaught = false;
+      if(W.trial?.windSchool&&!W.trial.windSchool.launched)W.trial.windSchool.launched=W.t;
       fordWear(h, h.mastic ? 17 : 26); h.mastic = false;
       h.vy = Math.max(h.vy, 8.9); h.onGround = false; h.jumps = 2;
       h.vx = mvx * spLift(h); h.vz = mvz * spLift(h);
@@ -757,6 +758,17 @@ function tryZip(h) {
   h.zip = { lane: lane, dir: dir, s: Q.s }; h.dashT = 0; h.onGround = false;
   fx({ k: 'zip', u: h });
 }
+// Read-only lane sample. The view may show this; only heroStep can award the lift.
+const windPoint={},windNear={},windSample={};
+S.fordWind = function(h, dx, dz, out) {
+  const lane=LL.nearestLane(h.x,h.z);
+  LL.laneNearest(lane,h.x,h.z,windNear); LL.lanePoint(lane,windNear.s,windPoint);
+  const speed=hyp(dx,dz), dot=speed>0 ? (dx*windPoint.dx+dz*windPoint.dz)/speed : 0;
+  out.lane=lane;out.s=windNear.s;out.distance=windNear.d;
+  out.aligned=Math.abs(dot)>.68;out.direction=dot<0?-1:1;
+  out.near=windNear.d<1.85;out.catches=out.near&&out.aligned&&speed>3;
+  return out;
+};
 function spLift(h) { return h.def.speed * h.st.speed * 1.45; }
 function heroStep(h, dt) {
   const c = h.ctl, st = h.st, d = h.def;
@@ -798,12 +810,11 @@ function heroStep(h, dt) {
     if (h.liftT > 0) {
       // A single updraft from an existing ground thread. It favors following the current, not hover-spamming.
       if (!h.threadCaught && W.trial && h.y > .48) {
-        const lane = LL.nearestLane(h.x,h.z);
-        LL.laneNearest(lane,h.x,h.z,Q); LL.lanePoint(lane,Q.s,P);
-        const vel = hyp(h.vx,h.vz);
-        if (Q.d < 1.85 && vel>3 && Math.abs(h.vx*P.dx+h.vz*P.dz)>vel*.68) {
-          h.threadCaught=true; h.liftT+=.27; h.pack=Math.min(100,h.pack+8);
-          fx({k:'wickthread',u:h,col:0xa0f3d0});
+        const wind=S.fordWind(h,h.vx,h.vz,windSample);
+        if (wind.catches) {
+          h.threadCaught=true; h.liftT+=.27; h.liftMax+=.27; h.pack=Math.min(100,h.pack+8);
+          if(W.trial.windSchool)W.trial.windSchool.caught=true;
+          fx({k:'wickthread',u:h,lane:wind.lane,col:0xa0f3d0});
         }
       }
       h.liftT = Math.max(0, h.liftT - dt);
@@ -1072,7 +1083,7 @@ function spawnHollow(lane, extra) {
   W.troopers.push(u); fx({ k: 'hollow', lane: lane, extra: !!u.extra });
 }
 // A boxed opening: same aim, damage and real guardian theft/recovery as the full game.
-S.beginLanternTrial = function () {
+S.beginLanternTrial = function (school = false) {
   const p = W.player, guard = W.st[0][1].outer;
   W.trial = { guard: guard, thief: null, result: '', intro: 3.2 };
   // Clear the stage, not its terrain or collision system. Use the middle guardian and its real position.
@@ -1091,6 +1102,13 @@ S.beginLanternTrial = function () {
     ];
   }
   p.x = guard.x - 6.8; p.z = guard.z - 13; p.yaw = 0.24;
+  if(school && p.def.id==='rook'){
+    const lane=1, start={}, q={}, s0=LL.laneNearest(lane,0,-9,q).s;
+    LL.lanePoint(lane,s0,start);
+    p.x=start.x;p.z=start.z;p.yaw=Math.atan2(start.dx,start.dz);p.souls=0;
+    W.trial.supplies=[];W.trial.intro=Infinity;
+    W.trial.windSchool={lane, s:s0, yaw:p.yaw, launched:0,caught:false};
+  }
 };
 S.earnsFordFlyer = function (trial, player) {
   return !!(trial && trial.result === 'recovered' && player?.alive && !player.useAI);
@@ -1108,7 +1126,7 @@ function fordSupply(h, id) {
   fx({k:'wicksupply', id:id,u:h,col:s.color}); return true;
 }
 S.buyFordSupply = function (id) {
-  if (!W || W.over || !W.trial?.supplies || !Object.hasOwn(LL.FORD_SUPPLIES,id)) return false;
+  if (!W || W.over || !W.trial?.supplies || W.trial.windSchool || !Object.hasOwn(LL.FORD_SUPPLIES,id)) return false;
   const h = W.player, s = LL.FORD_SUPPLIES[id];
   if (!h.alive || h.souls < s.cost) return false;
   h.souls -= s.cost;
@@ -1116,6 +1134,15 @@ S.buyFordSupply = function (id) {
 };
 function trialStep(dt) {
   const tr = W.trial, g = tr.guard, h = W.player;
+  if (tr.windSchool) {
+    const sc=tr.windSchool;
+    if(sc.launched && h.onGround && W.t>sc.launched+.45){
+      tr.result=sc.caught?'thread-landed':'thread-missed';
+      W.over=true;W.winner=sc.caught?0:1;
+      fx({k:'over',winner:W.winner,trial:true,t:W.t});
+    }
+    return;
+  }
   if (tr.supplies && h.alive) {
     for (const s of tr.supplies) {
       if (!s.used && h.y < 1.35 && hyp(h.x-s.x,h.z-s.z) < 1.35) { s.used=true; fordSupply(h,s.id); }

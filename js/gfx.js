@@ -151,7 +151,7 @@ function construct() {
   scene.add(new T.HemisphereLight(LK.hemi[0], LK.hemi[1], LK.hemi[2]));
   const moon = new T.DirectionalLight(LK.dir[0], LK.dir[1]); moon.position.set(-40, 80, 60); scene.add(moon);
   world = new T.Group(); scene.add(world); dyn = new T.Group(); scene.add(dyn);
-  if(fordArt?.coating)fordArt.coating.material.map.dispose(); if(fordArt?.treeTextures)fordArt.treeTextures.forEach(t=>t.dispose());
+  if(fordArt?.windTex)fordArt.windTex.dispose(); if(fordArt?.coating)fordArt.coating.material.map.dispose(); if(fordArt?.treeTextures)fordArt.treeTextures.forEach(t=>t.dispose());
   fordMatte = null; fordArt = null;
   buildSky(); buildGround(); buildThreads(); buildInstanced(); buildParticles(); buildPools(); buildCreaseArt();
   applyLook();
@@ -827,14 +827,24 @@ function makeFordArt() {
     token.rotation.y=Math.PI/4;
     return {o,token,mark:glowSprite(LL.FORD_SUPPLIES[o.id].color,1.1,g,o.x,.27,o.z)};
   });
+  const windMark=W.trial.supplies?Array.from({length:6},()=>{
+    const m=mesh(new T.PlaneGeometry(1.9,1.9),new T.MeshBasicMaterial({side:T.DoubleSide,transparent:true,depthWrite:false,opacity:.68}),0,.08,0,g);
+    m.rotation.order='YXZ';m.rotation.x=-Math.PI/2;m.visible=false;return m;
+  }):[];
   world.add(g);
-  return { g, halo, ember, lantern, core, trail, supplies, grove, style: null, coating: null, trees: null, trailT:0, i:0, born: new Array(trail.length).fill(-100) };
+  return { g, halo, ember, lantern, core, trail, supplies, windMark, windTex:null, windSample:{}, windNode:{}, grove, style: null, coating: null, trees: null, trailT:0, i:0, born: new Array(trail.length).fill(-100) };
 }
 function updateFordArt() {
   const a = fordArt, tr = W.trial, t = tr.thief;
   const style = R.fordArtStyle, lib = LL.fordStage;
   if (lib && a.style!==style) {
     a.style=style;
+    if(a.windTex){a.windTex.dispose();a.windTex=null;}
+    if(a.windMark.length){
+      const glyph=lib.kit.windGlyph(style);
+      if(glyph)a.windTex=new T.CanvasTexture(glyph);
+      for(const m of a.windMark){m.material.map=a.windTex;m.material.needsUpdate=true;}
+    }
     if(fordMatte)fordMatte.material.color.setHex(style==='rainprint'?0xc4a9c6:0xffffff);
     if(a.coating){ a.g.remove(a.coating); a.coating.geometry.dispose(); a.coating.material.map.dispose();a.coating.material.dispose();a.coating=null; }
     if(a.trees){ a.g.remove(a.trees); a.trees.traverse(o=>{if(o.isSprite)o.material.dispose();});a.treeTextures.forEach(t=>t.dispose());a.trees=null;}
@@ -856,6 +866,16 @@ function updateFordArt() {
     }else{a.halo.material.color.setHex(0xffb169);a.lantern.material.color.setHex(0xffbc69);a.trail.forEach(o=>o.material.color.setHex(0xffb85d));}
   }
   a.halo.visible = !tr.guard.dark;
+  if(a.windTex){
+    const p=W.player,n=S.fordWind(p,p.liftT>0?p.vx:Math.sin(p.yaw),p.liftT>0?p.vz:Math.cos(p.yaw),a.windSample);
+    a.windMark.forEach((m,j)=>{
+      const lane=tr.windSchool?.lane??n.lane, along=n.s+n.direction*((j+1)*2.6+1.25);
+      m.visible=along>=0&&along<=LL.lanes[lane].len;
+      if(!m.visible)return;
+      const q=LL.lanePoint(lane,along,a.windNode);m.position.set(q.x,.095,q.z);m.rotation.y=Math.atan2(q.dx*n.direction,q.dz*n.direction);
+      m.material.opacity=p.threadCaught&&p.liftT>0?.94:n.near&&n.aligned?.84:.56;
+    });
+  }
   a.supplies.forEach(({o,token,mark})=>{token.visible=mark.visible=!o.used;if(!R.reduced){token.rotation.y=.78+time*.4;token.position.y=.22+Math.sin(time*2)*.05;}});
 
   const live = !!(t && t.alive), carries = live && !!t.carry;
@@ -879,7 +899,7 @@ function updateFordArt() {
 R.build = function (w) {
   W = w;
   if (fordMatte) { fordMatte.visible = !!W.trial; fordMatte.material.color.setHex(W.trial&&R.fordArtStyle==='rainprint'?0xc4a9c6:0xffffff); }
-  if (fordArt) { if(fordArt.coating)fordArt.coating.material.map.dispose(); if(fordArt.treeTextures)fordArt.treeTextures.forEach(t=>t.dispose()); world.remove(fordArt.g); fordArt.g.traverse(o => { if (o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); }); fordArt = null; }
+  if (fordArt) { if(fordArt.windTex)fordArt.windTex.dispose(); if(fordArt.coating)fordArt.coating.material.map.dispose(); if(fordArt.treeTextures)fordArt.treeTextures.forEach(t=>t.dispose()); world.remove(fordArt.g); fordArt.g.traverse(o => { if (o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); }); fordArt = null; }
   if (W.trial) fordArt = makeFordArt();
   heroM.concat(structM, strayM).forEach(function (g) { dyn.remove(g); });
   if (!nessM) nessM = nessModel(); nessY = -11;

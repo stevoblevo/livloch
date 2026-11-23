@@ -42,3 +42,19 @@ normal roster, lift/steering/recovery, pack damage, thread catch, one-shot picku
 and shop charging/effects. `node --test tools/ford-test.js` exercises theft, victory
 and replay. Real user feel, hardware performance, controller/touch and WebGL visuals
 require playtesting; tests are simulator evidence, not human play.
+
+## Wind School and reusable wind cues
+
+After unlocking Rook, choose **Wind School** for one practice lift on the actual
+Middle thread. Press Lift from the marked runway, catch a real updraft, and land.
+The lesson uses the same flight/pack rules as the chase. There is no Hush, no
+Shhhop, and no save or currency reward. You can miss by launching across the lane.
+
+Foldlight draws cut-paper chevrons through the Storeybrook Pen; Rainprint engraves
+the same silhouette and uses its own violet ink. Original keeps the double-line
+shape without a folded fill. The cached glyph in `vendor/play-stage/stage.mjs` is
+shared by Canvas and WebGL. Projecting the glyph is a renderer responsibility.
+A read-only geometry sample feeds cues and telemetry; the existing simulation
+alone awards the updraft. Rook's HUD shows lane, alignment, burn, glide, and
+out-of-flight state. D-pad right cycles art on a controller in the Ford; normal
+match lens controls are unchanged. Actual device validation is still open.

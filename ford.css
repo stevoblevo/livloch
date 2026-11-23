@@ -39,3 +39,8 @@
 #wickShop:not([hidden]) { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:.65rem; margin:.75rem 0; }
 .ford-trial.ford-flyer #bShop { display:inline-block; border-color:#91e5c6; color:#ccffef; }
 .ford-trial.ford-flyer:has(#shop:not([hidden])) #wickHud { display:none; }
+.wick-flight{display:grid; grid-template-columns:minmax(8rem,1fr) 4.5rem; gap:.55rem;align-items:center;margin-top:.23rem;color:#c4f2e4}
+#wickBurn{width:4.5rem; accent-color:#80e6d3}
+.ford-trial.ford-flyer.ford-school #bShop{display:none}
+.ford-trial.pad #fordControls{display:none}
+#wickKeys{margin-top:.31rem;color:#abe0d3}

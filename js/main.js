@@ -47,25 +47,27 @@ function attract() {
   W.fx.length = 0; R.build(W);
   view.mode = 'attract'; view.target = null; state = 'title'; I.play = false;
 }
-let repeatTrial = true, repeatFlyer = false, steadyAim = false;
-function play(auto, trial, flyer) {
+let repeatTrial = true, repeatFlyer = false, repeatSchool=false, steadyAim = false;
+function play(auto, trial, flyer, school=false) {
   repeatTrial = !auto && !!trial; repeatFlyer = repeatTrial && flyer===true && cfg.fordFlyerUnlocked===true; steadyAim = false;
+  repeatSchool=repeatFlyer&&school;
+  document.body.classList.toggle('ford-school',repeatSchool);
   document.body.classList.toggle('ford-flyer', repeatFlyer);
   document.body.classList.remove('ford-focus');
   document.body.classList.toggle('ford-trial', repeatTrial);
   if (repeatTrial) setLook('snow');
   A.init(); A.setVol(cfg.vol); A.ui('ok');
   W = S.newWorld({ fordFlyer: repeatFlyer, heroPick: cfg.hero, difficulty: cfg.diff, auto: !!auto, seed: (Date.now() & 0xfffff) + 11, lens: cfg.look, mode: repeatTrial ? 'match' : cfg.mode, lean: !repeatTrial && !auto && cfg.lean, dream: !repeatTrial && !auto && cfg.dream }); speed = 1;
-  if (repeatTrial) S.beginLanternTrial();
+  if (repeatTrial) S.beginLanternTrial(repeatSchool);
   lens0 = W.lens; R.build(W); UI.startHUD(W);
-  view.mode = 'play'; view.target = W.player; view.yaw = repeatTrial ? 0.30 : 0; view.pitch = repeatTrial ? -0.055 : -0.08; view.zoom = 0;
+  view.mode = 'play'; view.target = W.player; view.yaw = repeatSchool ? W.trial.windSchool.yaw : repeatTrial ? 0.30 : 0; view.pitch = repeatTrial ? -0.055 : -0.08; view.zoom = 0;
   state = 'play'; I.play = true; counted = !auto; overT = 0; I.lookX = I.lookY = 0;
   coach.step = (!repeatTrial && !auto && !W.lean && I.device === 'touch' && !cfg.coached) ? 0 : -1; coach.x = W.player.x; coach.z = W.player.z; coach.t = 0; coach.look = 0; UI.coach('');
   if (!auto && !W.lean) I.lock();
 }
 function pause() { if (state !== 'play' || W.over) return; if (UI.screen === 'shop') UI.toggleShop(false); state = 'pause'; pausedAt = performance.now(); I.play = false; UI.showPause(true); I.unlock(); }
 function resume() { if (state !== 'pause') return; state = 'play'; I.play = true; UI.showPause(false); I.lock(); last = performance.now(); }
-function quit() { document.body.classList.remove('ford-trial','ford-flyer'); I.unlock(); UI.showTitle(); attract(); }
+function quit() { document.body.classList.remove('ford-trial','ford-flyer','ford-school'); I.unlock(); UI.showTitle(); attract(); }
 
 function playerControl(dt) {
   const p = W.player, c = p.ctl, menu = UI.screen !== null;
@@ -168,11 +170,11 @@ function frame(now) {
   if (state === 'play') {
     const esc = I.take('esc');
     if (I.take('pause') || esc || (UI.screen === 'shop' && I.take('navBack'))) { if (UI.screen === 'shop') UI.toggleShop(false); else pause(); }
-    else if (I.take('shop') && (!W.trial || !!W.trial.supplies)) UI.toggleShop();
+    else if (I.take('shop') && (!W.trial || (!!W.trial.supplies && !W.trial.windSchool))) UI.toggleShop();
     if (I.take('fordArt')) nextFordArt();
     if (I.take('fordAim') && W.trial) { steadyAim = !steadyAim; document.body.classList.toggle('ford-focus', steadyAim); }
     if (I.take('ink') && !W.trial) toggleInk();
-    if (I.take('view') && !W.trial) nextView(); if (I.take('echo')) S.echo();
+    if (I.take('view')) { if (W.trial) nextFordArt(); else nextView(); } if (I.take('echo')) S.echo();
   } else if (state === 'pause') { const esc = I.take('esc') && now - pausedAt > 500; if (I.take('pause') || esc || I.take('navBack')) resume(); }
   UI.nav(I);
   if (state === 'play') {
@@ -203,10 +205,10 @@ function frame(now) {
     UI.frame(dt, W, view, info); A.frame(dt, W);
     if (W.trial) {
       const t = W.trial, n = document.getElementById('fordObjective');
-      const phase = t.result || (!t.thief ? 'listen' : t.guard.dark ? 'chase' : 'watch');
+      const phase = t.result || (t.windSchool ? (t.windSchool.caught?'thread-held':t.windSchool.launched?'thread-air':'thread-launch') : !t.thief ? 'listen' : t.guard.dark ? 'chase' : 'watch');
       if (n.dataset.phase !== phase) {
         n.dataset.phase = phase;
-        n.textContent = { listen: 'Watch the shrine.', watch: 'Something moved in the snow.', chase: 'Follow the gold. Shoot to bring the light back.', recovered: 'Light recovered.', protected: 'The shrine never went dark.', escaped: 'The light slipped away.' }[phase];
+        n.textContent = { listen: 'Watch the shrine.', watch: 'Something moved in the snow.', chase: 'Follow the gold. Shoot to bring the light back.', recovered: 'Light recovered.', protected: 'The shrine never went dark.', escaped: 'The light slipped away.', 'thread-launch':'Wind School · face along the marks and use Lift.', 'thread-air':'Keep your line and let the pack carry you.', 'thread-held':'Thread caught. Glide back to the snow.', 'thread-landed':'Safe landing.', 'thread-missed':'No catch this flight.' }[phase];
       }
     }
   }
@@ -218,7 +220,7 @@ function frame(now) {
 
 function boot() {
   UI.init({
-    play: play, trial: () => play(false, true), flyer: () => play(false, true, true), again: () => play(false, repeatTrial, repeatFlyer), pause: pause, resume: resume, quit: quit, save: save,
+    play: play, trial: () => play(false, true), flyer: () => play(false, true, true), school:()=>play(false,true,true,true), again: () => play(false, repeatTrial, repeatFlyer, repeatSchool), pause: pause, resume: resume, quit: quit, save: save,
     apply: function () { A.setVol(cfg.vol); R.setQuality(cfg.low); },
     buy: function (i) { UI.afterBuy(S.buy(W.player, i)); },
     buyFord: function (id) { UI.afterBuy(S.buyFordSupply(id)); },

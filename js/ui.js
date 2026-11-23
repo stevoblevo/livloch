@@ -70,7 +70,7 @@ UI.init = function (handlers) {
   mctx = $('mini').getContext('2d');
   // buttons
   const on = (id, f) => $(id).addEventListener('click', f);
-  on('bTrial', H.trial); on('bFlyer', H.flyer); on('bFlyerOver', H.flyer); on('bPlay', () => H.play(false)); on('bWatch', () => H.play(true));
+  on('bTrial', H.trial); on('bFlyer', H.flyer); on('bFlyerOver', H.flyer); on('bSchool',H.school); on('bSchoolOver',H.school); on('bPlay', () => H.play(false)); on('bWatch', () => H.play(true));
   on('bFull', H.full); on('bFull2', H.full);
   on('bShop', () => UI.toggleShop()); on('bDeadShop', () => UI.toggleShop(true)); on('bShopClose', () => UI.toggleShop(false));
   on('bPause', H.pause); on('bResume', H.resume); on('bQuit', H.quit); on('bAgain', H.again); on('bTitle', H.quit);
@@ -154,14 +154,19 @@ function show(name) {
   if (name && LL.input.device !== 'touch') { const b = $(name).querySelector('.btn.primary, .btn'); if (b) try { b.focus({ preventScroll: true }); } catch (e) {} }
   else if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
 }
+const wickWindSample={};
+function flightHelp(){
+  const d=LL.input.device;
+  return d==='pad'?{lift:'RB',shop:'View/Back',art:'D-pad right'}:d==='touch'?{lift:'Lantern Lift',shop:'Shhhop',art:'Art button'}:{lift:'E',shop:'B',art:'L'};
+}
 UI.fordFlyerReady = function () {
-  $('bFlyer').hidden = LL.cfg.fordFlyerUnlocked !== true;
+  $('bFlyer').hidden = $('bSchool').hidden = LL.cfg.fordFlyerUnlocked !== true;
 };
 UI.fordFlyerFX = function (e) {
   const el=$('wickHint');
-  if (e.k==='wickthread') el.textContent='Thread caught · +0.27 s lift and 8 integrity';
+  if (e.k==='wickthread') el.textContent=C.LANE_NAME[e.lane]+' caught · +0.27 s lift and 8 integrity';
   else if (e.k==='wickwear') el.textContent='Hush scuffed the pack · move clear';
-  else if (e.k==='wickdry') el.textContent='Pack is damaged · find Gum or open Shhhop (B)';
+  else if (e.k==='wickdry') el.textContent='Pack is damaged · find Gum or use '+flightHelp().shop+' for Shhhop';
   else if (e.k==='wicksupply') el.textContent=LL.FORD_SUPPLIES[e.id].name+' · '+LL.FORD_SUPPLIES[e.id].desc;
   else return;
   el.dataset.until=String(W.t+4.2);
@@ -171,7 +176,7 @@ UI.startHUD = function (w) {
   W = w; const p = W.player, d = p.def;
   $('wickHud').hidden=!W.trial?.supplies; $('wickHint').textContent=''; $('wickHint').dataset.until='0';
   $('bShop').textContent=W.trial?.supplies?'Shhhop':'Shop';
-  if (W.trial?.supplies) $('wickHint').textContent='E · Lift • B · Shhhop • Collect gum on the path';
+  if (W.trial?.supplies) $('wickHint').textContent=W.trial.windSchool?'One practice lift. No Hush. No supplies spent.':'Collect gum on the path, or visit Shhhop.';
   $('wickHint').dataset.until='5';
   $('hud').hidden = false; show(null);
   $('hud').style.setProperty('--hc', d.css);
@@ -373,10 +378,17 @@ UI.showOver = function () {
   const win = W.winner === 0, t = U.fmtTime(W.t);
   document.body.classList.remove('lean'); $('calls').hidden = !(W.dream || dreamSeen.length) || !dreamSeen.length; if (dreamSeen.length) { callsDraw(); $('copyNote').textContent = ''; }
   $('stars').hidden = !W.short || !!W.trial;
-  $('bFlyerOver').hidden = !(W.trial && LL.cfg.fordFlyerUnlocked===true && W.player.def.id!=='rook');
+  $('bFlyerOver').hidden = !(W.trial && LL.cfg.fordFlyerUnlocked===true && (W.player.def.id!=='rook'||W.trial.windSchool));
+  $('bSchoolOver').hidden=!(W.trial&&!W.trial.windSchool&&LL.cfg.fordFlyerUnlocked===true);
   $('wickHud').hidden = true;
   if (W.trial) {
     const r = W.trial.result;
+    if(W.trial.windSchool){
+      const ok=r==='thread-landed';
+      $('overH').textContent=ok?'Caught the thread.':'The wind slipped by.';
+      $('overP').textContent=ok?'You caught the Middle updraft and landed. Try it under pressure in the chase.':'Face along the folded markers and lift from close to the thread.';
+      $('sbOver').innerHTML='';$('hud').hidden=true;show('over');return;
+    }
     $('overH').textContent = r === 'recovered' ? 'The light came back.' : r === 'protected' ? 'You held the ford.' : 'The ford went dark.';
     $('overP').textContent = r === 'recovered' ? 'You caught the Hush with the stolen light. The guardian is lit again.' : r === 'protected' ? 'You stopped the Hush before it reached the shrine.' : 'The Hush made it to its gate. Try following the golden wake.';
     if (W.trial.newFlyer) $('overP').textContent += ' Rook Vale, the Wick Aviator, is unlocked.';
@@ -491,6 +503,12 @@ UI.frame = function (dt, w, view, info) {
     tz.hidden = false; tz.textContent = p.zip ? 'Let go' : 'Ride thread';
   } else { pm.hidden = true; tz.hidden = true; }
   if (W.trial?.supplies) {
+    const wind=S.fordWind(p,p.liftT>0?p.vx:Math.sin(view.yaw),p.liftT>0?p.vz:Math.cos(view.yaw),wickWindSample);
+    const state=p.liftT>0?(p.threadCaught?'Riding the wind':'Burning') : !p.onGround?'Gliding':p.pack<17?'Pack damaged':p.cds[1]>0?'Cooling':wind.near?(wind.aligned?'Wind lined up':'Turn along the thread'):'Seek a thread';
+    const help=flightHelp(), label=C.LANE_NAME[wind.lane]+' · '+state;
+    const controls=W.trial.windSchool?help.lift+' Lift · '+help.art+' art':help.lift+' Lift · '+help.shop+' Shhhop';
+    if($('wickKeys').textContent!==controls)$('wickKeys').textContent=controls; if($('wickWind').textContent!==label)$('wickWind').textContent=label;
+    $('wickBurn').value=(p.liftT||0)/(p.liftMax||1);
     $('wickPack').value = Math.round(p.pack);
     $('wickStatus').textContent=Math.round(p.pack)+'%'+(p.mastic?' · Mastic lined':'')+(p.mintT>0?' · Mint wind':'');
     if ($('wickHint').textContent && W.t > +$('wickHint').dataset.until) $('wickHint').textContent='';

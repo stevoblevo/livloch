@@ -57,3 +57,22 @@ test('hush carrier contact scuffs the pack at most once in 1.1 seconds',()=>{
   A.equal(p.pack,56);A(w.fx.some(e=>e.k==='wickwear'));
   steps(w,10);A.equal(p.pack,56);
 });
+test('wind preview agrees with real signed lane directions without mutating pilot',()=>{
+  const loc=LL.lanePoint(1,LL.lanes[1].len*.55,{});
+  const pilot=Object.freeze({x:loc.x,z:loc.z});
+  const f=S.fordWind(pilot,loc.dx*6,loc.dz*6,{}), b=S.fordWind(pilot,-loc.dx*6,-loc.dz*6,{});
+  A.equal(f.lane,1);A(f.near&&f.aligned&&f.catches);A.equal(f.direction,1);A.equal(b.direction,-1);
+  A(!S.fordWind(pilot,loc.dz*6,-loc.dx*6,{}).catches);
+  A(!S.fordWind(pilot,loc.dx,loc.dz,{}).catches);
+});
+test('Wind School teaches launch, real thread catch and landing without chase or supplies',()=>{
+  const w=S.newWorld({seed:18,heroPick:0,fordFlyer:true});S.beginLanternTrial(true);
+  A(w.trial.windSchool);steps(w,300);A.equal(w.trial.thief,null);A.equal(S.buyFordSupply('gum'),false);
+  const p=w.player; p.ctl.ax=p.x;p.ctl.az=p.z+25;p.ctl.ay=1;cast(w);steps(w,180);
+  A.equal(w.trial.result,'thread-landed');A.equal(p.pack,54);A(p.onGround);A.equal(w.thieves.length,0);
+});
+test('Wind School gives a real miss for a launch across the lane',()=>{
+  const w=S.newWorld({seed:18,heroPick:0,fordFlyer:true});S.beginLanternTrial(true);
+  const p=w.player;p.ctl.mx=1;p.ctl.mz=0;p.ctl.ab[1]=true;steps(w,190);
+  A.equal(w.trial.result,'thread-missed');A(!S.earnsFordFlyer(w.trial,p));
+});

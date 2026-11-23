@@ -39,3 +39,12 @@ test('fire anticipation blends and releases; no camera data or hero mutation',()
  for(let i=0;i<15;i++)motion.pose(a,u,.05,2.4+i*.05);assert(a.aim<.001);
  const b=motion.pose(a,u,.05,2.10,true);assert.equal(b.recoil,0);assert.equal(b.roll,0);
 });
+test('wind cue caches a shared glyph per style, calling the pen for Foldlight only',()=>{
+ let fold=0;const ctx={save(){},restore(){},beginPath(){},moveTo(){},lineTo(){},stroke(){}};
+ const canvas=(width,height)=>({width,height,getContext:()=>ctx});
+ const s=createStage({canvas,pen:{fold(){fold++;}}});
+ const ink=s.windGlyph('rainprint'), paper=s.windGlyph('foldlight'), orig=s.windGlyph('classic');
+ assert.equal(s.windGlyph('foldlight'),paper);assert.equal(fold,1);
+ assert.notEqual(ink,orig);assert.equal(ink.width,96);assert.equal(paper.width,96);
+ s.dispose();assert.equal(ink.width,1);assert.equal(s.windGlyph('rainprint'),null);
+});

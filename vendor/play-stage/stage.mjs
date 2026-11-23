@@ -30,7 +30,7 @@ function firShape(v) {
   return {tris,stock:'paper-washi',tags:{cap:'washi'}};
 }
 export function createStage({canvas,pen,material}){
-  let tornDown=false; const memo=new Map(), trees=new Map();
+  let tornDown=false; const memo=new Map(), trees=new Map(), windMarks=new Map();
   function cache(style){
     if(tornDown||style==='classic'||!palettes[style])return null;
     if(memo.has(style))return memo.get(style);
@@ -62,6 +62,27 @@ export function createStage({canvas,pen,material}){
     });
     ctx.restore();return true;
   }
-  function dispose(){if(tornDown)return;tornDown=true;for(const v of memo.values())for(const s of [v.bg,...v.ridges,...v.tree]){s.width=1;s.height=1;}memo.clear();trees.clear();material?.dispose();}
-  return Object.freeze({cache,drawRidges,dispose});
+  // A single visual grammar: a split chevron points along a valid current.
+  // Blank inks still work because both treatments use the same outline.
+  function windGlyph(style='foldlight'){
+    if(tornDown)return null;
+    if(windMarks.has(style))return windMarks.get(style);
+    const c=canvas(96,96),g=c.getContext('2d');
+    const ice=style==='rainprint'?'#d9d0f6':'#a1ebd4';
+    if(style==='foldlight'){
+      const a=[-0.36,.24,0], b=[0,-.40,.02], d=[-.10,.26,.04], e=[0,.07,.21], f=[.10,.26,.04], h=[.36,.24,0];
+      pen.fold(g,{tris:[[a,b,e],[a,e,d],[b,h,e],[e,h,f]]},{x:48,y:48,size:99,stock:ice,shadow:false,open:1,lineWidth:1.6});
+    }
+    // Keep the arrow perceptible below glow and over the terrain in every style.
+    g.save();g.lineJoin='round';g.lineCap='square';
+    const stroke=()=>{g.beginPath();g.moveTo(13,66);g.lineTo(48,14);g.lineTo(83,66);g.moveTo(28,77);g.lineTo(48,47);g.lineTo(68,77);g.stroke();};
+    g.strokeStyle='#0e2538';g.lineWidth=7;stroke();g.strokeStyle=ice;g.lineWidth=3.7;stroke();
+    if(style==='rainprint'){
+      g.strokeStyle='#b2a1c8';g.lineWidth=1.2;
+      for(let i=0;i<4;i++){g.beginPath();g.moveTo(22+i*4,72-i*8);g.lineTo(28+i*4,69-i*8);g.stroke();}
+    }
+    g.restore();windMarks.set(style,c);return c;
+  }
+  function dispose(){if(tornDown)return;tornDown=true;for(const v of memo.values())for(const s of [v.bg,...v.ridges,...v.tree]){s.width=1;s.height=1;}for(const c of windMarks.values()){c.width=1;c.height=1;}windMarks.clear();memo.clear();trees.clear();material?.dispose();}
+  return Object.freeze({cache,drawRidges,windGlyph,dispose});
 }
