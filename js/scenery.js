@@ -54,7 +54,7 @@ const PAL = {
     rimB: [0xf0e0a0, 0.3, 2.8], rimP: [0xf0e0a0, 0.22, 3.0], water: [0x0a1830, 0x3d7aa8, 0xc0e4ff], pool: [0xf0c75e, 0x8fb4e8, [0.5, 0.38, 0.16]],
     moon: [0xfff4d8, 0xf0c75e, 0xf0d890, [1, 0.2]], mist: [0x263a57, 0x5a7aa0, 0.4], fly: [0xf0d070, 0.8], petal: [0xe8d8f0, 0xfff4e8, 0.5],
     grass: [0x1a2a3a, 0x4e7090], flowers: [0xf0c75e, 0x8fb4e8, 0xf4efe6, 0xf0c75e], shroom: 0x8fd0f0, litter: [0xe8dcf0, 0.5], glint: [0xf0e0a0, 0.03], ground: [0x18263a, 0.25, 0.92, 0.7] },
-  origami: { bl: [0xe09aaa, 0xf4bcc6, 0xfcdce2, 0xfff4f6], blGlow: 0.05, blDetail: 0.25, trunk: 0x6a5a5a, pine: [0x4f7268, 0x6a8f80, 0x8fb0a0], pineGlow: 0, snow: 0,
+  origami: { bl: [0xf57ca4, 0xff90b4, 0xffa8c4, 0xffdce6], blK: 1.2, blGlow: 0.38, blDetail: 0.25, trunk: 0x6a5a5a, pine: [0x4f7268, 0x6a8f80, 0x8fb0a0], pineGlow: 0, snow: 0,
     rimB: [0xffffff, 0.12, 3.0], rimP: [0xffffff, 0.1, 3.0], water: [0x3a78b0, 0x8cc2e6, 0xffffff], pool: null,
     moon: null, mist: [0xffffff, 0xf6f8f3, 0.32], fly: null, petal: [0xf4a8b8, 0xffe0e6, 0.7],
     grass: [0x8fae7a, 0xc8dca8], flowers: [0xb8311a, 0xf0cf78, 0x2a4c86, 0xffffff], shroom: 0xf0e0c0, litter: [0xf0a0b0, 0.55], ground: null, plantGlow: 0.2 },
@@ -204,7 +204,7 @@ function limb(B, a, b, r0, r1, colr, seg) { // a tapered branch from a to b
 /* A cherry tree: a flared, leaning trunk, four limbs, and a wide umbrella of blossom lumps: a crown, a ring, and a lower
    ring that hangs at the edge. v picks one of two shapes. */
 function blossomGeo(v) {
-  const B = new Bundle(), r = LL.rng(311 + v * 97), stops = P.bl.map(col), trunk = col(P.trunk), trunkD = col(P.trunk).multiplyScalar(0.55);
+  const B = new Bundle(), r = LL.rng(311 + v * 97), stops = P.bl.map(function (h) { return col(h).multiplyScalar(P.blK || 1); }), trunk = col(P.trunk), trunkD = col(P.trunk).multiplyScalar(0.55);
   const lean = v ? -0.45 : 0.55, th = 5.0;
   const tg = new T.CylinderGeometry(0.3, 0.62, th, 8, 6, true); tg.translate(0, th / 2 - 0.3, 0);
   { const p = tg.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i), k = Math.max(0, y) / th, fl = y < 0.7 ? 1 + (0.7 - y) * 0.7 : 1; p.setX(i, p.getX(i) * fl + lean * k * k * 1.4 + Math.sin(y * 1.3 + v) * 0.1); p.setZ(i, p.getZ(i) * fl); } tg.computeVertexNormals(); }
