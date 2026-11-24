@@ -447,6 +447,142 @@ test('bots with Rook play whole matches, use the lift, and nothing breaks', () =
   const { W, h } = rookAt(-24, 20); h.ctl.ab[1] = true; for (let i = 0; i < 20; i++) S.step(1 / 60); assert.ok(h.liftT > 0 && h.y > 1); S._t.kill ? S._t.damage(h, 1e6, null, 'unit') : 0; assert.ok(!h.alive); W.fx.length = 0;
   const ev = run(W, 40, w => { w.patron.forEach(p => { p.hp = p.maxHp; }); }); assert.ok(h.alive, 'respawned'); assert.ok(!ev.some(e => e.k === 'liftland' || e.k === 'glide'), 'no lift events from a dead pilot'); assert.ok(!h.glide && h.liftT === 0);
 });
+/* ---------- 0.26 ness: the chomp and the flood ----------
+   The sim still uses Math.random (issue #27), so staged tests place every piece by hand and whole-match tests sum over seeds. */
+const NS = S.NESS;
+function nessUp(o) { const W = world(o), n = W.ness; n.respT = 0; S.step(1 / 30); n.rise = 1; n.chompT = 0; n.floodAt = 1e9; n.floodHp = true; W.fx.length = 0; W.waveT = 1e9; W.thiefT = 1e9;
+  W.heroes.forEach((h, i) => { h.useAI = false; h.x = -60 + i * 3; h.z = -100; }); return W; }
+function stand(W, d, ang) { const h = W.player, n = W.ness; h.x = n.x + Math.sin(ang || Math.PI) * d; h.z = n.z + Math.cos(ang || Math.PI) * d; h.y = 0; h.vx = h.vy = h.vz = 0; h.onGround = true; return h; }
+const fine = (W) => W.heroes.every(h => [h.x, h.y, h.z, h.vx, h.vy, h.vz, h.hp].every(isFinite)) && [W.ness.x, W.ness.z, W.ness.yaw, W.ness.hp].every(isFinite);
+test('the Ness chomps only after its tell; the bite hurts once, holds, then throws the hero clear', () => {
+  const W = nessUp(), n = W.ness, h = stand(W, 11.5), hp0 = h.hp; let heldT = 0, moved = 0;
+  const ev = run(W, 6, w => { if (h.held) { heldT += 1 / 30; h.ctl.mx = 1; const x0 = h.x; moved = Math.max(moved, Math.abs(h.x - x0)); } w.heroes.forEach(o => { if (o !== h) { o.x = -60; o.z = -100; } }); });
+  const tell = ev.find(e => e.k === 'nesstell'), lock = ev.find(e => e.k === 'nesslock'), bite = ev.find(e => e.k === 'nesschomp'), rel = ev.find(e => e.k === 'nessrelease');
+  assert.ok(tell && tell.u === h, 'a tell on the hero in reach'); assert.ok(lock && bite && rel, 'lock, chomp and release all happened');
+  assert.ok(Math.abs(bite.at - tell.at - NS.TELL) < 0.08, 'the bite lands NESS.TELL after the tell: ' + (bite.at - tell.at).toFixed(2));
+  assert.ok(Math.abs(bite.at - lock.at - NS.LOCK) < 0.08, 'the spot stops following NESS.LOCK before the bite');
+  assert.ok(!ev.some(e => e.k === 'hit' && e.p === 2 && e.at < bite.at - 0.01), 'no harm before the bite');
+  assert.ok(bite.hit && bite.u === h && bite.held, 'caught and held');
+  const want = (NS.BITE + NS.BITE_MIN * bite.at / 60) * (1 - h.st.resist), hits = ev.filter(e => e.k === 'hit' && e.p === 2);
+  assert.strictEqual(hits.length, 1, 'one bite, no more harm while held'); assert.ok(Math.abs(hits[0].amt - want) < 2, 'bite damage ' + hits[0].amt.toFixed(0) + ', want ' + want.toFixed(0));
+  assert.ok(Math.abs(rel.at - bite.at - NS.HOLD) < 0.1 && rel.why === 'time', 'held NESS.HOLD seconds without mashing: ' + (rel.at - bite.at).toFixed(2));
+  assert.ok(!h.held && h.alive && h.hp < hp0, 'released alive');
+  assert.ok(Math.hypot(h.x - n.x, h.z - n.z) > NS.REACH - 3, 'thrown clear of the loch: ' + Math.hypot(h.x - n.x, h.z - n.z).toFixed(1) + ' m');
+  assert.ok(ev.filter(e => e.k === 'nesstell').length === 1, 'not picked again at once (safe for NESS.SAFE, then the cooldown)');
+});
+test('the chomp is dodged by a timed jump, a dash out of the ring, or a thread; a miss leaves the Ness open', () => {
+  // standing still: bitten (the control)
+  let W = nessUp(), h = stand(W, 11.5); let ev = run(W, 1.4); assert.ok(ev.some(e => e.k === 'nesschomp' && e.hit && e.u === h), 'standing still is caught');
+  // a jump over the bite
+  W = nessUp(); h = stand(W, 11.5); const n = W.ness;
+  ev = run(W, 1.4, w => { const ch = w.ness.chomp; if (ch && ch.ph === 'tell' && ch.t <= 0.32 && h.onGround) h.ctl.jump = true; });
+  let bite = ev.find(e => e.k === 'nesschomp'); assert.ok(bite && !bite.hit && !h.held, 'a jump clears the jaws'); assert.ok(n.openT > 0, 'a miss leaves it open');
+  const hp0 = n.hp; S._t.damage(n, 100, h, 'gun'); assert.ok(Math.abs((hp0 - n.hp) - 100 * NS.OPEN_MUL) < 1e-6, 'open: it takes NESS.OPEN_MUL damage');
+  ev = run(W, NS.OPEN + 0.2, w => { h.x = -60; h.z = -100; }); const hp1 = n.hp; S._t.damage(n, 100, h, 'gun'); assert.ok(Math.abs((hp1 - n.hp) - 100) < 1e-6, 'and ordinary damage once it has recovered');
+  assert.ok(!ev.some(e => e.k === 'nesstell' || e.k === 'nessspit'), 'while open it does nothing');
+  // a dash once the spot has locked
+  W = nessUp(); h = stand(W, 11.5);
+  ev = run(W, 1.4, w => { const ch = w.ness.chomp; if (ch && ch.locked && h.dashT <= 0 && !h.dashed) { h.dashed = true; h.ctl.mx = 0; h.ctl.mz = -1; h.ctl.dash = true; } });
+  bite = ev.find(e => e.k === 'nesschomp'); assert.ok(bite && !bite.hit && !h.held, 'a dash out of the ring is not caught');
+  // on a thread: not prey at all
+  W = nessUp(); h = stand(W, 11.5); h.zip = { lane: 1, dir: 1, s: 60 }; ev = run(W, 0.3); assert.ok(!ev.some(e => e.k === 'nesstell'), 'a hero riding a thread is not bitten');
+  // out of reach: nothing
+  W = nessUp(); h = stand(W, NS.REACH + 2); ev = run(W, 3, w => { stand(w, NS.REACH + 2); }); assert.ok(!ev.some(e => e.k === 'nesstell'), 'no tell beyond NESS.REACH');
+});
+test('held in the jaws: mashing or a friend shooting the Ness ends it early; the Ness dying lets go', () => {
+  const held = () => { const W = nessUp(), h = stand(W, 11.5); const ev = run(W, 0.98); assert.ok(h.held, 'held'); return { W, h, at: W.t }; };
+  let r = held(), k = 0; let ev = run(r.W, 2, w => { if (r.h.held && k++ % 4 === 0) r.h.ctl.jump = true; }); let rel = ev.find(e => e.k === 'nessrelease');
+  assert.ok(rel && rel.why === 'mash' && rel.at - r.at < NS.HOLD - 0.3, 'mashing jump gets out early: ' + (rel.at - r.at).toFixed(2) + ' s');
+  r = held(); const y0 = r.h.y; r.h.ctl.mx = 1; r.h.ctl.fire = true; r.h.ctl.ab[0] = true; const am = r.h.ammo; S.step(1 / 30); assert.ok(r.h.ammo === am && r.h.cds[0] <= 0, 'no shooting or casting from the jaws'); r.W.fx.length = 0;
+  S._t.damage(r.W.ness, r.W.ness.maxHp * (NS.LETGO + 0.01), r.W.heroes[0] === r.h ? r.W.heroes[2] : r.W.heroes[0], 'gun'); ev = run(r.W, 0.2); rel = ev.find(e => e.k === 'nessrelease'); assert.ok(rel && rel.why === 'shot', 'shot free by a friend');
+  r = held(); S._t.damage(r.W.ness, 1e7, r.W.heroes[0], 'gun'); assert.ok(!r.h.held && !r.W.ness.alive, 'the Ness dying lets go'); ev = run(r.W, 3); assert.ok(r.h.alive && fine(r.W));
+  // dying in the jaws does not leave the next life held
+  r = held(); S._t.damage(r.h, 1e7, null, 'unit'); run(r.W, 1); assert.ok(!r.h.held && !r.W.ness.chomp, 'a dead hero is dropped');
+});
+test('the flood: a warning, the water runs out from the loch, stands, drains, and always ends', () => {
+  const W = nessUp(), n = W.ness; assert.strictEqual(S.waterAt(0, 0), 0); assert.ok(S._t.flood('test'));
+  const far = [[-77, 137], [77, -137], [-77, -137]]; let highT = 0, wetFar = 0, nearT = 0, outSeen = false, maxAway = 0;
+  const ev = run(W, 40, w => { if (w.flood && w.flood.ph === 'high') { highT += 1 / 30; if (far.every(p => S.waterAt(p[0], p[1]) === 1)) wetFar += 1 / 30; } if (S.waterAt(0, 0) > 0.5) nearT += 1 / 30; if (n.out) { outSeen = true; maxAway = Math.max(maxAway, Math.hypot(n.x - n.hx, n.z - n.hz)); } });
+  const at = k => { const e = ev.find(x => x.k === k); return e ? e.at : -1; }, t0 = at('floodwarn');
+  assert.ok(t0 >= 0 && at('flood') > 0 && at('flooddrain') > 0 && at('floodend') > 0, 'floodwarn, flood, flooddrain, floodend');
+  assert.ok(Math.abs(at('flood') - t0 - NS.SWELL) < 0.1, 'NESS.SWELL seconds of warning'); assert.ok(at('flood') < at('flooddrain') && at('flooddrain') < at('floodend'));
+  assert.ok(Math.abs(highT - NS.HIGH) < 0.15 && Math.abs(wetFar - highT) < 0.05, 'the whole field is under water for NESS.HIGH seconds: ' + wetFar.toFixed(1));
+  assert.ok(nearT > 12 && nearT < 20, 'the middle thread is wet ' + nearT.toFixed(1) + ' s'); assert.ok(at('floodend') - t0 < 25, 'over within 25 s: ' + (at('floodend') - t0).toFixed(1));
+  assert.ok(!W.flood && S.waterAt(0, 0) === 0, 'dry again'); assert.ok(outSeen && maxAway > 15, 'the Ness left the loch (' + maxAway.toFixed(0) + ' m)');
+  assert.ok(!n.out && n.x === n.hx && n.z === n.hz && n.alive, 'and is back in it'); assert.ok(S._t.flood('again') && W.flood.ph === 'swell', 'and a later flood can start');
+});
+test('in the flood heroes wade slower, move faster in the air, skim farther on a dash, and are carried by the current', () => {
+  const setup = (wet) => { const W = nessUp(), h = W.player; if (wet) { S._t.flood('test'); run(W, NS.SWELL + NS.FAR / NS.FRONT + 0.3); assert.strictEqual(W.flood.ph, 'high'); } W.ness.alive = wet; if (!wet) W.ness.respT = 1e9; h.x = -24; h.z = -30; h.y = 0; h.vx = h.vz = h.vy = 0; h.onGround = true; h.stamina = 3; return { W, h }; };
+  const walk = (wet) => { const { W, h } = setup(wet); W.ness.out = false; W.ness.x = W.ness.hx; h.ctl.mx = 1; for (let i = 0; i < 45; i++) { h.ctl.mx = 1; S.step(1 / 30); } return Math.hypot(h.vx, h.vz); };
+  const dry = walk(false), wet = walk(true); assert.ok(Math.abs(wet / dry - NS.WADE) < 0.02, 'wading is NESS.WADE of walking: ' + (wet / dry).toFixed(2));
+  const air = (wet) => { const { W, h } = setup(wet); let top = 0; h.ctl.jump = true; for (let i = 0; i < 20; i++) { h.ctl.mx = 1; S.step(1 / 30); if (!h.onGround) top = Math.max(top, Math.hypot(h.vx, h.vz)); } return top; };
+  const a0 = air(false), a1 = air(true); assert.ok(a1 > a0 * 1.1, 'faster through the air over the water: ' + (a1 / a0).toFixed(2));
+  const dash = (wet) => { const { W, h } = setup(wet); const x0 = h.x; h.ctl.mx = 1; h.ctl.dash = true; for (let i = 0; i < 14; i++) { h.ctl.mx = 0; S.step(1 / 60); } return h.x - x0; };
+  const d0 = dash(false), d1 = dash(true); assert.ok(d1 > d0 * 1.3, 'a dash skims farther: ' + d0.toFixed(1) + ' m dry, ' + d1.toFixed(1) + ' m wet');
+  // the current: standing on a thread's line, carried away from the middle of the valley; off the threads, not carried
+  let r = setup(true); r.h.x = 0; r.h.z = 30; for (let i = 0; i < 30; i++) S.step(1 / 30); assert.ok(Math.abs((r.h.z - 30) - NS.CUR) < 0.3, 'carried up the thread at NESS.CUR: ' + (r.h.z - 30).toFixed(2) + ' m in a second');
+  r = setup(true); r.h.x = 0; r.h.z = -30; for (let i = 0; i < 30; i++) S.step(1 / 30); assert.ok(r.h.z < -31.5, 'and the other way on the other side');
+  r = setup(true); r.h.x = -24; r.h.z = -30; for (let i = 0; i < 30; i++) S.step(1 / 30); assert.ok(Math.abs(r.h.z + 30) < 0.01, 'no current off the threads');
+  // a thread is above the water: the ride is as fast as ever
+  const ride = (wet) => { const { W, h } = setup(wet); h.x = 0; h.z = -60; h.ctl.zip = true; h.ctl.zipDir = 1; S.step(1 / 30); assert.ok(h.zip, 'on the thread'); const z0 = h.z; for (let i = 0; i < 30; i++) S.step(1 / 30); return h.z - z0; };
+  assert.ok(Math.abs(ride(true) - ride(false)) < 0.2, 'riding a thread is not slowed');
+});
+test('in the flood small troopers float slower and drift; a hollow does not drift', () => {
+  const W = nessUp(); S._t.flood('test'); W.waveT = 0; run(W, NS.SWELL + NS.FAR / NS.FRONT + 0.3, w => { w.ness.out = false; w.ness.x = w.ness.hx; w.ness.z = w.ness.hz; w.ness.chompT = 9; });
+  const t = W.troopers.find(u => u.alive && u.team === 0 && u.lane === 0 && !u.big); assert.ok(t, 'a trooper');
+  W.troopers.forEach(u => { if (u !== t) u.alive = false; }); t.s = 40; t.lat = 0; t.x = LL.lanes[0].pts[2][0]; t.z = -64; const s0 = (LL.laneNearest(0, t.x, t.z, t._q = {}), t._q.s); t.s = s0;
+  for (let i = 0; i < 30; i++) { W.ness.out = false; W.ness.chompT = 9; S.step(1 / 30); } const went = t.s - s0;
+  // marching +s at 5.2 x NESS.FLOAT, drifting -s (z < 0: away from the middle) at NESS.DRIFT
+  assert.ok(Math.abs(went - (5.2 * NS.FLOAT - NS.DRIFT)) < 0.35, 'floats and drifts: ' + went.toFixed(2) + ' m/s, want ' + (5.2 * NS.FLOAT - NS.DRIFT).toFixed(2));
+  assert.ok(t.wet === 1);
+});
+test('a flood comes once a rising: when the Ness is hurt under NESS.FLOOD_HP, or by the clock, never into a red rain', () => {
+  // by the clock: NESS.FLOOD_FIRST after it surfaces, with nobody near it
+  let W = world({ seed: 3 }); let ev = run(W, 262, w => { keepAlive(w); w.rushNext[0] = w.rushNext[1] = 1e9; w.ness.hp = w.ness.maxHp; });
+  let up = ev.find(e => e.k === 'nessup'), warn = ev.filter(e => e.k === 'floodwarn');
+  assert.ok(up && Math.abs(up.at - 180) < 0.1); assert.ok(warn.length === 1 && warn[0].why === 'time' && Math.abs(warn[0].at - up.at - NS.FLOOD_FIRST) < 0.2, 'flood warning ' + (warn[0] && (warn[0].at - up.at).toFixed(1)) + ' s after it surfaces');
+  // provoked: under NESS.FLOOD_HP of its health, once
+  W = nessUp(); const n = W.ness; n.floodHp = false; S._t.damage(n, n.maxHp * (1 - NS.FLOOD_HP) - 5, null, 'unit'); ev = run(W, 1); assert.ok(!ev.some(e => e.k === 'floodwarn'), 'not above the line');
+  S._t.damage(n, 10, null, 'unit'); ev = run(W, 30); warn = ev.filter(e => e.k === 'floodwarn'); assert.ok(warn.length === 1 && warn[0].why === 'hurt', 'provoked under the line'); assert.ok(ev.some(e => e.k === 'floodend'));
+  n.hp = n.maxHp; run(W, 1); S._t.damage(n, n.maxHp * 0.5, null, 'unit'); ev = run(W, 20); assert.ok(!ev.some(e => e.k === 'floodwarn'), 'only once a rising'); assert.ok(n.floodAt > W.t + 150, 'the next one by the clock is NESS.FLOOD_EVERY away');
+  // never into a red rain
+  W = nessUp(); W.ness.floodAt = 0; W.redNext = W.t + 20; ev = run(W, 5); assert.ok(!ev.some(e => e.k === 'floodwarn'), 'held back before a red rain');
+  W = nessUp(); W.ness.floodAt = 0; W.red = 30; ev = run(W, 5); assert.ok(!ev.some(e => e.k === 'floodwarn'), 'and during one');
+});
+test('the Ness roams and chomps in the flood, goes home, and killing it out there still gives the Greatness', () => {
+  let W = nessUp(), n = W.ness; S._t.flood('test'); const h = W.player; let tells = 0, away = 0;
+  let ev = run(W, 30, w => { if (w.flood && !h.held && h.onGround && w.flood.ph !== 'drain') { h.x = 0; h.z = -30; } away = Math.max(away, Math.hypot(n.x - n.hx, n.z - n.hz)); });
+  assert.ok(ev.some(e => e.k === 'nesstell' && e.u === h), 'it swims to a hero standing in the water and bites'); assert.ok(away > 25, 'it crossed the field: ' + away.toFixed(0) + ' m from the loch');
+  assert.ok(!n.out && n.x === n.hx && n.z === n.hz, 'home when the water has gone'); assert.ok(!W.flood);
+  // killed out in the field
+  W = nessUp(); n = W.ness; S._t.flood('test'); run(W, NS.SWELL + 2, w => { w.player.x = 0; w.player.z = -30; }); assert.ok(n.out && W.flood.ph !== 'swell');
+  const k = W.heroes[0]; S._t.damage(n, 1e7, k, 'gun'); assert.ok(!n.alive && W.great[0] === C.GREAT_T, 'the Greatness for the side that landed it'); assert.strictEqual(W.flood.ph, 'drain', 'and the water starts back at once');
+  ev = run(W, 6); assert.ok(ev.some(e => e.k === 'floodend') && !W.flood); assert.ok(W.great[0] > C.GREAT_T - 7 && W.great[0] < C.GREAT_T);
+  ev = run(W, 245, keepAlive); assert.ok(ev.some(e => e.k === 'nessup') && n.alive && n.x === n.hx && !n.out, 'it comes back up in the loch');
+});
+test('whole bot matches with the Ness: floods end, nobody stays in the jaws, bots dodge some bites and ride threads, fishing goes on', () => {
+  let floods = 0, tells = 0, bitten = 0, dodged = 0, zips = 0, fishing = 0, downs = 0, over = 0, longest = 0;
+  for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+    const W = world({ seed: seed, heroPick: seed % LL.HEROES.length, difficulty: seed % 3 }); let fl0 = -1, heldT = 0, ok = true; const tgt = {};
+    for (let i = 0; i < 1300 * 30 && !W.over; i++) {
+      S.step(1 / 30);
+      for (const e of W.fx) {
+        if (e.k === 'floodwarn') { floods++; fl0 = W.t; } else if (e.k === 'floodend') { longest = Math.max(longest, W.t - fl0); fl0 = -1; }
+        else if (e.k === 'nesstell' && e.u.kind === 'hero') { tells++; tgt.u = e.u; } else if (e.k === 'nesschomp' && tgt.u) { if (e.u) bitten++; else dodged++; tgt.u = null; }
+        else if (e.k === 'zip' && W.flood && W.flood.ph !== 'swell') zips++; else if (e.k === 'fishing') fishing++; else if (e.k === 'nessdown') downs++;
+      }
+      W.fx.length = 0;
+      heldT = W.heroes.some(h => h.held) ? heldT + 1 / 30 : 0; assert.ok(heldT < NS.HOLD + 0.2, 'seed ' + seed + ': held too long');
+      if (fl0 >= 0) assert.ok(W.t - fl0 < 25, 'seed ' + seed + ': a flood that does not end');
+      if (i % 30 === 0) ok = ok && fine(W);
+    }
+    assert.ok(ok, 'seed ' + seed + ': every number stays finite'); assert.ok(W.over, 'seed ' + seed + ': the match ends (' + W.t.toFixed(0) + ' s)'); over++;
+    assert.ok(!W.ness.out || W.flood, 'seed ' + seed + ': the Ness is only out of the loch in a flood');
+  }
+  assert.ok(floods >= 8, 'a flood in every match: ' + floods); assert.ok(longest < 25, 'the longest flood: ' + longest.toFixed(1) + ' s');
+  assert.ok(tells >= 8, 'heroes are picked: ' + tells); assert.ok(bitten >= 2 && dodged >= 2, 'bots dodge some bites and take some: ' + dodged + ' dodged, ' + bitten + ' bitten');
+  assert.ok(zips >= 5, 'bots take the threads in a flood: ' + zips); assert.ok(fishing >= 4, 'bots still go fishing: ' + fishing); assert.ok(downs >= 4, 'and still land the Ness: ' + downs);
+});
 test('the model never reads the look: sim and core have no presentation references', () => {
   for (const f of ['core.js', 'sim.js']) { const src = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8').replace(/typeof window !== 'undefined' \? window : globalThis/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/.*$/gm, '$1'); // comments may talk about the rule; code may not break it
     for (const bad of [/\bLL\.gfx\b/, /\bLL\.ui\b/, /\bdocument\b/, /\bwindow\b/, /\blook\b/i, /\bLK\b/, /localStorage/]) assert.ok(!bad.test(src), f + ' mentions ' + bad); }
