@@ -602,11 +602,11 @@ HERO.rook = {
     groups: [{ lo: 0, hi: Math.PI, az: [0.45, Math.PI / 2, Math.PI - 0.45] }, { lo: Math.PI, hi: TAU, az: [Math.PI + 0.45, 1.5 * Math.PI, TAU - 0.45] }] },
   /* the scarf's tail: from the nape, over the top of the pack on his left, down beside the lantern. back: the surface it must
      stay behind (the neck, then the pack's frame), as a shell profile. */
-  chains: [{ pre: 'kt', n: 5, seg: 0.145, back: [[1.7, 0.14, 0.14], [1.58, 0.2, 0.2, -0.01], [1.53, 0.3, 0.36, -0.02], [0.92, 0.3, 0.36, -0.02], [0.88, 0.22, 0.18], [0.6, 0.3, 0.25]] }],
-  KT: { x: 0.165, y: 1.57, z: -0.2 }, PK: { y: 1.23, z: -0.27, w: 0.26, h: 0.31, fin: 0.72 },
+  chains: [{ pre: 'kt', n: 5, seg: 0.145, back: [[1.7, 0.14, 0.14], [1.6, 0.2, 0.2, -0.01], [1.54, 0.3, 0.315, -0.02], [0.92, 0.3, 0.315, -0.02], [0.88, 0.22, 0.18], [0.6, 0.3, 0.25]] }],
+  KT: { x: 0.165, y: 1.575, z: -0.345 }, PK: { y: 1.23, z: -0.27, w: 0.26, h: 0.31, fin: 0.72 },
   rig: function (r, P) {
     const K = this.KT, PK = this.PK;
-    let par = 'chest'; for (let i = 0; i < 5; i++) { r.b('kt' + i, par, K.x + i * 0.006, K.y - i * 0.145, K.z - i * 0.012); par = 'kt' + i; }
+    let par = 'chest'; for (let i = 0; i < 5; i++) { r.b('kt' + i, par, K.x + i * 0.006, K.y - i * 0.145, K.z - i * 0.004); par = 'kt' + i; }
     r.b('pack', 'chest', 0, PK.y, -0.16);
     r.b('finL', 'pack', PK.w, PK.y, PK.z - 0.04).b('finR', 'pack', -PK.w, PK.y, PK.z - 0.04);
     r.b('wick', 'pack', 0, PK.y, PK.z - 0.17);
@@ -649,8 +649,8 @@ HERO.rook = {
     // the kite scarf: a mint roll round the neck (teal in the folds), the knot on his left, and the tail
     B.add(shellG([[1.685, 0.105, 0.1, 0.0], [1.645, 0.165, 0.158, -0.004], [1.59, 0.2, 0.185, -0.01], [1.535, 0.2, 0.185, -0.016], [1.5, 0.15, 0.135, -0.016]], 16, 0, TAU), null,
       function (lx, ly, lz, wx, wy, wz) { return frac(Math.atan2(wx, wz) * 1.6 + wy * 9) < 0.2 ? teal : mint; }, [['chest', 0.7], ['neck', 0.3]]);
-    B.add(sph(8, 6), M(K.x, K.y + 0.005, K.z + 0.02, 0, 0, 0, 0.07, 0.06, 0.055), teal, 'chest');
-    for (let i = 0; i < 5; i++) { const y0 = K.y - i * 0.145, x0 = K.x + i * 0.006, z0 = K.z - i * 0.012 - 0.012, w = 0.125 * (1 - i * 0.11);
+    B.add(capG([K.x - 0.03, 1.6, -0.17], [K.x, K.y, K.z + 0.01], 0.05, 0.045, 6, 1), null, mint, 'chest'); B.add(sph(8, 6), M(K.x, K.y + 0.005, K.z + 0.012, 0, 0, 0, 0.07, 0.06, 0.055), teal, 'chest'); // the scarf's end runs back over the top of the frame to its knot
+    for (let i = 0; i < 5; i++) { const y0 = K.y - i * 0.145, x0 = K.x + i * 0.006, z0 = K.z - i * 0.004 - 0.012, w = 0.125 * (1 - i * 0.11);
       B.add(new T.PlaneGeometry(w, 0.15, 1, 1), M(x0, y0 - 0.0725, z0, 0.08, 0, 0), function (lx, ly) { return i === 4 && ly < -0.01 ? gold : (i === 3 || (i === 4) ? 0x5cc2b0 : mint); }, 'kt' + i, { em: i === 4 ? 0.12 : 0 });
       if (i === 1 || i === 3) [1, -1].forEach(function (k) { B.add(new T.ConeGeometry(0.05, 0.11, 3), M(x0 + k * 0.075, y0 - 0.075, z0 - 0.004, 0, 0, k * Math.PI / 2, 1, 1, 0.3), i === 1 ? gold : teal, 'kt' + i); }); } // a kite tail's bows
     // THE LANTERN-KITE. The frame: an eight-sided wooden board on the back, a dark slate panel set in it.
@@ -688,9 +688,9 @@ HERO.rook = {
     b.finL.rotation.set(0, PK.fin * fold, dihedral); b.finR.rotation.set(0, -PK.fin * fold, -dihedral);
     b.pack.rotation.set(wob * 0.025 * c.mix * Math.sin(c.ph * 2 + 0.6) * (1 - L), 0, wob * 0.03 * c.mix * Math.sin(c.ph) * (1 - L));
     // the lantern: steady on the ground, brighter in the glide, brightest while it is lifting him (with a flicker)
-    const burn = 1 + L * 0.2 + rs * (0.55 + wob * 0.1 * Math.sin(t * 31));
+    const burn = 1 + L * 0.2 + rs * (0.4 + wob * 0.08 * Math.sin(t * 31));
     if (fig.mat.userData.U) fig.mat.userData.U.uEmK.value = (fig.emK0 || (fig.emK0 = fig.mat.userData.U.uEmK.value)) * burn;
-    if (fig.glow) { const g0 = this.glow.size * (1 + 0.7 * (burn - 1)); fig.glow.scale.set(g0, g0, 1); fig.glow.material.opacity = clamp(0.45 + 0.4 * (burn - 1), 0, 0.8); }
+    if (fig.glow) { const g0 = this.glow.size * (1 + 0.5 * (burn - 1)); fig.glow.scale.set(g0, g0, 1); fig.glow.material.opacity = clamp(0.45 + 0.4 * (burn - 1), 0, 0.8); }
     if (L < 0.002) return;
     // the body tips into the flight and banks with a turn; upright while it climbs, flatter in the glide
     const fwd = clamp(S.vz / 9, -0.5, 1), sideV = clamp(S.vx / 9, -1, 1);

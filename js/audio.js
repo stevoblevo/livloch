@@ -195,7 +195,7 @@ A.fx = function (e, W, cam) {
     case 'liftland': if (e.u === pl) { noise(0.1, 0.1, 380, 1, 'lowpass'); tone(edo(62), 0.06, 'triangle', 0.04); } break;
     case 'toll': if (e.col === ROOK_COL) { bell(49, 0.2 * near(e.x, e.z, 90), 1.8); bell(80, 0.1 * near(e.x, e.z, 90), 1.2); }
       bell(0, 0.4 * near(e.x, e.z, 90), 3.5); noise(0.7, 0.3 * near(e.x, e.z, 90), 500, 0.6, 'lowpass', 0, 80); break;
-    case 'cast': if (e.u === pl && e.i === 2 && e.u.def.id === 'rook') { bell(80, 0.12, 0.7); bell(80, 0.09, 0.6); tone(edo(111), 0.25, 'sine', 0.05, 0, 0.18); break; } // 0.25 rook: the hand bell, rung
+    case 'cast': if (e.u === pl && e.i === 2 && e.u.def.id === 'rook') { bell(80, 0.055, 0.7); bell(93, 0.035, 0.6); tone(edo(111), 0.25, 'sine', 0.04, 0, 0.18); break; } // 0.25 rook: the hand bell, rung
       if (e.u === pl) { noise(0.25, 0.12, 600, 1.2, 'bandpass', 0, 3200); tone(edo(e.i === 2 ? 49 : 62 + e.i * 5), 0.25, 'triangle', 0.1, edo(e.i === 2 ? 80 : 72)); } break;
     case 'blink': noise(0.2, 0.15 * near(e.x, e.z, 50), 3000, 3, 'bandpass', 0, 400); break;
     case 'zip': if (e.u === pl) tone(edo(31), 0.5, 'sawtooth', 0.06, edo(62)); break;

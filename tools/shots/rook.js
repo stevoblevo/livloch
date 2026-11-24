@@ -2,7 +2,7 @@
    player's controls (as a hand would), steps LL.sim twice at 1/60 s, hands the events to the renderer, and draws once. So
    the lift, the thread catch, the glide and the landing here are the model's, not a scripted height.
    The run: forward along the Middle thread, strafe right then left while firing, forward again, Lantern Lift along the
-   thread (the thread catches him), fire on the way down, land, run, the camera turns a quarter, a second lift off the
+   thread (the thread catches him), fire on the way down, land, the camera turns a quarter as he runs on (away from the Hush tower ahead), a second lift off the
    thread banking across the camera (its cooldown is zeroed for the picture: in play it is 9 s), land, stop.
    Writes OUT/f###.png and OUT/log.json (per frame: phase, height, liftT, glide, events).
    Env: LL_ROOT, OUT, W/H (640x400), PORT (8870-8879), LOOK, PAPER=1, HUD=1 (keep the HUD), ZOOM. */
@@ -24,24 +24,24 @@ const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split
   if (process.env.LOOK) await pg.evaluate((l) => { LL.cfg.look = l; document.body.setAttribute('data-look', l); LL.gfx.setLook(l); }, process.env.LOOK);
   await pg.click('#bPlay'); await pg.waitForTimeout(3500);
   await pg.evaluate((o) => { window.requestAnimationFrame = () => 0; if (!o.hud) document.getElementById('hud').hidden = true; const W = LL.sim.W, p = W.player;
-    p.useAI = false; p.x = 0; p.z = -64; p.y = 0; p.vx = p.vz = p.vy = 0; p.onGround = true; p.level = 3; p.yaw = 0;
+    p.useAI = false; p.x = 0; p.z = -18; /* clear of the Reign house behind (the camera needs 6 m) and short of the Hush tower ahead */ p.y = 0; p.vx = p.vz = p.vy = 0; p.onGround = true; p.level = 3; p.yaw = 0;
     W.heroes.forEach((h, i) => { if (h !== p) { h.useAI = false; h.x = (i ? 1 : -1) * 60; h.z = -120; h.ctl.mx = h.ctl.mz = 0; } });
     const v = LL.dbg.view; v.yaw = 0; v.pitch = -0.1; v.zoom = o.zoom; for (let k = 0; k < 6; k++) LL.gfx.frame(0.033, v); }, { hud: !!process.env.HUD, zoom: +(process.env.ZOOM || 0) });
   await pg.waitForTimeout(1200);
-  const N = 372, log = [];
+  const N = 332, log = [];
   for (let f = 0; f < N; f++) {
     const row = await pg.evaluate((f) => {
       const W = LL.sim.W, S = LL.sim, p = W.player, c = p.ctl, v = LL.dbg.view, dt = 1 / 30; let ph = '';
-      if (f >= 232 && f < 262) v.yaw += (Math.PI / 2) / 30;                                         // the camera turns a quarter
+      if (f >= 190 && f < 220) v.yaw += (Math.PI / 2) / 30;                                         // the camera turns a quarter
       const fx = Math.sin(v.yaw), fz = Math.cos(v.yaw), rx = -fz, rz = fx; let mx = 0, mz = 0, fire = false, lift = false, down = 0;
       if (f < 12) ph = 'idle';
-      else if (f < 42) { ph = 'run'; mx = fx; mz = fz; }
-      else if (f < 70) { ph = 'strafe right, firing'; mx = rx; mz = rz; fire = true; }
-      else if (f < 98) { ph = 'strafe left, firing'; mx = -rx; mz = -rz; fire = true; }
-      else if (f < 116) { ph = 'run'; mx = fx; mz = fz; }
-      else if (f < 205) { ph = p.liftT > 0 ? 'lift along the thread' : (p.glide ? 'glide, firing' : (f < 120 ? 'lift' : 'landed, run')); mx = fx; mz = fz; lift = f === 116; fire = p.glide && f > 150; down = p.glide ? 0.12 : 0; }
-      else if (f < 266) { ph = 'run, camera turning'; mx = fx; mz = fz; }
-      else if (f < 350) { if (f === 266) p.cds[1] = 0; lift = f === 266; const a = (f - 266) / 84; mx = fx * 0.75 + rx * Math.sin(a * 6.283) * 0.8; mz = fz * 0.75 + rz * Math.sin(a * 6.283) * 0.8; ph = p.liftT > 0 || f < 270 ? 'second lift, off the thread, banking' : (p.glide ? 'glide, banking' : 'landed'); }
+      else if (f < 34) { ph = 'run'; mx = fx; mz = fz; }
+      else if (f < 62) { ph = 'strafe right, firing'; mx = rx; mz = rz; fire = true; }
+      else if (f < 90) { ph = 'strafe left, firing'; mx = -rx; mz = -rz; fire = true; }
+      else if (f < 102) { ph = 'run'; mx = fx; mz = fz; }
+      else if (f < 190) { ph = p.liftT > 0 ? 'lift along the thread' : (p.glide ? 'glide, firing' : (f < 106 ? 'lift' : 'landed, run')); mx = fx; mz = fz; lift = f === 102; fire = p.glide && f > 136; down = p.glide ? 0.12 : 0; }
+      else if (f < 226) { ph = 'run, camera turning'; mx = fx; mz = fz; }
+      else if (f < 310) { if (f === 226) p.cds[1] = 0; lift = f === 226; const a = (f - 226) / 84; mx = fx * 0.75 + rx * Math.sin(a * 6.283) * 0.8; mz = fz * 0.75 + rz * Math.sin(a * 6.283) * 0.8; ph = p.liftT > 0 || f < 230 ? 'second lift, off the thread, banking' : (p.glide ? 'glide, banking' : 'landed'); }
       else ph = 'stop';
       const ev = [];
       for (let k = 0; k < 2; k++) {

@@ -68,7 +68,7 @@ All in `js/audio.js` through `tone`, `noise`, `bell` and `edo()`, so the pitches
 | Glide begins | a long soft band of air, a sine sagging a little |
 | The thread catches | three plucked notes going up (49, 67, 80) |
 | Landing | a soft low thud |
-| Landing Bell rung | two strokes of a small high bell (80) and a high sine |
+| Landing Bell rung | a small high bell (80, with 93 over it) and a high sine after |
 | Landing Bell tolls | the shared toll, with a brighter bell (49, 80) over it |
 
 Camera kick for his gun: 0.85 (Dora 0.7, Myra 1.0, Anna 1.25, the Skein Doll 0.45). The lift itself kicks the camera 0.5. Sparks and a ring at lift-off, sparks off the lantern while it lifts him, a gold ring and sparks at the thread catch, dust and a small ring where he lands.
