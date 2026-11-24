@@ -1360,7 +1360,7 @@ R.frame = function (dt, view) {
     m.legL.rotation.x = sw; m.legR.rotation.x = h.zip ? -0.35 : -sw;
     m.body.rotation.x = h.dashT > 0 || h.zip ? 0.45 : Math.min(0.22, sp * 0.02);
     if (h.zip && Math.random() < dt * 40) emit(h.x, 0.25, h.z, 1, 0xffe2a0, 1.5, 0.6, 1.2, 0);
-    if ((h.liftT > 0 || h.glide) && !R.reduced && Math.random() < dt * (h.liftT > 0 ? 34 : 9)) emit(h.x - Math.sin(h.yaw) * 0.45, h.y + 1.15, h.z - Math.cos(h.yaw) * 0.45, 1, h.def.col, 1.2, 0.55, -0.6, 0); // 0.25 rook: the lantern sheds sparks while it lifts him
+    if ((h.liftT > 0 || h.glide) && !R.reduced && Math.random() < dt * (h.liftT > 0 ? 13 : 4)) emit(h.x - Math.sin(h.yaw) * 0.5, h.y + 0.95, h.z - Math.cos(h.yaw) * 0.5, 1, h.def.col, 1.4, 0.4, -1.2, 0); // 0.25 rook: the lantern sheds sparks while it lifts him
     m.body.position.y = h.onGround ? st.body : 0;
     if (m.recoil > 0) m.recoil = Math.max(0, m.recoil - dt * 9);
     m.arm.rotation.x = -h.pitch - m.body.rotation.x - m.recoil * 0.25;

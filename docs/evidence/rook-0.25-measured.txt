@@ -1,0 +1,31 @@
+node tools/test.js (0.25 rook), the Rook and Lantern Lift tests and the total:
+PASS  Rook Vale is the fifth hero and the first four keep their indices
+PASS  Lantern Lift: about a second of rise, never above the cap, then a glide down slower than a fall
+PASS  Lantern Lift: steerable, he can fire aloft, and the jump cannot add height
+PASS  Lantern Lift respects its cooldown: no continuous flight
+PASS  Lantern Lift: a thread catches him once per lift, only when he flies along it
+PASS  Landing Bell tolls where he is when it rings, and waits for level three
+PASS  bots with Rook play whole matches, use the lift, and nothing breaks
+45 passed, 0 failed
+
+node tools/rookfly.js (one lift at 60 Hz holding forward, no AI, nothing else acting on him):
+off a thread: 2.48 s in the air, top 4.19 m, 21.5 m covered; lift at 0.02 s, 0.0 m up; glide at 1.02 s, 4.2 m up
+along the Middle thread: 2.80 s in the air, top 4.20 m, 24.3 m covered; lift at 0.02 s, 0.0 m up; liftthread at 0.12 s, 0.7 m up; glide at 1.37 s, 4.2 m up
+standing still: 2.48 s in the air, top 4.19 m, 0.0 m covered; lift at 0.02 s, 0.0 m up; glide at 1.02 s, 4.2 m up
+
+node tools/soak.js 8 (bots only, five heroes in rotation; simulator results, noisy, not human play):
+Gentle Reign wins 7/8 10:28W 12:27W 12:10W 9:38W 9:30W 10:16W 12:50W 12:28L
+Even Reign wins 3/8 12:05W 11:52L 11:59L 12:03L 11:53W 11:56W 12:28L 12:00L
+Cruel Reign wins 1/8 11:52L 11:38L 11:40L 11:55L 11:38L 11:38W 6:47L 11:46L
+
+node tools/shots/rook-audio.js (rendered offline; measures level and length, not how it sounds):
+rook shot                      peak 0.116  rms 0.0025  0.06 s
+dora shot (scale)              peak 0.135  rms 0.0027  0.05 s
+lift                           peak 0.107  rms 0.0057  0.46 s
+glide                          peak 0.072  rms 0.0040  0.48 s
+thread catch                   peak 0.115  rms 0.0072  0.34 s
+landing                        peak 0.040  rms 0.0009  0.04 s
+Landing Bell rung              peak 0.136  rms 0.0059  0.42 s
+Landing Bell tolls             peak 0.753  rms 0.0731  2.24 s
+shared toll (scale)            peak 0.794  rms 0.0679  2.24 s
+lift, another Rook 20 m off    peak 0.034  rms 0.0019  0.43 s

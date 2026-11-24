@@ -10,7 +10,7 @@ const { chromium } = require('/opt/npm-tools/node_modules/playwright');
 const fs = require('fs'), http = require('http'), path = require('path');
 const root = process.env.LL_ROOT || process.cwd(), out = process.env.OUT || '/tmp/h3/x', hero = +(process.env.HERO || 0), W_ = +(process.env.W || 640), H_ = +(process.env.H || 480), port = +(process.env.PORT || 8851);
 fs.mkdirSync(out, { recursive: true });
-const types = { '.js': 'text/javascript', '.html': 'text/html', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.mp4': 'video/mp4', '.css': 'text/css', '.json': 'application/json', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg' };
+const types = { '.js': 'text/javascript', '.html': 'text/html', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.mp4': 'video/mp4', '.css': 'text/css', '.json': 'application/json', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.svg': 'image/svg+xml' /* 0.25 rook: his paper sheet */ };
 const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split('?')[0]); if (u === '/') u = '/index.html'; fs.readFile(path.join(root, u), (e, d) => { if (e) { r.writeHead(404); r.end(); } else { r.writeHead(200, { 'content-type': types[path.extname(u)] || 'application/octet-stream' }); r.end(d); } }); }).listen(port);
 /* name, frames, move (local: x left, z forward, speed fraction), face (hero yaw relative to the camera's), fire, extra */
 const SEGS = [
@@ -39,7 +39,7 @@ const SEGS = [
     await pg.evaluate(() => { const W = LL.sim.W, p = W.player; while (W.heroes.length < LL.HEROES.length) { const h = Object.assign({}, W.heroes.find(x => x !== p)); h.id = 9990 + W.heroes.length; W.heroes.push(h); } // 0.25 rook: all five
       const have = W.heroes.map(h => h.def.id), want = LL.HEROES.map(d => d.id); W.heroes.forEach((h, i) => { h.def = LL.HEROES.find(d => d.id === want[i]); h.alive = true; h.hp = h.maxHp; h.useAI = false; });
       W.player = W.heroes[1]; W.heroes.forEach(h => { h.isPlayer = h === W.player; }); const pl = W.player, g = W.structs.find(s => s.team === 0 && s.kind === 'guardian' && s.lane === 1); pl.x = g.x + 6; pl.z = g.z + 30;
-      W.heroes.forEach((h, i) => { h.x0 = pl.x + (i - (W.heroes.length - 1) / 2) * 1.6; h.z0 = pl.z; h.x = h.x0; h.z = h.z0; h.y = 0; h.onGround = true; h.yaw = 0; });
+      const px0 = pl.x, pz0 = pl.z; W.heroes.forEach((h, i) => { h.x0 = px0 + (i - (W.heroes.length - 1) / 2) * 1.6; h.z0 = pz0; h.x = h.x0; h.z = h.z0; h.y = 0; h.onGround = true; h.yaw = 0; });
       LL.gfx.setLook(LL.cfg.look || 'snow'); LL.dbg.view.zoom = 0.2; LL.dbg.view.pitch = -0.18; });
     const N = +(process.env.N || 120);
     for (let f = 0; f < N * 2; f++) {

@@ -688,7 +688,7 @@ HERO.rook = {
     b.finL.rotation.set(0, PK.fin * fold, dihedral); b.finR.rotation.set(0, -PK.fin * fold, -dihedral);
     b.pack.rotation.set(wob * 0.025 * c.mix * Math.sin(c.ph * 2 + 0.6) * (1 - L), 0, wob * 0.03 * c.mix * Math.sin(c.ph) * (1 - L));
     // the lantern: steady on the ground, brighter in the glide, brightest while it is lifting him (with a flicker)
-    const burn = 1 + L * 0.2 + rs * (0.4 + wob * 0.08 * Math.sin(t * 31));
+    const burn = 1 + L * 0.15 + rs * (0.3 + wob * 0.08 * Math.sin(t * 31));
     if (fig.mat.userData.U) fig.mat.userData.U.uEmK.value = (fig.emK0 || (fig.emK0 = fig.mat.userData.U.uEmK.value)) * burn;
     if (fig.glow) { const g0 = this.glow.size * (1 + 0.5 * (burn - 1)); fig.glow.scale.set(g0, g0, 1); fig.glow.material.opacity = clamp(0.45 + 0.4 * (burn - 1), 0, 0.8); }
     if (L < 0.002) return;

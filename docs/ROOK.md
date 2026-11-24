@@ -45,7 +45,7 @@ Rules live in `sim.js` (`liftCast`, `liftStep`, `botLift`). The model emits `lif
 
 The back is the silhouette, because the play camera sits behind him: the frame, the fins rising past the shoulders, the lantern glowing in the middle, the scarf tail beside it.
 
-4,476 triangles, 32 bones, one draw call (measured by `tools/shots/heroes3d.js`, which prints `H3._dbg`).
+4,512 triangles, 32 bones, one draw call (measured by `tools/shots/heroes3d.js`, which prints `H3._dbg`).
 
 His own pose layer (`HERO.rook.pose`, one hook in `H3.pose`):
 
