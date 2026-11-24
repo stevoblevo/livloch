@@ -17,22 +17,25 @@
    LL.rng, never W.rng, so every line is reproducible and the policy itself does not move the model's draws.
 
    THE FIVE LESSONS, as behaviours (the order they should be found; "lessons known k" in the table is the first k):
-     0 none   Picks the middle thread and walks up behind its own troopers; shoots whatever is nearest in range; casts
-              whatever is ready at whatever it is shooting; buys its hero's build every half minute; fights on to 12%
-              health before walking home; runs to any other thread whose house is being hit. Never rides a thread,
-              never shoots an orb, never changes the view, never hunts.
+     0 none   Keeps the middle thread and walks up behind its own troopers (every level steps back out of a Hush
+              building's reach when none of its troopers is under it); shoots whatever is nearest in range; casts whatever is ready
+              at whatever it is shooting; buys its hero's build every half minute; fights on to 12% health before
+              walking home; runs to any other thread whose house is being hit. Never rides a thread, never shoots an
+              orb, never changes the view, never hunts, never dodges the Ness.
      1 Equal force cancels; break the symmetry. Keeps the middle thread (the patron's) and stands
               closer behind the wave; shoots its own soul orbs to secure them; hollows and buildings first among targets;
-              Echo in a fight; fishes the Ness from outside its reach when the lane is quiet, for the Greatness.
-     2 The world keeps time. Hunts the small ones (thieves) within 45 m before they get home; walks to ripe little
-              fruit within 30 m; presses the building while its thread's hollow is down (the respawn window); falls back
+              Echo in a fight; fishes the Ness from outside its reach when the lane is quiet, for the Greatness, and jumps
+              its bite.
+     2 The world keeps time. Hunts the small ones (thieves) within 45 m before they reach the Hush third of the valley; walks to ripe little
+              fruit within 30 m; presses the building with its troopers while its thread's hollow is down; falls back
               to its own house during a full red rain.
      3 Looking is an action. Answers the mood with the right view about five seconds after the warning; wears
               Rainwake through the rain; fetches a ripe big fruit within 55 m through its view, then back to snow.
      4 Distance is not fixed. Rides threads (to the front, and home to heal); kills the west stray when its crease is
               guarded and folds the lane next to it into its own; the Ness crease too once the Ness is down.
      5 You cannot keep everything lit. Stops running to every house under attack: leaves its thread only for an inner
-              house or the patron; walks home at 35% health instead of 12% and comes back mended.
+              house or the patron; walks home at 35%
+              health instead of 12% and comes back mended.
 
    WHAT IT MEASURES. Per difficulty and lessons known: the long match's win rate, median length, how losses came (by the
    gutter after 20:00, or overrun), structures lost each side, the player's deaths and what killed it, the longest
@@ -47,11 +50,12 @@ const P = { x: 0, z: 0, dx: 0, dz: 0 }, Q = { s: 0, d: 0 };
 function policy(W, L, seed) {
   const has = (k) => L.indexOf(String(k)) >= 0, r = LL.rng(seed * 7919 + (has('q') ? 14 : 13)), p = W.player;
   const st = { thinkT: 0, lane: 1, laneT: 0, pick: 0, buyT: 10, retreat: false, ax: p.x, ay: 1.5, az: p.z + 20, tgt: null, gx: p.x, gz: p.z,
-    lat: (r() * 2 - 1) * 2.5, strafe: r() * 9, ph: r() * 6, hp: {}, hurtAt: {}, moodAt: -1, fold: -1, orb: null, back: false, wantLens: null, zipOn: false };
+    lat: (r() * 2 - 1) * 2.5, strafe: r() * 9, ph: r() * 6, hp: {}, hurtAt: {}, covered: {}, moodAt: -1, fold: -1, orb: null, back: false, wantLens: null, zipOn: false };
   const en = 1, rel = S.rel;
   function enemyNext(l) { const s = W.st[en][l]; return s.outer.alive ? s.outer : (s.inner.alive ? s.inner : W.patron[en]); }
   function think() {
     const c = p.ctl, hpF = p.hp / p.maxHp, wasFold = st.fold; st.fold = -1;
+    st.covered = {}; for (const b of W.structs) if (b.team === 1 && b.alive) { for (const u of W.troopers) if (u.alive && u.team === 0 && hyp(u.x - b.x, u.z - b.z) < b.range - 2) { st.covered[b.id] = true; break; } }
     for (const s of W.structs) if (s.team === 0) { if (st.hp[s.id] != null && s.hp < st.hp[s.id] - 1) st.hurtAt[s.id] = W.t; st.hp[s.id] = s.hp; }
     if ((st.buyT -= 0.2) <= 0) { st.buyT = 30; const b = p.def.build; for (let i = 0; i < b.length; i++) if (p.items.indexOf(b[i]) < 0) { if (p.souls >= LL.ITEMS[b[i]].cost) S.buy(p, b[i]); break; } }
     // retreat
@@ -60,8 +64,8 @@ function policy(W, L, seed) {
     // views (lesson 3)
     const m = W.mood;
     if (has(3)) {
-      if (m && !m.done) { if (st.moodAt < 0) st.moodAt = W.t + 5; if (W.t >= st.moodAt) S.setLens(m.lens); }
-      else { st.moodAt = -1; if (W.red > 0) S.setLens('rain'); else if (!st.wantLens) S.setLens('snow'); }
+      if (m && !m.done) { if (st.moodAt < 0) st.moodAt = W.t + 5; if (W.t >= st.moodAt && !has('m')) S.setLens(m.lens); }
+      else { st.moodAt = -1; if (W.red > 0 && !has('r')) S.setLens('rain'); else if (!st.wantLens) S.setLens('snow'); }
     }
     // lane
     st.laneT -= 0.2;
@@ -81,17 +85,17 @@ function policy(W, L, seed) {
     let standS = W.front[0][lane] - (has(1) && !has('w') ? 3 : 6);
     const tw = enemyNext(lane), twS = tw === W.patron[en] ? Ln.len + 6 : rel(0, lane, tw.s);
     let pushing = false; for (const u of W.troopers) if (u.alive && u.team === 0 && hyp(u.x - tw.x, u.z - tw.z) < tw.range - 2) { pushing = true; break; }
-    const window = has(2) && W.hollowT[lane] > 0;
-    standS = Math.min(standS, pushing || window ? twS - (window ? 10 : 15) : twS - tw.range - 4);
-    if (has(2) && W.red > 0 && !W.thin) { const g = W.st[0][lane]; const own = g.outer.alive ? g.outer : g.inner; if (own.alive) standS = Math.min(standS, rel(0, lane, own.s) + 4); }
+    const window = has(2) && !has('k') && W.hollowT[lane] > 0 && pushing;
+    standS = Math.min(standS, pushing ? twS - (window ? 10 : 15) : twS - tw.range + (has(5) ? -4 : 3));
+    if (has(2) && !has('k') && W.red > 0 && !W.thin) { const g = W.st[0][lane]; const own = g.outer.alive ? g.outer : g.inner; if (own.alive) standS = Math.min(standS, rel(0, lane, own.s) + 4); }
     standS = U.clamp(standS, 8, Ln.len - 16);
     LL.lanePoint(lane, rel(0, lane, standS), P); let gx = P.x - P.dz * st.lat, gz = P.z + P.dx * st.lat, job = 'lane';
     // errands, in order of what a lesson says matters
     const free = !st.retreat && hpF > 0.45;
-    if (has(2) && !st.retreat) { let bt = null, bd = 45; for (const t of W.thieves) if (t.alive) { const d = hyp(t.x - p.x, t.z - p.z); if (d < bd) { bd = d; bt = t; } } if (bt) { gx = bt.x; gz = bt.z; job = 'thief'; st.tgt = bt; } }
+    if (has(2) && !has('t') && !st.retreat) { let bt = null, bd = 45; for (const t of W.thieves) if (t.alive && t.z < 40) { const d = hyp(t.x - p.x, t.z - p.z); if (d < bd) { bd = d; bt = t; } } if (bt) { gx = bt.x; gz = bt.z; job = 'thief'; st.tgt = bt; } }
     st.wantLens = null;
-    if (job === 'lane' && free && has(3) && !(m && !m.done) && !(W.red > 0)) { for (const f of W.fruit) if (f.ripe && f.lens && hyp(f.x - p.x, f.z - p.z) < 55) { st.wantLens = f.lens; S.setLens(f.lens); gx = f.x; gz = f.z; job = 'fruit'; break; } }
-    if (job === 'lane' && !st.retreat && has(2)) { for (const f of W.fruit) if (f.ripe && !f.lens && hyp(f.x - p.x, f.z - p.z) < 30 && (f.k !== 'hips' || hpF < 0.8)) { gx = f.x; gz = f.z; job = 'fruit'; break; } }
+    if (job === 'lane' && free && has(3) && !has('b') && !(m && !m.done) && !(W.red > 0)) { for (const f of W.fruit) if (f.ripe && f.lens && hyp(f.x - p.x, f.z - p.z) < 55) { st.wantLens = f.lens; S.setLens(f.lens); gx = f.x; gz = f.z; job = 'fruit'; break; } }
+    if (job === 'lane' && !st.retreat && has(2) && !has('f')) { for (const f of W.fruit) if (f.ripe && !f.lens && hyp(f.x - p.x, f.z - p.z) < 30 && (f.k !== 'hips' || hpF < 0.8)) { gx = f.x; gz = f.z; job = 'fruit'; break; } }
     if (job === 'lane' && free && has(4)) {
       for (let i = 0; i < W.creases.length; i++) {
         const k = W.creases[i]; if (k.t > 0 || k.cd > 0) continue;
@@ -152,6 +156,8 @@ function policy(W, L, seed) {
       const c = p.ctl;
       if (!p.alive) { c.fire = false; c.mx = c.mz = 0; st.retreat = false; return; }
       if (p.held) { if (r() < 3 * dt) c.jump = true; return; }
+      const ch = W.ness.alive && W.ness.chomp; // lesson 1 fishes the Ness, so it has learned its tell: jump over the bite
+      if (has(1) && ch && ch.ph === 'tell' && p.onGround && ch.t <= 0.3 && ch.t > 0.12 && hyp(p.x - ch.tx, p.z - ch.tz) < NESS.BITE_R + 2.5) c.jump = true;
       st.thinkT -= dt; if (st.thinkT <= 0) { st.thinkT = 0.2; think(); }
       if (st.tgt && !st.tgt.alive) st.tgt = null;
       st.strafe += dt;
@@ -159,6 +165,9 @@ function policy(W, L, seed) {
       const t = st.tgt;
       if (t && st.job !== 'home') { const tx = t.x - p.x, tz = t.z - p.z, tdd = hyp(tx, tz) || 1, sg = Math.sin(st.strafe * 1.5 + st.ph) > 0 ? 1 : -1; mx += -tz / tdd * 0.6 * sg; mz += tx / tdd * 0.6 * sg; if (t.big && tdd < 9) { mx -= tx / tdd * 0.8; mz -= tz / tdd * 0.8; } }
       const ns = W.ness; if (ns.alive && ns.rise >= 0.5 && !p.zip) { const kx = p.x - ns.x, kz = p.z - ns.z, kd = hyp(kx, kz), keep = ns.out ? 12 : NESS.REACH + 1; if (kd < keep && kd > 0.01 && (st.job === 'ness' || st.job === 'fold')) { mx += kx / kd * 1.2; mz += kz / kd * 1.2; } }
+      for (const b of W.structs) { // every level has learned that a Hush building shoots whoever stands under it alone
+        if (b.team !== 1 || !b.alive || b.dark || st.covered[b.id]) continue; const kx = p.x - b.x, kz = p.z - b.z, kd = hyp(kx, kz);
+        if (kd < b.range + 1.5 && kd > 0.01) { mx += kx / kd * 1.5; mz += kz / kd * 1.5; } }
       const mm = hyp(mx, mz); if (mm > 1) { mx /= mm; mz /= mm; } c.mx = mx; c.mz = mz;
       let aim = null;
       if (st.orb && !st.orb.dead) aim = [st.orb.x, st.orb.y + 0.25, st.orb.z];
