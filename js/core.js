@@ -102,6 +102,10 @@ C.DIFF = [
   { build: 1.5, towerH: 1.25, wave: 4, rainWave: 2, thinWave: 1, rainHollows: 3, thinHollows: 2, hollowHp: 3000, hollowDmg: 82, hollowBack: 18, thiefEvery: 50, orbDrift: 0.4 },
   { build: 1.8, towerH: 1.5, wave: 5, rainWave: 3, thinWave: 2, rainHollows: 3, thinHollows: 2, hollowHp: 3400, hollowDmg: 100, hollowBack: 18, thiefEvery: 44, orbDrift: 0.4 }
 ];
+/* lead, 0.27: First Rain keeps 0.26's hollows and thieves. The gate is the owner finishing three First Rains in a row by
+   choice, so the long-match tuning above (harder hollows, quicker thieves) must not make the short match harsher. */
+C.DIFF_FR = [{}, { hollowHp: 2100, hollowDmg: 72, hollowBack: 24, thiefEvery: 62 }, { hollowHp: 2700, hollowDmg: 90, rainWave: 2, thiefEvery: 44 }];
+C.dif = function (W) { const d = C.DIFF[W.diff]; return W.short ? Object.assign({}, d, C.DIFF_FR[W.diff]) : d; };
 
 LL.lanes = C.LANE_X.map(function (lx) {
   var pts = [[0, -104], [lx * 0.6, -92], [lx, -70], [lx, 70], [lx * 0.6, 92], [0, 104]];
