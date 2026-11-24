@@ -30,7 +30,7 @@ Keyboard and mouse, touch, or a controller. Start with **First rain**: six minut
 
 ## What is in the game
 
-**Four painted heroes.** Dora carries the little light. Anna is a field geologist with a rock hammer and a fawn with opinions. Myra Belle is the round purple thread-keeper who mends whoever stands near her. The Skein Doll is fast, fragile and everywhere. Each is a paper cutout cut from a painted turnaround sheet; they bend as they run, turn over like cards, lean, squash and land.
+**Five heroes.** Dora carries the little light. Anna is a field geologist with a rock hammer and a fawn with opinions. Myra Belle is the round purple thread-keeper who mends whoever stands near her. The Skein Doll is fast, fragile and everywhere. Rook Vale, the Wick Aviator (0.25), is a loch courier with a lantern-kite on his back: for a moment he flies, then glides down ([`docs/ROOK.md`](docs/ROOK.md)). Each is a small 3D figure, or, with one setting, a paper cutout cut from a painted turnaround sheet; they bend as they run, turn over like cards, lean, squash and land.
 
 **Two sides that are not mirrors.** The Reign has heroes, lantern-bearing troopers and lantern houses. The Hush has no heroes: it has hollows that lumber down each thread, small ones that steal souls or a house's light and run for the gate, tissue-paper spires, and a red rain every five minutes.
 

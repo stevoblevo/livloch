@@ -42,7 +42,7 @@ if (document.body.dataset.look === 'origami') { /* */ } // and on this
 | 3 | [`js/motion.js`](../js/motion.js) | `LL.paperMotion` | How a painted body moves: stride by distance walked, aim, landing squash, lean, four damped springs for follow-through. Also a Node module, so tests can load it | a unit | its own rig object |
 | 4 | [`js/props.js`](../js/props.js) | `LL.props` | Hush towers, troopers on both sides, hollows, the light a thief carries, rocks. Built in code, instanced | the unit it is handed | Three.js objects |
 | 5 | [`js/scenery.js`](../js/scenery.js) | `LL.scenery` | Trees, the shader loch, pools of light, ground growth, moon, mist, stars, fireflies, petals. Optional: without it gfx falls back to cone trees and a flat loch | `W` | Three.js objects |
-| 5a | [`js/heroes3d.js`](../js/heroes3d.js) | `LL.heroes3d` | 0.24: the four heroes as small 3D figures with a skeleton (and the Echo), posed every frame from the motion rig. Presentation only | the unit and its pose | its own Three.js objects |
+| 5a | [`js/heroes3d.js`](../js/heroes3d.js) | `LL.heroes3d` | 0.24: the heroes as small 3D figures with a skeleton (and the Echo); 0.25 adds Rook Vale, posed every frame from the motion rig. Presentation only | the unit and its pose | its own Three.js objects |
 | 5b | [`js/wardrobe.js`](../js/wardrobe.js) | `LL.wardrobe` (`WD`) | 0.23: things the player's hero wears or carries (trail, footfall, ring, light, dash), their unlock rules, the wardrobe screen and the end-screen box. Rules are pure and load under Node | `LL.cfg`, the player's hero model, events | its own Three.js objects, the DOM, `cfg.wear` and its counters |
 | 6 | [`js/gfx.js`](../js/gfx.js) | `LL.gfx` (`R`) | The scene: sky, ground, threads, structures, crowds, paper heroes, painted flats, the fox, cues, particles, camera, bloom and the per-view drawing pass | `W` | the canvas |
 | 7 | [`js/audio.js`](../js/audio.js) | `LL.audio` (`A`) | The score: eight recorded cues in `art/music/` on two crossfading decks that follow the match (see [`docs/MUSIC.md`](MUSIC.md)). The effects: a small WebAudio synth with no samples, written in 31 equal steps (`edo(n)`) and rounded to semitones unless "Saelion tuning" is on. Master, music and effects volumes and one mute | `W`, events | speakers |
@@ -131,6 +131,16 @@ The skeleton: hips, spine, chest, neck, head; arms (shoulder, elbow, hand); legs
 
 Afterimages are frozen copies of the skinned figure (`H3.ghost`, faded by `H3.step`); the wardrobe colours them as before. The Echo is the same figure, pale, running its own rig. Captures: `tools/shots/heroes3d.js` (close-ups by segment, every view, a turntable), `play.js` with `PAPER=1` for the cards.
 
+## Rook Vale and Lantern Lift (0.25)
+
+The fifth hero, from the Lantern Ford study branch (`work/lantern-ford-wick-aviator`); the full note is [`docs/ROOK.md`](ROOK.md). What a maintainer needs:
+
+- **Data.** The last row of `LL.HEROES` in `core.js`. He is appended, never inserted: saves store the hero as an index (`cfg.hero`), and a test pins the order.
+- **The ability kind `lift`.** `sim.js`: `liftCast` (from the ability switch in `cast`), `liftStep` (one hook line in `heroStep`, before the thread ride and the ordinary movement), `botLift` (from the switch in `botAbilities`). State on every hero: `liftT` (seconds of rise left), `glide`, `liftCaught`, `liftA` (the ability row in use). `liftStep` runs before `heroStep`'s own gravity, so it adds `C.GRAV * dt` back and applies its own vertical rule; it never lets him above the ability's `cap`. Events: `lift`, `liftthread`, `glide`, `liftland`. Any hero could be given a `lift` row; nothing in it names Rook.
+- **The figure.** `HERO.rook` in `heroes3d.js`. Two general additions came with it, both marked `0.25 rook`: `D.pose(fig, st, h, c)`, a hero's own layer called once in `H3.pose` after the shared legs and arms and before the aim IK (his lift pose, fins and lantern live there); and `material.userData.U`, the figure's shader uniforms, so a figure can turn its own glow up.
+- **Everything else** is a marked line or two: `RIGS.rook` and `GAITS.rook` in `motion.js`; `PAPER.rook`, the built shapes in `heroModel`, `KICK.rook`, four event cases and a spark line in `gfx.js`; his shot, the lift sounds and the two bells in `audio.js`; the picker's grid in `index.html`; the wardrobe preview's picture path.
+- **Captures.** `tools/shots/rook.js` (the real sim from the play camera), `tools/shots/heroes3d.js` with `HERO=4` (segments `lift`, `liftAim`, `liftBank`, `liftSide`), `tools/shots/picker.js`.
+
 ## Paper heroes: from sheet to screen
 
 The painted cards, the look until 0.23 and still one setting away: flat painted cutouts that always face the camera.
@@ -162,7 +172,7 @@ It joins the rest at lines marked `0.23 wardrobe`: `main.js` calls `WD.adopt` af
 
 ## How to add ...
 
-**A hero.** A row in `LL.HEROES` in `core.js`: stats, a gun, three abilities described by `kind` (`orb`, `line`, `nova`, `dash`, `blink`, `zone`, `turret`) plus numbers, so most heroes need no new code. A rig in `RIGS` in `motion.js`. Sheets and a `PAPER` line for the picture. Keep the lore notes at the top of `core.js` intact.
+**A hero.** A row appended to `LL.HEROES` in `core.js` (appended: saves store the hero as an index): stats, a gun, three abilities described by `kind` (`orb`, `line`, `nova`, `dash`, `blink`, `zone`, `turret`, `lift`) plus numbers, so most heroes need no new code. A rig in `RIGS` in `motion.js`. A `HERO.<id>` block in `heroes3d.js` for the figure. Sheets and a `PAPER` line for the picture. A `KICK` value in `gfx.js` and a shot sound in `audio.js`. Rook Vale (0.25) is the worked example; search for `0.25 rook`. Keep the lore notes at the top of `core.js` intact.
 
 **A rule.** In `sim.js`, as a function called from `S.step` or from an action. Emit an event with `fx({ k: 'name', ... })` if anything should be seen or heard, and answer it in `R.fx`, `A.fx` or `UI.fx`. Add a test to `tools/test.js` that drives the real sim and checks the rule. Say in the file's `DESIGN` header what the rule is for.
 

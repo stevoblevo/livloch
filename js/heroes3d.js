@@ -1,4 +1,4 @@
-/* LIVLOCH · heroes3d (0.24): the four heroes as small 3D figures with a skeleton, posed every frame from the motion rig.
+/* LIVLOCH · heroes3d (0.24): the heroes (four in 0.24; Rook Vale joined in 0.25, see HERO.rook) as small 3D figures with a skeleton, posed every frame from the motion rig.
 
    DESIGN
    - Why. The owner, playing over the shoulder: the painted cards "wander around and look really terrible" and "it just looks

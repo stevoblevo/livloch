@@ -19,7 +19,7 @@ This is a hobby project's honest summary, not advice from a lawyer, and no lawye
 | Music and recorded sound | [`art/music/`](art/music/) and any other recording in the repository |
 | Source turnaround and motion sheets | [`docs/sheets/`](docs/sheets/) |
 | Screenshots, frame strips and clips of the game | the images and videos in [`docs/evidence/`](docs/evidence/) and [`docs/media/`](docs/media/) (the `.txt` logs there are plain records) |
-| The names **Livloch** and **Saelion**, and the characters and world | Dora, Anna, Myra Belle, the Skein Doll, the guardian fox, the Reign, the Hush, the hollows and small ones, the Ness, the valley and its lore |
+| The names **Livloch** and **Saelion**, and the characters and world | Dora, Anna, Myra Belle, the Skein Doll, Rook Vale, the guardian fox, the Reign, the Hush, the hollows and small ones, the Ness, the valley and its lore |
 
 The text strings inside the code (hero blurbs, menu lines, mood lines) ship under MIT with the code, so a fork can run. That does not hand over the characters or the world they describe.
 
@@ -33,7 +33,7 @@ The text strings inside the code (hero blurbs, menu lines, mood lines) ship unde
 
 ## Where the art and music came from
 
-What is on record: the score was made with ElevenLabs Music from the owner's prompts ([`docs/MUSIC.md`](docs/MUSIC.md) has the prompts and how each take was picked); the turnaround and motion sheets were drawn by ChatGPT from the owner's prompts ([`docs/sheets/README.md`](docs/sheets/README.md)); the far ridge is described by the study it came from as an original generated backdrop; for the concept plates and key art, no generator or licence is recorded ([`docs/concepts/README.md`](docs/concepts/README.md)). Recording who made each picture, with what and under what terms is an open task on the roadmap ([`docs/ROADMAP.md`](docs/ROADMAP.md), Phase 5) and has to be done before any store release.
+What is on record: the score was made with ElevenLabs Music from the owner's prompts ([`docs/MUSIC.md`](docs/MUSIC.md) has the prompts and how each take was picked); the turnaround and motion sheets were drawn by ChatGPT from the owner's prompts ([`docs/sheets/README.md`](docs/sheets/README.md)); Rook Vale's turnaround, `art/heroes/wick-aviator.svg`, was drawn as an SVG on the Lantern Ford study branch (`work/lantern-ford-wick-aviator`), whose notes call it an original design and say no generator ([`docs/ROOK.md`](docs/ROOK.md)); the far ridge is described by the study it came from as an original generated backdrop; for the concept plates and key art, no generator or licence is recorded ([`docs/concepts/README.md`](docs/concepts/README.md)). Recording who made each picture, with what and under what terms is an open task on the roadmap ([`docs/ROADMAP.md`](docs/ROADMAP.md), Phase 5) and has to be done before any store release.
 
 ## Contributing art, music or sound
 
