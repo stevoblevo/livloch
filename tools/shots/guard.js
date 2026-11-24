@@ -15,7 +15,7 @@
    Writes OUT/f###.png, OUT/log.json (per frame: segment, height, guard, events) and OUT/seg.json.
    Env: LL_ROOT, HERO (0 Dora, 1 Anna, 2 Myra, 3 Skye, 4 Rook), OUT, W/H (640x400), PORT (8860-8869), LOOK, HUD=1 (the HUD on,
    fed the events and drawn each frame: the hat's pips, the boon's numbers), ZOOM,
-   REDUCED=1, LOW=1 (Lighter graphics), CAM (the camera's yaw about the hero, radians: 0 behind, 1.57 her left side, 3.14 in front), DMG (the shooters' damage, default 18; Dora's guard run uses 55 so the bubble fills and pops). */
+   REDUCED=1, LOW=1 (Lighter graphics), PAPER=1 (painted paper), CAM (the camera's yaw about the hero, radians: 0 behind, 1.57 her left side, 3.14 in front), DMG (the shooters' damage, default 18; Dora's guard run uses 55 so the bubble fills and pops). */
 const { chromium } = require('/opt/npm-tools/node_modules/playwright');
 const fs = require('fs'), http = require('http'), path = require('path');
 const root = process.env.LL_ROOT || process.cwd(), out = process.env.OUT || '/tmp/guard', W_ = +(process.env.W || 640), H_ = +(process.env.H || 400), port = +(process.env.PORT || 8861), hero = +(process.env.HERO || 0);
@@ -41,6 +41,7 @@ const BY = { dora: ['guard', 'boost', 'hat'], anna: ['guard', 'boost'], myra: ['
   await pg.route('**/*', rt => { const u = rt.request().url(); if (u.includes('three.min.js')) return rt.fulfill({ path: '/tmp/t/node_modules/three/build/three.min.js', contentType: 'text/javascript' }); if (u.startsWith('http://localhost')) return rt.continue(); return rt.abort(); });
   await pg.goto('http://localhost:' + port + '/'); await pg.waitForTimeout(2000);
   await pg.evaluate((i) => { LL.cfg.mode = 'match'; document.querySelectorAll('.hero')[i].click(); }, hero);
+  if (process.env.PAPER) await pg.evaluate(() => { LL.cfg.heroes3d = false; if (LL.gfx.setHeroes3d) LL.gfx.setHeroes3d(false); });
   if (process.env.LOOK) await pg.evaluate((l) => { LL.cfg.look = l; document.body.setAttribute('data-look', l); LL.gfx.setLook(l); }, process.env.LOOK);
   await pg.click('#bPlay'); await pg.waitForTimeout(3500);
   const id = await pg.evaluate((o) => { window.requestAnimationFrame = () => 0; if (!o.hud) document.getElementById('hud').hidden = true; else ['banner', 'quest', 'feed', 'coach'].forEach(n => { const el = document.getElementById(n); if (el) el.style.display = 'none'; }); if (o.red) LL.gfx.reduced = true; if (o.low && LL.gfx.setQuality) LL.gfx.setQuality(true);

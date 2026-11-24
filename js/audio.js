@@ -211,19 +211,19 @@ function guardSound(e, pl, near) {
       else if (e.kind === 'fray') { noise(0.32, 0.06 * g, 1200, 3, 'bandpass', 0, 6400); tone(edo(80), 0.18, 'triangle', 0.05 * g, 0, 0.06); }
       break;
     case 'guarded':
-      if (e.how === 'block') { if (g < 0.02) return; bell(31, (e.melee ? 0.16 : 0.1) * g, e.melee ? 0.9 : 0.6); noise(0.05, (e.melee ? 0.16 : 0.09) * g, 3200, 2); if (e.melee) noise(0.14, 0.12 * g, 400, 1, 'lowpass'); }
+      if (e.how === 'block') { if (g < 0.02) return; bell(31, (e.melee ? 0.12 : 0.1) * g, e.melee ? 0.9 : 0.6); noise(0.05, (e.melee ? 0.13 : 0.09) * g, 3200, 2); if (e.melee) noise(0.14, 0.09 * g, 400, 1, 'lowpass'); }
       else if (!mine) return;
       else if (e.how === 'absorb') { tone(edo(103), 0.12, 'sine', 0.05); tone(edo(111), 0.08, 'sine', 0.025, 0, 0.02); }
-      else noise(0.09, 0.05, 3800, 2.5, 'bandpass', 0, 1600);
+      else noise(0.09, 0.08, 3800, 2.5, 'bandpass', 0, 1600);
       break;
     case 'guardend': if (e.kind === 'bubble' && g >= 0.02) { tone(edo(62), 0.07, 'sine', 0.07 * g, edo(93)); noise(0.08, 0.06 * g, 2600, 1.2); tone(edo(93), 0.4, 'sine', 0.04 * g, 0, 0.05); } break;
     case 'tboost': if (g >= 0.02) { tone(edo(31), 0.3, 'triangle', 0.08 * g, edo(44)); tone(edo(49), 0.4, 'sine', 0.05 * g, 0, 0.05); noise(0.2, 0.03 * g, 2400, 2, 'bandpass', 0, 4800); } break;
     case 'hatready': if (mine) [31, 41, 49].forEach(function (n, i) { tone(edo(n + 31), 0.3, 'sine', 0.05, 0, i * 0.08); }); break;
     case 'hatthrow': if (hatSnd && mine) { hatSnd(); hatSnd = null; } { const s = whirr(1.8, 0.05 * g); if (mine) hatSnd = s; } noise(0.1, 0.06 * g, 1800, 1, 'bandpass', 0, 3600); break;
-    case 'hatcut': { const gc = mine ? 0.8 : 0.4 * near(e.x, e.z, 45); noise(0.06, 0.12 * gc, 2600, 2); tone(edo(62), 0.06, 'triangle', 0.04 * gc, edo(49)); break; }
+    case 'hatcut': { const gc = mine ? 0.8 : 0.4 * near(e.x, e.z, 45); noise(0.06, 0.2 * gc, 2600, 2); tone(edo(62), 0.06, 'triangle', 0.05 * gc, edo(49)); break; }
     case 'hatback': if (mine && hatSnd) { hatSnd(); hatSnd = null; } if (g >= 0.02) { noise(0.06, 0.06 * g, 700, 1, 'lowpass'); tone(edo(80), 0.25, 'sine', 0.04 * g, 0, 0.03); } break;
-    case 'boon': { const gb = mine ? 1 : 0.5 * near(e.x, e.z, 50); if (gb < 0.02) break; bell(31, 0.08 * gb, 1.6); bell(41, 0.06 * gb, 1.5); bell(49, 0.05 * gb, 1.4); break; }
-    case 'roll': if (g >= 0.02) noise(0.4, 0.08 * g, 600, 1.4, 'bandpass', 0, 2600); break;
+    case 'boon': { const gb = mine ? 1 : 0.5 * near(e.x, e.z, 50); if (gb < 0.02) break; bell(31, 0.05 * gb, 1.6); bell(41, 0.035 * gb, 1.5); bell(49, 0.03 * gb, 1.4); break; }
+    case 'roll': if (g >= 0.02) noise(0.4, 0.16 * g, 600, 1.4, 'bandpass', 0, 2600); break;
   }
 }
 A.fx = function (e, W, cam) {
