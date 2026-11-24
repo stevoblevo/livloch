@@ -80,6 +80,21 @@ var C = LL.C = {
   ULT_LEVEL: 3, MAX_ITEMS: 15,
   TBOOST: { r: 2.4, align: 0.7, minSp: 3, vy: 2.2, sp: 1.6, t: 0.7, sinkK: 0.4 } // 0.26 guard: the thread boost (see the DESIGN note above)
 };
+/* 0.27 tune: THE DIFFICULTY TABLE. One row per difficulty (0 Gentle, 1 Even, 2 Cruel); every number that differs by
+   difficulty lives here, and tools/tune.js measures them against the agreed target (docs/PLAN.md: Even winnable with two
+   of the five lessons, Cruel only with four, Gentle by someone who knows none).
+     build       the Hush's buildings: health times this; towerH: their damage to heroes times this
+     wave        small Hush troopers per thread per wave (the Reign sends 4)
+     rainWave    more of them per wave while a full red rain falls; thinWave: while a thin one falls (the mood answered)
+     rainHollows extra hollows a full rain brings, one per thread up to three; thinHollows: a thin rain
+     hollowHp, hollowDmg  a hollow's health and blow at 0:00 (both grow each minute); hollowBack: seconds before a
+                 fallen hollow returns to its thread
+     thiefEvery  seconds between small ones (Mercy and Ever Fallen scale it) */
+C.DIFF = [
+  { build: 1.2, towerH: 1, wave: 4, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 1500, hollowDmg: 55, hollowBack: 30, thiefEvery: 85 },
+  { build: 1.5, towerH: 1.25, wave: 4, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 2100, hollowDmg: 72, hollowBack: 24, thiefEvery: 62 },
+  { build: 1.8, towerH: 1.5, wave: 5, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 2700, hollowDmg: 90, hollowBack: 18, thiefEvery: 44 }
+];
 
 LL.lanes = C.LANE_X.map(function (lx) {
   var pts = [[0, -104], [lx * 0.6, -92], [lx, -70], [lx, 70], [lx * 0.6, 92], [0, 104]];

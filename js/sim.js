@@ -189,7 +189,7 @@ function buildStructs() {
     W.structs.push(p); W.patron[team] = p;
   }
   // the Hush has no heroes to defend with, so what it builds is heavier
-  const k = [1.2, 1.5, 1.8][W.diff], kd = [1, 1.25, 1.5][W.diff];
+  const k = C.DIFF[W.diff].build, kd = C.DIFF[W.diff].towerH; // 0.27 tune: the difficulty table in core.js
   W.structs.forEach(function (s) { if (s.team === 1) { s.hp = s.maxHp = s.maxHp * k; s.dmgH *= kd; } });
 }
 function buildStrays() {
@@ -727,7 +727,7 @@ function kill(t, src, hero) {
   const min = W.t / 60;
   fx({ k: 'death', u: t, x: t.x, y: t.y, z: t.z, team: t.team, kind: t.kind, by: hero }); // by: who to credit on screen (0.23); no rule reads it
   if (t.kind === 'trooper') {
-    if (t.big && !t.extra) W.hollowT[t.lane0] = [30, 24, 18][W.diff];
+    if (t.big && !t.extra) W.hollowT[t.lane0] = C.DIFF[W.diff].hollowBack;
     if (kt === 0 || kt === 1) {
       const val = (t.big ? 170 : 36) + Math.floor(min) * 2.5;
       const near = heroesNear(kt, t.x, t.z, 28);
@@ -1585,7 +1585,7 @@ function spawnWave() {
   const min = W.t / 60;
   for (let team = 0; team < 2; team++) for (let lane = 0; lane < 3; lane++) {
     const L = lanes[lane];
-    const cnt = team === 0 ? 4 : [4, 4, 5][W.diff] + (W.red > 0 && !W.thin ? 2 : 0) - (W.mercy ? 1 : 0);
+    const D = C.DIFF[W.diff], cnt = team === 0 ? 4 : D.wave + (W.red > 0 ? (W.thin ? D.thinWave : D.rainWave) : 0) - (W.mercy ? 1 : 0);
     for (let k = 0; k < cnt; k++) {
       const s = team === 0 ? 2 + k * 2.4 : L.len - 2 - k * 2.4;
       LL.lanePoint(lane, s, P);
@@ -1603,9 +1603,9 @@ function spawnWave() {
 function spawnHollow(lane, extra) {
   const L = lanes[lane], min = W.t / 60, s = L.len - 3;
   LL.lanePoint(lane, s, P);
-  const u = mk('trooper', 1, P.x, P.z, 1.15, 3.2, [1500, 2100, 2700][W.diff] + 110 * min);
+  const u = mk('trooper', 1, P.x, P.z, 1.15, 3.2, C.DIFF[W.diff].hollowHp + 110 * min);
   u.big = true; u.extra = !!extra; u.lane = lane; u.lane0 = lane; u.s = s; u.lat = 0; u.ranged = false; u.range = 3.2;
-  u.dmg = [55, 72, 90][W.diff] + 2.5 * min; u.rate = 1.1; u.speed = 4.4; u.atkT = 0.6;
+  u.dmg = C.DIFF[W.diff].hollowDmg + 2.5 * min; u.rate = 1.1; u.speed = 4.4; u.atkT = 0.6;
   W.troopers.push(u); fx({ k: 'hollow', lane: lane, extra: !!u.extra });
 }
 function pickMark() {
@@ -1661,7 +1661,7 @@ function hushStep(dt) {
   }
   else if (W.t >= W.redNext) {
     W.redNext += W.redEvery; W.red = C.RED_T; W.fallN++; if (W.mood && !W.mood.done) { W.mood.done = true; fx({ k: 'moodlost' }); }
-    fx({ k: 'red', thin: W.thin, n: W.fallN }); if (!W.thin) { for (let l = 0; l < 3; l++) spawnHollow(l, true); if (W.fallen) for (let k = 1; k < W.fallN; k++) spawnHollow(Math.floor(W.rng() * 3), true); }
+    fx({ k: 'red', thin: W.thin, n: W.fallN }); { const D = C.DIFF[W.diff], nh = W.fallen ? (W.thin ? 0 : 3) : (W.thin ? D.thinHollows : D.rainHollows); for (let l = 0; l < Math.min(3, nh); l++) spawnHollow(nh >= 3 ? l : [1, 0, 2][l], true); if (W.fallen && !W.thin) for (let k = 1; k < W.fallN; k++) spawnHollow(Math.floor(W.rng() * 3), true); } // 0.27 tune: how many hollows a rain brings is in C.DIFF
   }
   // mercy: when the Reign is two structures behind, the Hush eases off
   let rd = 0, hd = 0; for (let i = 0; i < W.structs.length; i++) { const s = W.structs[i]; if (!s.alive) { if (s.team === 0) rd++; else hd++; } }
@@ -1669,7 +1669,7 @@ function hushStep(dt) {
   if (W.calm > 0) W.calm -= dt;
   for (let l = 0; l < 3; l++) { if (W.hollowT[l] > 0 && W.calm <= 0) { W.hollowT[l] -= dt; if (W.hollowT[l] <= 0) { W.hollowT[l] = 0; spawnHollow(l, false); } } }
   if (W.calm <= 0) W.thiefT -= dt * (W.red > 0 ? (W.tune.stagger || W.thin ? 2 : 3.5) : 1);
-  if (W.thiefT <= 0) { W.thiefT = [85, 62, 44][W.diff] * (W.mercy ? 1.6 : 1) * (W.fallen ? 0.55 : 1); if (W.thieves.filter(u => u.alive).length < (W.tune.stagger ? 2 : 3)) spawnThief(); }
+  if (W.thiefT <= 0) { W.thiefT = C.DIFF[W.diff].thiefEvery * (W.mercy ? 1.6 : 1) * (W.fallen ? 0.55 : 1); if (W.thieves.filter(u => u.alive).length < (W.tune.stagger ? 2 : 3)) spawnThief(); }
   for (let i = 0; i < W.thieves.length; i++) { const u = W.thieves[i]; if (u.alive) { if (u.flash > 0) u.flash -= dt; thiefStep(u, dt); } }
 }
 function pickTarget(u, R, heroesOk) {

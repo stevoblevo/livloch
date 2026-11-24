@@ -21,7 +21,7 @@
               whatever is ready at whatever it is shooting; buys its hero's build every half minute; fights on to 12%
               health before walking home; runs to any other thread whose house is being hit. Never rides a thread,
               never shoots an orb, never changes the view, never hunts.
-     1 Equal force cancels; break the symmetry. Goes to the thread where the Hush's next building is weakest and stands
+     1 Equal force cancels; break the symmetry. Keeps the middle thread (the patron's) and stands
               closer behind the wave; shoots its own soul orbs to secure them; hollows and buildings first among targets;
               Echo in a fight; fishes the Ness from outside its reach when the lane is quiet, for the Greatness.
      2 The world keeps time. Hunts the small ones (thieves) within 45 m before they get home; walks to ripe little
@@ -45,7 +45,7 @@ const S = LL.sim, C = LL.C, U = LL.U, lanes = LL.lanes, hyp = Math.hypot, NESS =
 const P = { x: 0, z: 0, dx: 0, dz: 0 }, Q = { s: 0, d: 0 };
 
 function policy(W, L, seed) {
-  const r = LL.rng(seed * 7919 + 13), p = W.player, has = (k) => L.indexOf(String(k)) >= 0;
+  const has = (k) => L.indexOf(String(k)) >= 0, r = LL.rng(seed * 7919 + (has('q') ? 14 : 13)), p = W.player;
   const st = { thinkT: 0, lane: 1, laneT: 0, pick: 0, buyT: 10, retreat: false, ax: p.x, ay: 1.5, az: p.z + 20, tgt: null, gx: p.x, gz: p.z,
     lat: (r() * 2 - 1) * 2.5, strafe: r() * 9, ph: r() * 6, hp: {}, hurtAt: {}, moodAt: -1, fold: -1, orb: null, back: false, wantLens: null, zipOn: false };
   const en = 1, rel = S.rel;
@@ -67,9 +67,9 @@ function policy(W, L, seed) {
     st.laneT -= 0.2;
     if (st.laneT <= 0) {
       st.laneT = 40;
-      if (has(1)) { let bl = 1, bv = 1e9; for (let l = 0; l < 3; l++) { const e = enemyNext(l), v = e.hp / e.maxHp + (e.kind === 'guardian' ? 0 : e.kind === 'warden' ? 1 : 2); if (v < bv) { bv = v; bl = l; } } st.pick = bl; }
+      if (has('l')) { let bl = 1, bv = 1e9; for (let l = 0; l < 3; l++) { const e = enemyNext(l), v = e.hp / e.maxHp + (e.kind === 'guardian' ? 0 : e.kind === 'warden' ? 1 : 2); if (v < bv) { bv = v; bl = l; } } st.pick = bl; }
       else st.pick = 1;
-      if (W.t > 600 && has(1)) { const b = W.heroes.find(h => h !== p && h.alive); if (b) st.pick = b.ai.lane; }
+      if (W.t > 600 && has(1) && has('j')) { const b = W.heroes.find(h => h !== p && h.alive); if (b) st.pick = b.ai.lane; }
     }
     st.lane = st.pick;
     let fire = null; // a house of ours being hit
@@ -78,7 +78,7 @@ function policy(W, L, seed) {
     const lane = st.lane, Ln = lanes[lane];
     LL.laneNearest(lane, p.x, p.z, Q); const myS = rel(0, lane, Q.s), onLane = Q.d < 6;
     // where to stand
-    let standS = W.front[0][lane] - (has(1) ? 3 : 6);
+    let standS = W.front[0][lane] - (has(1) && !has('w') ? 3 : 6);
     const tw = enemyNext(lane), twS = tw === W.patron[en] ? Ln.len + 6 : rel(0, lane, tw.s);
     let pushing = false; for (const u of W.troopers) if (u.alive && u.team === 0 && hyp(u.x - tw.x, u.z - tw.z) < tw.range - 2) { pushing = true; break; }
     const window = has(2) && W.hollowT[lane] > 0;
@@ -96,6 +96,8 @@ function policy(W, L, seed) {
       for (let i = 0; i < W.creases.length; i++) {
         const k = W.creases[i]; if (k.t > 0 || k.cd > 0) continue;
         if (Math.abs(lane - (i === 0 ? 0 : 2)) > 1) continue;
+        const from = lane === k.b ? k.a : k.b, own = W.st[0][from], ownS = own.outer.alive ? own.outer : own.inner;
+        if (W.troopers.some(u => u.alive && u.team === 1 && u.big && u.lane === from && u.z < 10) || !ownS.alive || ownS.hp < ownS.maxHp * 0.6 || W.front[0][lane] < twS - 40) continue;
         if (k.guard.alive) { if (i === 0 && hyp(k.x - p.x, k.z - p.z) < 60 && W.t > 40) { gx = k.guard.x; gz = k.guard.z; job = 'stray'; st.tgt = k.guard; } break; }
         gx = k.x; gz = k.z; job = 'fold';
         if (S.creaseFor(p) === i) { const into = lane === k.b ? k.b : k.a, side = C.LANE_X[into] - k.x; c.ax = p.x + Math.sign(side || 1) * 10; c.az = p.z; c.ay = 1.5; if (wasFold === i) S.fold(p, i); else st.fold = i; }
@@ -103,7 +105,7 @@ function policy(W, L, seed) {
       }
     }
     const ns = W.ness;
-    if (job === 'lane' && free && has(1) && ns.alive && ns.rise >= 1 && hpF > 0.6 && Math.abs(lane - 2) <= 1) {
+    if (job === 'lane' && free && has(1) && !has('y') && ns.alive && ns.rise >= 1 && hpF > 0.6 && Math.abs(lane - 2) <= 1) {
       let busy = false; for (const u of W.troopers) if (u.alive && u.team === 1 && u.big && hyp(u.x - p.x, u.z - p.z) < 25) busy = true;
       if (!busy) { gx = ns.out ? ns.x - 14 : C.LOCH.x; gz = ns.out ? ns.z - 14 : C.LOCH.z - (NESS.REACH + 3.5); job = 'ness'; }
     }
@@ -122,7 +124,7 @@ function policy(W, L, seed) {
         if (u.struct && (!S.vuln(u) || (!u.pressed && !W.fray))) continue;
         if (!(u.kind === 'trooper' || u.kind === 'thief' || u.struct)) continue;
         let sc = -d;
-        if (has(1)) sc += u.big ? 40 : u.struct ? 25 : u.kind === 'thief' ? 50 : (1 - u.hp / u.maxHp) * 15;
+        if (has(1) && !has('p')) sc += u.big ? 40 : u.struct ? 25 : u.kind === 'thief' ? 50 : (1 - u.hp / u.maxHp) * 15;
         if (sc > bs) { bs = sc; best = u; }
       }
       if (!best && ns.alive && (job === 'ness' || (ns.out && hyp(ns.x - p.x, ns.z - p.z) < range) || (ns.hp < ns.maxHp * 0.98 && hyp(ns.x - p.x, ns.z - p.z) < range && has(1)))) best = ns;
@@ -130,8 +132,8 @@ function policy(W, L, seed) {
       st.tgt = best;
     }
     st.orb = null;
-    if (has(1) && W.orbs.length) for (const o of W.orbs) if (!o.dead && o.team === 0 && o.t < 2.2 && hyp(o.x - p.x, o.z - p.z) < 26 && !(st.tgt && st.tgt.big && hyp(st.tgt.x - p.x, st.tgt.z - p.z) < 10)) { st.orb = o; break; }
-    if (has(1) && S.echoReady() && st.tgt && (st.tgt.big || st.tgt.struct || st.tgt.kind === 'ness') && W.t - p.lastShotT < 0.5) S.echo();
+    if (has(1) && !has('o') && W.orbs.length) for (const o of W.orbs) if (!o.dead && o.team === 0 && o.t < 2.2 && hyp(o.x - p.x, o.z - p.z) < 26 && !(st.tgt && st.tgt.big && hyp(st.tgt.x - p.x, st.tgt.z - p.z) < 10)) { st.orb = o; break; }
+    if (has(1) && !has('e') && S.echoReady() && st.tgt && (st.tgt.big || st.tgt.struct || st.tgt.kind === 'ness') && W.t - p.lastShotT < 0.5) S.echo();
     // abilities: any player casts what is ready at what it is shooting
     const t = st.tgt, td = t ? hyp(t.x - p.x, t.z - p.z) : 1e9;
     for (let i = 0; i < 3; i++) {
@@ -196,6 +198,11 @@ function play(diff, mode, L, seed) {
   return o;
 }
 
+/* --set row.key=value,...: try numbers in C.DIFF without editing core.js. row is 0, 1, 2 or * for every row. */
+function apply(set) {
+  if (!set) return; for (const kv of set.split(',')) { const m = /^([0-2*])\.(\w+)=(-?[\d.]+)$/.exec(kv); if (!m) throw new Error('bad --set ' + kv);
+    for (let d = 0; d < 3; d++) if (m[1] === '*' || +m[1] === d) { if (!(m[2] in C.DIFF[d])) throw new Error('no C.DIFF key ' + m[2]); C.DIFF[d][m[2]] = +m[3]; } }
+}
 function jobs(a) {
   const out = []; for (const diff of a.diffs) for (const mode of a.modes) for (const L of a.lessons) for (let s = a.first; s < a.first + a.n; s++) out.push({ diff, mode, L, seed: s });
   return out;
@@ -206,7 +213,7 @@ function report(a, res) {
   const D = ['Gentle', 'Even', 'Cruel'];
   for (const mode of a.modes) {
     console.log('\n' + (mode === 'match' ? 'LONG MATCH' : 'FIRST RAIN') + ', ' + a.n + ' seeds from ' + a.first + ' (scripted player; simulator output, not human play)');
-    if (mode === 'match') console.log('diff    lessons  win   median  lost by gutter/overrun  structs lost R-H  player deaths (by)          longest quiet  folds moods ness');
+    if (mode === 'match') console.log('diff    lessons  win   margin  median  lost by gutter/overrun  structs lost R-H  player deaths (by)          longest quiet  folds moods ness');
     else console.log('diff    lessons  stars  3+    houses  structs lost R-H  player deaths  moods ness  star sets');
     for (const diff of a.diffs) for (const L of a.lessons) {
       const rs = res.filter(x => x.diff === diff && x.mode === mode && x.L === L).map(x => x.o), n = rs.length; if (!n) continue;
@@ -216,7 +223,7 @@ function report(a, res) {
       const name = L === '0' ? 'none' : L;
       if (mode === 'match') {
         const w = rs.filter(x => x.win).length;
-        console.log(D[diff].padEnd(7), name.padEnd(8), pct(w, n).padStart(4), U.fmtTime(med(rs.map(x => x.t))).padStart(7), ('  ' + rs.filter(x => x.how === 'gutter').length + '/' + rs.filter(x => x.how === 'overrun').length).padEnd(24),
+        console.log(D[diff].padEnd(7), name.padEnd(8), pct(w, n).padStart(4), avg(x => x.hLost - x.rLost).toFixed(1).padStart(7), U.fmtTime(med(rs.map(x => x.t))).padStart(7), ('  ' + rs.filter(x => x.how === 'gutter').length + '/' + rs.filter(x => x.how === 'overrun').length).padEnd(24),
           (avg(x => x.rLost).toFixed(1) + '-' + avg(x => x.hLost).toFixed(1)).padEnd(17), (avg(x => x.deaths).toFixed(1) + ' (' + byS + ')').padEnd(28), U.fmtTime(med(rs.map(x => x.gap))).padStart(6) + '      ',
           avg(x => x.folds).toFixed(1).padStart(4), avg(x => x.moods).toFixed(1).padStart(5), avg(x => x.ness).toFixed(1).padStart(4));
       } else {
@@ -227,13 +234,14 @@ function report(a, res) {
       }
     }
   }
-  if (a.lines) for (const x of res) console.log([['G', 'E', 'C'][x.diff], x.mode, 'L' + x.L, 'seed', x.seed, x.o.hero, U.fmtTime(x.o.t), x.o.how, 'R-H', x.o.rLost + '-' + x.o.hLost, 'deaths', x.o.deaths, x.o.stars != null ? 'stars ' + x.o.stars + ' ' + x.o.starSet : ''].join(' '));
+  if (a.lines) for (const x of res) console.log([['G', 'E', 'C'][x.diff], x.mode, 'L' + x.L, 'seed', x.seed, x.o.hero, U.fmtTime(x.o.t), x.o.how, 'R-H', x.o.rLost + '-' + x.o.hLost, 'deaths', x.o.deaths, 'floods', x.o.floods, 'chomps', x.o.chomps, 'ness', x.o.ness, x.o.stars != null ? 'stars ' + x.o.stars + ' ' + x.o.starSet : ''].join(' '));
 }
 
 function args() {
-  const v = process.argv.slice(2), a = { n: 8, first: 1, diffs: [0, 1, 2], modes: ['match', 'short'], lessons: ['0', '1', '12', '123', '1234', '12345'], lines: false, jobs: os.cpus().length };
+  const v = process.argv.slice(2), a = { n: 8, first: 1, diffs: [0, 1, 2], modes: ['match', 'short'], lessons: ['0', '1', '12', '123', '1234', '12345'], lines: false, jobs: os.cpus().length, set: '' };
   const pos = []; for (let i = 0; i < v.length; i++) {
     if (v[i] === '--mode') a.modes = [v[++i]]; else if (v[i] === '--diff') a.diffs = v[++i].split(',').map(Number);
+    else if (v[i] === '--set') a.set = v[++i];
     else if (v[i] === '--lessons') a.lessons = v[++i].split(','); else if (v[i] === '--lines') a.lines = true; else if (v[i] === '--jobs') a.jobs = +v[++i];
     else pos.push(v[i]);
   }
@@ -241,15 +249,16 @@ function args() {
   return a;
 }
 if (process.argv[2] === '--worker') {
-  process.on('message', (list) => { const out = list.map(j => Object.assign(j, { o: play(j.diff, j.mode, j.L, j.seed) })); process.send(out); process.exit(0); });
+  process.on('message', (msg) => { const list = msg.list; apply(msg.set); const out = list.map(j => Object.assign(j, { o: play(j.diff, j.mode, j.L, j.seed) })); process.send(out); process.exit(0); });
 } else if (require.main === module) {
   const a = args(), all = jobs(a), k = Math.max(1, Math.min(a.jobs, all.length)), res = []; let left = k;
   const t0 = Date.now();
-  if (k === 1) { for (const j of all) res.push(Object.assign(j, { o: play(j.diff, j.mode, j.L, j.seed) })); report(a, res); }
+  if (a.set) console.log('C.DIFF with --set ' + a.set);
+  if (k === 1) { apply(a.set); for (const j of all) res.push(Object.assign(j, { o: play(j.diff, j.mode, j.L, j.seed) })); report(a, res); }
   else for (let w = 0; w < k; w++) {
     const ch = cp.fork(__filename, ['--worker']);
     ch.on('message', (out) => { res.push(...out); if (--left === 0) { res.sort((p, q) => p.diff - q.diff || (p.mode < q.mode ? -1 : p.mode > q.mode ? 1 : 0) || (p.L < q.L ? -1 : p.L > q.L ? 1 : 0) || p.seed - q.seed); report(a, res); console.log('\n' + all.length + ' matches in ' + Math.round((Date.now() - t0) / 1000) + ' s'); } });
-    ch.send(all.filter((_, i) => i % k === w));
+    ch.send({ list: all.filter((_, i) => i % k === w), set: a.set });
   }
 }
 module.exports = { policy: policy, play: play };
