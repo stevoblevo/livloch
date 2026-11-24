@@ -45,6 +45,7 @@ You need Node 20 or newer (CI uses 20).
 |---|---|
 | `for f in js/*.js tools/*.js; do node --check "$f"; done` | syntax only |
 | `node tools/test.js` | the rule regressions and the motion rig, about 20 seconds. Must pass |
+| `node tools/smoke.js` | the page in headless Chromium: title, a First Rain, all eight views, Lighter graphics, back to the title; fails on any page or console error. Needs Playwright: `npm i --no-save playwright && npx playwright install chromium`. CI runs it on every pull request |
 | `node tools/soak.js [n]` | bot-only win rates per difficulty |
 | `node tools/timeline.js [difficulty] [seed]` | one bot match as a timeline |
 | `node tools/fallen.js [n]` | how long bots hold in Ever Fallen |
@@ -90,7 +91,7 @@ Pull requests and reports use four words for claims, from [`AGENTS.md`](AGENTS.m
 1. Fork the repository and make a branch: `fix/moon-halo`, `art/hush-towers`, `feel/hit-flash`.
 2. Make one change. Keep the pull request small enough to review in one sitting.
 3. Run the tests. Take a picture of anything visual.
-4. Open a pull request against `main` and fill in the template. CI runs the syntax checks and `node tools/test.js`.
+4. Open a pull request against `main` and fill in the template. CI runs the syntax checks, `node tools/test.js`, the debrief contracts and the browser smoke test (`node tools/smoke.js`).
 5. Someone reviews it. Expect questions; they are not a no.
 
 ## Workflow for agents
