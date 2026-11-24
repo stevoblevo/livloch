@@ -77,7 +77,8 @@ body.touch #quest { top: calc(var(--st) + 164px); }
 #hud .ab.cd { border-color: var(--gl); }
 @media (prefers-reduced-motion: no-preference) { #hud .ab.ready { animation: lanternLit 0.5s ease-out; } }
 @keyframes lanternLit { from { box-shadow: 0 0 30px 6px var(--hc, var(--gold)); } }
-#ammo { text-shadow: 0 1px 3px var(--shc), 0 0 6px rgba(var(--shr), 0.5); }
+#ammo { text-shadow: 0 1px 3px var(--shc), 0 0 6px rgba(var(--shr), 0.5); padding: 2px 4px 4px 16px; background: radial-gradient(ellipse 70% 70% at 62% 60%, rgba(var(--wash), 0.55), transparent 100%); }
+body.touch #hud #ammo { bottom: calc(var(--sb) + 2px); right: calc(var(--sr) + 2px); font-size: 20px; }
 #ammo small { border-top: 1px solid; border-image: linear-gradient(270deg, var(--gl), transparent) 1; padding-top: 2px; margin-top: 2px; }
 
 /* ---- the view's name ---- */
@@ -108,8 +109,21 @@ body.touch #ab0 { bottom: calc(var(--sb) + 168px); } body.touch #ab1 { bottom: c
 @media (max-height: 460px) {
   #miniF { width: 72px; height: 122px; }
   #great { top: calc(var(--st) + 138px); }
-  body.touch #quest { top: calc(var(--st) + 140px); }
+  body.touch #quest { top: calc(var(--st) + 146px); }
+  /* a phone on its side: the band moves beside the map, the buttons tighten, health sits under the band, the lanterns
+     stand in a column left of Jump and Dash, and the banner drops below the health bar */
+  body.touch #hud #score { left: calc(var(--sl) + 86px); transform: none; padding: 3px 24px 7px; font-size: 14px; } body.touch #score b { font-size: 18px; } body.touch #clock { font-size: 16px; }
+  body.touch #lvl { display: none; }
+  body.touch #topR { gap: 4px; padding-left: 12px; } body.touch #hud .btn.small { font-size: 12px; padding: 4px 7px; letter-spacing: 0.04em; }
+  body.touch #hpRow { top: calc(var(--st) + 64px); width: min(280px, 36%); }
+  body.touch #stam { top: calc(var(--st) + 88px); }
+  body.touch #banner { top: 34%; }
+  body.touch #ab0 { right: calc(var(--sr) + 244px); bottom: calc(var(--sb) + 14px); }
+  body.touch #ab1 { right: calc(var(--sr) + 244px); bottom: calc(var(--sb) + 92px); }
+  body.touch #ab2 { right: calc(var(--sr) + 244px); bottom: calc(var(--sb) + 170px); }
+  body.touch #feed { top: calc(var(--st) + 52px); max-width: 34%; }
 }
 /* Origami is a light view: the glass is paper-white, so the lit lantern needs its own dark text shadow, and the frames go square */
 body[data-look="origami"] #hud .ab, body[data-look="origami"] #miniF { border-radius: 2px; }
 body[data-look="origami"] #hud .ab.cd em, body[data-look="origami"] #hud .ab span { color: var(--paper); }
+body[data-look="origami"] #hud .ab.ready { background-image: radial-gradient(ellipse 62% 56% at 50% 46%, color-mix(in srgb, var(--hc, var(--gold)) 70%, #fff) 0%, var(--hc, var(--gold)) 45%, color-mix(in srgb, var(--hc, var(--gold)) 55%, #000) 100%); }

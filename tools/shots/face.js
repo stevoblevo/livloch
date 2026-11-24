@@ -51,6 +51,11 @@ const VP = { desk: { viewport: { width: 1280, height: 720 } }, desk960: { viewpo
     await pg.waitForTimeout(1500); await pg.screenshot({ path: out + '/' + size + '-picker.png' });
     const hit = await pg.evaluate(function () { const m = document.getElementById('bMute').getBoundingClientRect(); const over = []; document.querySelectorAll('#title button, #title .hero').forEach(function (el) { if (el.id === 'bMute') return; const r = el.getBoundingClientRect(); if (r.width && r.left < m.right && r.right > m.left && r.top < m.bottom && r.bottom > m.top) over.push(el.id || el.className + ':' + el.textContent.slice(0, 12)); }); return { mute: [m.left, m.top, m.width], overlaps: over }; });
     console.log('mute overlaps', JSON.stringify(hit));
+    for (const y of [120, 260, 420]) {
+      await pg.evaluate(function (y) { document.getElementById('title').scrollTop = y; }, y); await pg.waitForTimeout(300);
+      const h2 = await pg.evaluate(function () { const m = document.getElementById('bMute').getBoundingClientRect(); const over = []; document.querySelectorAll('#title .hero, #title .chip, #title .btn').forEach(function (el) { const r = el.getBoundingClientRect(); if (r.width && r.left < m.right && r.right > m.left && r.top < m.bottom && r.bottom > m.top) over.push(el.textContent.trim().slice(0, 14)); }); return { muteTop: Math.round(m.top), overlaps: over }; });
+      console.log('scrolled', y, JSON.stringify(h2)); if (y === 260) await pg.screenshot({ path: out + '/' + size + '-picker-scrolled.png' });
+    }
   }
   console.log(errs.length ? errs.join('\n') : 'no script errors');
   await ctx.close(); await b.close(); srv.close();

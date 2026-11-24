@@ -18,7 +18,7 @@
 (function () {
 'use strict';
 const LL = window.LL;
-const HOLD = 1.4, LIVE = 2.6, FADE = 2.4, SLOW_MS = 45, VEIL = 420, SETTLE = 2.1, REVEAL = 1.5;
+const HOLD = 1.4, LIVE = 2.6, FADE = 2.4, SLOW_MS = 45, VEIL = 420, SETTLE = 2.6, REVEAL = 1.5;
 const F = LL.face = { VEIL: VEIL };
 const HUD_AT = 1.3, HUD_IN = 0.8;
 let hudT = -1, plate = null, pl = 1, plTo = 1, plRate = 0, t = 0, fading = false, fell = false, fadeT = 0, ft = [], settleT = -1, pending = 0;
@@ -65,11 +65,13 @@ F.cam = function (camera, hero, dt) {
   const u = Math.min(1, settleT / SETTLE), e = u * u * u * (u * (u * 6 - 15) + 10);
   if (u >= 1) { settleT = -1; return; }
   p1.copy(camera.position); q1.copy(camera.quaternion); fov1 = camera.fov;
-  const fx = Math.sin(hero.yaw || 0), fz = Math.cos(hero.yaw || 0), dx = p1.x - hero.x, dz = p1.z - hero.z, dl = Math.hypot(dx, dz) || 1;
-  const bx = dl > 0.5 ? dx / dl : -fx, bz = dl > 0.5 ? dz / dl : -fz;
-  eye.set(hero.x + bx * 15, hero.y + 10.5, hero.z + bz * 15); at.set(hero.x - bx * 10, hero.y + 1.2, hero.z - bz * 10);
+  /* in polar terms round the hero: from a crane (higher, further, swung a little to one side) to where the play camera is */
+  const dx = p1.x - hero.x, dz = p1.z - hero.z, r1 = Math.hypot(dx, dz) || 0.01, a1 = Math.atan2(dx, dz), h1 = p1.y - hero.y;
+  const a = a1 + 0.75 * (1 - e), r = 24 + (r1 - 24) * e, h = 15 + (h1 - 15) * e;
+  eye.set(hero.x + Math.sin(a) * r, hero.y + h, hero.z + Math.cos(a) * r);
+  at.set(hero.x - Math.sin(a) * 8, hero.y + 1.4, hero.z - Math.cos(a) * 8);
   m4.lookAt(eye, at, up); q0.setFromRotationMatrix(m4);
-  camera.position.lerpVectors(eye, p1, e); camera.quaternion.copy(q0).slerp(q1, e); camera.fov = fov1 + (52 - fov1) * (1 - e);
+  camera.position.copy(eye); camera.quaternion.copy(q0).slerp(q1, Math.pow(e, 1.4)); camera.fov = fov1 + (50 - fov1) * (1 - e);
 };
 F.state = function () { return { t: +t.toFixed(2), fading: fading, fell: fell, live: F.wantLive(), median: ft.length ? ft.slice().sort(function (a, b) { return a - b; })[ft.length >> 1] : null, settle: settleT }; };
 })();
