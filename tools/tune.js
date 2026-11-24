@@ -260,7 +260,7 @@ function args() {
   return a;
 }
 if (process.argv[2] === '--worker') {
-  process.on('message', (msg) => { const list = msg.list; apply(msg.set); const out = list.map(j => Object.assign(j, { o: play(j.diff, j.mode, j.L, j.seed) })); process.send(out); process.exit(0); });
+  process.on('message', (msg) => { const list = msg.list; apply(msg.set); const out = list.map(j => Object.assign(j, { o: play(j.diff, j.mode, j.L, j.seed) })); process.send(out, () => process.exit(0)); }); // exit only once the results are sent: a large message is dropped by an early exit
 } else if (require.main === module) {
   const a = args(), all = jobs(a), k = Math.max(1, Math.min(a.jobs, all.length)), res = []; let left = k;
   const t0 = Date.now();
@@ -268,6 +268,7 @@ if (process.argv[2] === '--worker') {
   if (k === 1) { apply(a.set); for (const j of all) res.push(Object.assign(j, { o: play(j.diff, j.mode, j.L, j.seed) })); report(a, res); }
   else for (let w = 0; w < k; w++) {
     const ch = cp.fork(__filename, ['--worker']);
+    ch.on('exit', (code) => { if (code) { console.error('a worker failed, code ' + code); process.exit(1); } });
     ch.on('message', (out) => { res.push(...out); if (--left === 0) { res.sort((p, q) => p.diff - q.diff || (p.mode < q.mode ? -1 : p.mode > q.mode ? 1 : 0) || (p.L < q.L ? -1 : p.L > q.L ? 1 : 0) || p.seed - q.seed); report(a, res); console.log('\n' + all.length + ' matches in ' + Math.round((Date.now() - t0) / 1000) + ' s'); } });
     ch.send({ list: all.filter((_, i) => i % k === w), set: a.set });
   }

@@ -90,11 +90,16 @@ var C = LL.C = {
      hollowHp, hollowDmg  a hollow's health and blow at 0:00 (both grow each minute); hollowBack: seconds before a
                  fallen hollow returns to its thread
      thiefEvery  seconds between small ones (Mercy and Ever Fallen scale it)
-     orbDrift    what share of a soul orb nobody shot drifts to the nearest hero of its side anyway (shot, it is all of it) */
+     orbDrift    what share of a soul orb nobody shot drifts to the nearest hero of its side anyway (shot, it is all of it)
+   Until 0.27 these were numbers scattered through sim.js, never tuned; 0.27 moved them here and tuned Even and Cruel with
+   tools/tune.js (before and after tables: docs/evidence/tune-0.27-before.txt, -after.txt). Gentle is as it was. The
+   tuning showed the long match is decided by the red rain, so the rain's two halves are the main knobs: what a full rain
+   brings (rainWave, rainHollows) and what is left of it once the mood is answered (thinWave, thinHollows; until 0.27 a
+   thin rain brought nothing, and answering the mood alone won Cruel 97% of scripted matches). */
 C.DIFF = [
   { build: 1.2, towerH: 1, wave: 4, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 1500, hollowDmg: 55, hollowBack: 30, thiefEvery: 85, orbDrift: 0.7 },
-  { build: 1.5, towerH: 1.25, wave: 4, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 2100, hollowDmg: 72, hollowBack: 24, thiefEvery: 62, orbDrift: 0.7 },
-  { build: 1.8, towerH: 1.5, wave: 5, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 2700, hollowDmg: 90, hollowBack: 18, thiefEvery: 44, orbDrift: 0.7 }
+  { build: 1.5, towerH: 1.25, wave: 4, rainWave: 2, thinWave: 1, rainHollows: 3, thinHollows: 2, hollowHp: 3000, hollowDmg: 82, hollowBack: 18, thiefEvery: 50, orbDrift: 0.4 },
+  { build: 1.8, towerH: 1.5, wave: 5, rainWave: 3, thinWave: 2, rainHollows: 3, thinHollows: 2, hollowHp: 3400, hollowDmg: 100, hollowBack: 18, thiefEvery: 44, orbDrift: 0.4 }
 ];
 
 LL.lanes = C.LANE_X.map(function (lx) {

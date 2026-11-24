@@ -1,0 +1,1 @@
+C.DIFF with --set 1.hollowHp=2100,1.hollowBack=24,1.thinHollows=0,1.thinWave=0,1.thiefEvery=62,1.orbDrift=0.7,1.hollowDmg=72,2.hollowHp=2700,2.hollowDmg=90,2.rainWave=2,2.thinHollows=0,2.thinWave=0,2.orbDrift=0.7
