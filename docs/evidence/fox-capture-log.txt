@@ -1,0 +1,21 @@
+unlock state: {"unlocked":true,"pet":true,"enabled":true,"boxDisabled":false,"boxChecked":true}
+theft scene: {"carry":true,"state":1,"dark":true}
+fox-tether-snow.jpg | fox beside the player, thread to the laden thief at (3,3); guardian dark=true, thief state=1
+fox-tether-ink.jpg | same scene, Inkblot Noir look
+fox-tether-memory.jpg | same scene, Memory look
+fox-idle-snow.jpg | fox present with no laden thief: no thread should be drawn
+fps (SwiftShader, idle scene): pet on median 300 ms mean 308.38 ms; pet off median 283.2 ms mean 262.39 ms
+fox-settings-on.jpg | pause > Settings with the fox unlocked: checkbox enabled and checked
+after toggle off: {"pet":false,"enabled":false,"saved":false}
+fox-off-snow.jpg | fox toggled off in Settings: no fox beside the player
+after toggle back on: {"pet":true,"enabled":true,"saved":true,"savedUnlocked":true}
+fox-on-again-snow.jpg | fox toggled back on in Settings: fox returns
+desktop script errors: none
+after full reload + new match: {"unlocked":true,"pet":true,"enabled":true,"boxDisabled":false,"boxChecked":true}
+fox-persisted-snow.jpg | after a full page reload: fox restored from the saved setting, no manual re-enable
+fox-leanback-snow.jpg | Lean Back world (lean=true, hero plays itself=true): fox visible beside the hero
+leanback state: {"lean":true,"auto":true,"playerAI":true}; errors: none
+fox-reduced-snow.jpg | prefers-reduced-motion emulated; gfx.reduced=true (fox bob and tail sway are disabled in code when this is set)
+reduced state: gfx.reduced=true; errors: none
+fox-tether-phone.jpg | phone viewport, theft scene: carry=true, state=1
+phone errors: none
