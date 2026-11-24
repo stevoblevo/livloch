@@ -71,6 +71,6 @@ Prompts, so anyone can make a matching cue:
 
 ## Unverified
 
-Nobody has listened to the picks in the game yet. The fit of each take, the crossfade points, the balance against the
-effects and the battle thresholds all need a person with speakers. Report what sounds wrong in an issue labelled
+The owner plays with sound on; nobody else has reported yet. The fit of each take, the crossfade points, the balance
+against the effects and the battle thresholds want more ears on more speakers. Report what sounds wrong in an issue labelled
 `music`.
