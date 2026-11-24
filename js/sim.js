@@ -122,7 +122,7 @@ function losClear(ax, az, bx, bz) {
 function mk(kind, team, x, z, r, h, hp) {
   const u = { id: W.nextId++, kind: kind, team: team, x: x, y: 0, z: z, vx: 0, vy: 0, vz: 0, yaw: team === 1 ? Math.PI : 0,
     r: r, h: h, hp: hp, maxHp: hp, alive: true, struct: false, flash: 0, slowT: 0, slowAmt: 0,
-    dotT: 0, dotDps: 0, dotSrc: null, dotAcc: 0, atkT: 0, tgt: null, tgtT: Math.random() * 0.3, lastHurt: -99, owner: null };
+    dotT: 0, dotDps: 0, dotSrc: null, dotAcc: 0, atkT: 0, tgt: null, tgtT: W.rng() * 0.3, lastHurt: -99, owner: null };
   W.units.push(u); return u;
 }
 function spawnPos(team, slot) { return { x: (slot - 1) * 4.5, z: (team === 0 ? -1 : 1) * C.SPAWN_Z }; }
@@ -171,7 +171,7 @@ function buildStructs() {
         const s = team === 0 ? L.len * f : L.len * (1 - f);
         LL.lanePoint(lane, s, P);
         const u = mk(kind, team, P.x, P.z, r, h, hp);
-        u.struct = true; u.lane = lane; u.s = s; u.pressed = false; u.scanT = Math.random() * 0.25; u.ramp = 0; u.lastTgt = null; u.immuneFx = 0;
+        u.struct = true; u.lane = lane; u.s = s; u.pressed = false; u.scanT = W.rng() * 0.25; u.ramp = 0; u.lastTgt = null; u.immuneFx = 0;
         W.structs.push(u); return u;
       };
       const outer = mkS('guardian', 0.37, 2.4, 9, 2600); outer.range = 20; outer.rate = 0.9; outer.dmgT = 70; outer.dmgH = 46;
@@ -543,8 +543,8 @@ function mkHero(defIdx, team, slot, isPlayer) {
     lastShotT: -9, lastDmgHeroT: -9, incomeAcc: 0, breath: false, zestT: 0, furyT: 0, hipsT: 0, fruit: 0,
     botMul: isPlayer ? 1 : 0.78,
     ctl: { mx: 0, mz: 0, ax: sp.x, ay: 1.5, az: sp.z + (team === 0 ? 20 : -20), fire: false, jump: false, dash: false, ab: [false, false, false], reload: false, zip: false, zipDir: 0 },
-    ai: { thinkT: Math.random() * 0.2, lane: slot, mode: 'lane', gx: sp.x, gz: sp.z, target: null, wantFire: false, orb: null, orbT: 0,
-      ax: sp.x, ay: 1.5, az: sp.z, strafeT: Math.random() * 9, phase: Math.random() * 6, lat: (Math.random() * 2 - 1) * 3,
+    ai: { thinkT: W.rng() * 0.2, lane: slot, mode: 'lane', gx: sp.x, gz: sp.z, target: null, wantFire: false, orb: null, orbT: 0,
+      ax: sp.x, ay: 1.5, az: sp.z, strafeT: W.rng() * 9, phase: W.rng() * 6, lat: (W.rng() * 2 - 1) * 3,
       jit: team === 1 ? [1.5, 0.9, 0.4][diff] : 0.9, track: team === 1 ? [5, 8, 12][diff] : 8, buildI: 0, standS: 10 }
   });
   h.liftT = 0; h.liftMax = 0; h.glide = false; h.liftCaught = false; h.liftA = null; // 0.25 rook: Lantern Lift state (liftCast, liftStep)
@@ -1588,7 +1588,7 @@ function spawnWave() {
       const lat = ranged ? 0 : ((k % 3) - 1) * 2.2 + (k > 3 ? 0.9 : 0);
       const u = mk('trooper', team, P.x - P.dz * lat, P.z + P.dx * lat, 0.7, 1.7, (ranged ? 210 : 300) + 14 * min);
       u.lane = lane; u.s = s; u.lat = lat; u.ranged = ranged; u.range = ranged ? 15 : 8.5; u.dmg = (ranged ? 17 : 9.5) + 0.5 * min; u.rate = ranged ? 1.0 : 0.7; u.speed = 5.2;
-      u.atkT = Math.random() * 0.5;
+      u.atkT = W.rng() * 0.5;
       W.troopers.push(u);
     }
   }
@@ -1683,7 +1683,7 @@ function trooperStep(u, dt) {
   LL.lanePoint(u.lane, u.s, P);
   const px = P.x - P.dz * u.lat, pz = P.z + P.dx * u.lat;
   const offLane = hyp(u.x - px, u.z - pz);
-  if (u.tgtT <= 0) { u.tgtT = 0.3 + Math.random() * 0.1; u.tgt = pickTarget(u, 13, offLane < 9); }
+  if (u.tgtT <= 0) { u.tgtT = 0.3 + W.rng() * 0.1; u.tgt = pickTarget(u, 13, offLane < 9); }
   let tg = u.tgt; if (tg && !tg.alive) tg = u.tgt = null;
   const sp = u.speed * (u.slowT > 0 ? 1 - u.slowAmt : 1) * (W.flood ? floodTrooper(u, dt) : 1); // 0.26 ness: troopers float and drift in the flood
   let gx = px, gz = pz, move = true;
