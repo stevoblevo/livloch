@@ -78,7 +78,23 @@ var C = LL.C = {
   LIT_T: 80, FALLEN_RED_EVERY: 150,
   RED_WARN: 30, MOOD_GUESSES: 3,
   ULT_LEVEL: 3, MAX_ITEMS: 15,
-  TBOOST: { r: 2.4, align: 0.7, minSp: 3, vy: 2.2, sp: 1.6, t: 0.7, sinkK: 0.4 } // 0.26 guard: the thread boost (see the DESIGN note above)
+  TBOOST: { r: 2.4, align: 0.7, minSp: 3, vy: 2.2, sp: 1.6, t: 0.7, sinkK: 0.4 }, // 0.26 guard: the thread boost (see the DESIGN note above)
+  /* 0.28 play: lessons 4 and 5 made to matter. Rules in sim.js under "0.28 play"; why, and the measurements, in
+     docs/evidence/play-0.28-*.txt.
+       ARRIVE   a rider who lets go of a thread after `min` metres toward the front lands with it: small Hush within `r`
+                take `dmg` (+ `dmgMin` a minute) and stagger (`slow` for `slowT` s); a hollow staggers and takes a quarter
+       FOLD_CATCH  seconds a small Hush trooper caught in a folded-away thread's crease takes to crumple
+       EMBER    mending at home pays: a hero whom the fountain has mended by `need` of its health in one visit leaves
+                carrying a light; on foot within `r` of one of its side's hurt or dark houses, the light goes into that
+                house: lit again at once, and mended by `heal` of its health. One light at a time; lost on death
+       SLACK    the tide between rains: every `every` s from `first` (halfway between two rains) one thread goes slack
+                for `t` s, said `warn` s ahead. The houses of both sides on it (never a patron) stop firing and lose
+                their protection, and take `mul` times the harm. The Hush leans on it (C.DIFF slackHollows). Not in
+                First Rain or Ever Fallen, and never once the threads fray at 15:00 */
+  ARRIVE: { min: 45, r: 8, dmg: 140, dmgMin: 10, slow: 0.5, slowT: 2.5 },
+  FOLD_CATCH: 2.5,
+  EMBER: { need: 0.4, r: 9, heal: 0.2 },
+  SLACK: { first: 150, every: 300, warn: 20, t: 50, mul: 1.5 }
 };
 /* 0.27 tune: THE DIFFICULTY TABLE. One row per difficulty (0 Gentle, 1 Even, 2 Cruel); every number that differs by
    difficulty lives here, and tools/tune.js measures them against the agreed target (docs/PLAN.md: Even winnable with two
@@ -90,6 +106,7 @@ var C = LL.C = {
      hollowHp, hollowDmg  a hollow's health and blow at 0:00 (both grow each minute); hollowBack: seconds before a
                  fallen hollow returns to its thread
      thiefEvery  seconds between small ones (Mercy and Ever Fallen scale it)
+     slackHollows  (0.28 play) hollows the Hush sends down a thread as it goes slack (C.SLACK)
      orbDrift    what share of a soul orb nobody shot drifts to the nearest hero of its side anyway (shot, it is all of it)
    Until 0.27 these were numbers scattered through sim.js, never tuned; 0.27 moved them here and tuned Even and Cruel with
    tools/tune.js (before and after tables: docs/evidence/tune-0.27-before.txt, -after.txt). Gentle is as it was. The
@@ -98,9 +115,9 @@ var C = LL.C = {
    thin rain brought nothing, and answering the mood alone won Cruel 97% of scripted matches). In First Rain the rain is
    the ending, so there a thin rain still brings nothing (sim.js). */
 C.DIFF = [
-  { build: 1.2, towerH: 1, wave: 4, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 1500, hollowDmg: 55, hollowBack: 30, thiefEvery: 85, orbDrift: 0.7 },
-  { build: 1.5, towerH: 1.25, wave: 4, rainWave: 2, thinWave: 1, rainHollows: 3, thinHollows: 2, hollowHp: 3000, hollowDmg: 82, hollowBack: 18, thiefEvery: 50, orbDrift: 0.4 },
-  { build: 1.8, towerH: 1.5, wave: 5, rainWave: 3, thinWave: 2, rainHollows: 3, thinHollows: 2, hollowHp: 3400, hollowDmg: 100, hollowBack: 18, thiefEvery: 44, orbDrift: 0.4 }
+  { build: 1.2, towerH: 1, wave: 4, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 1500, hollowDmg: 55, hollowBack: 30, thiefEvery: 85, orbDrift: 0.7, slackHollows: 0 },
+  { build: 1.5, towerH: 1.25, wave: 4, rainWave: 2, thinWave: 1, rainHollows: 3, thinHollows: 2, hollowHp: 3000, hollowDmg: 82, hollowBack: 18, thiefEvery: 50, orbDrift: 0.4, slackHollows: 1 },
+  { build: 1.8, towerH: 1.5, wave: 5, rainWave: 3, thinWave: 2, rainHollows: 3, thinHollows: 2, hollowHp: 3400, hollowDmg: 100, hollowBack: 18, thiefEvery: 44, orbDrift: 0.4, slackHollows: 1 }
 ];
 /* lead, 0.27: First Rain keeps 0.26's hollows and thieves. The gate is the owner finishing three First Rains in a row by
    choice, so the long-match tuning above (harder hollows, quicker thieves) must not make the short match harsher. */
