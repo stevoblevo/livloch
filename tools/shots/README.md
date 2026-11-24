@@ -23,3 +23,4 @@ Example: `LL_ROOT=$PWD node tools/shots/dream.js`
 | `scenery.js` | 0.20 scenery: fixed poses (`fight`, `lane`, `loch`, `west`, `edge`, `base`, `high`) in several views in one run; prints scene draw calls with post off; `EVAL` runs code first |
 | `fight.js` | A wide frame mid-fight, for judging the look against the key art. `LOOK`, `T` (seconds simulated), `W`, `H`, `PORT`, `OUT` |
 | `motion.js` | Scripted motion: walk away, turn side-on, jump, fire, camera circles. `HERO`, `DASH=1` (a dash early on), `ZOOM`, `FOX`, `N`, `PORT`, `OUT`; encode the frames with ffmpeg |
+| `music.js` | 0.21 music and mute wiring: clicks once, then reports which cue each deck plays on the title, in a match, in a fight, in red rain, paused and at a win; screenshots of both mute buttons. Proves wiring, not sound. `PORT`, `OUT` |
