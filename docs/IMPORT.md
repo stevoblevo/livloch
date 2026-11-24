@@ -30,6 +30,8 @@
 | 0.20 | artifact version `1795472183-a8bb` | Pages `v0.20/` (PR 33, `171b5bc`); saelion.co `release/livloch-0.20-20261123` (`2c804f8`), deployment `dpl_HczkQeNpkVWBgV3Y3Pbg7gSiYS59` | `release/0.20` (`df4bc79`) |
 | 0.21 | no artifact (the owner made everything public on 23 November; the Claude artifact stays at 0.20) | Pages `v0.21/` (PR 34); saelion.co `release/livloch-0.21-20261123` (`fd828be`), deployment `dpl_18bykBf9NAmruQ1cogR7NCMkqjoo` | `release/0.21` (`4cc4fbb`) |
 | 0.22 | no artifact | Pages `v0.22/` (PR 35); saelion.co `release/livloch-0.22-20261123` (`623d59a`), deployment `dpl_JrwbDhvH5qohtmfWLtFepbX9JKSm` | `release/0.22` (`580ee17`) |
+| 0.22.1 | no artifact | the social card only: Pages PR 36; saelion.co `release/livloch-0.22.1-20261123` (`0deb0b7`), deployment `dpl_AFFinaPFWYg6wbgEYKb65BfzHVze` | `release/0.22.1` |
+| 0.22.2 | no artifact | calmer motion in play: Pages PR 37 (`livloch/` only); saelion.co `release/livloch-0.22.2-20261123` (`6e8e62a`), deployment `dpl_A2js8PuMDcwsZXNhbdqAJXTRkKZZ` | `release/0.22.2` (`a64d50d`) |
 
 ## Versioning
 This session cannot push tags or create releases (the GitHub proxy refuses both), so each version is a branch: `release/0.4`, `release/0.5`, `release/0.6`, `release/0.6.1`, `release/0.7`, `release/0.8`, `release/0.9`. They never move. Turn them into tags from a normal clone with `git tag v0.7 origin/release/0.7 && git push --tags` if tags are wanted.

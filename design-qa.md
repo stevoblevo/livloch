@@ -57,3 +57,9 @@ The sprite has **43 unique symbols**, with pinned upstream source and hashes in 
 The initial source baseline was `4cc4fbb`; before publishing the branch, main was checked at `c398b2b44a7b61601174f8b5fb74293e40e3b0d6`. Its six relevant application files were byte-for-byte unchanged. The branch uses the newer main as its parent and preserves the newer collaboration, licensing and CI files.
 
 Claude's `work/0.22-public` also replaces the old copy-success wording. This implementation removes that old handler and preserves its GitHub issue/Discussion destination inside `js/debrief.js`. The sibling branch's footer, performance-report text and DESIGN-comment changes should be retained when the lead integrates both branches. No merge, release or production publication is part of this PR.
+
+### Compatibility update, 23 November
+
+Claude merged 0.22 into this branch at `3fb1ba15`, retaining the debrief's copy handler and the GitHub feedback destination. The follow-up compatibility merge brings in main `5265b8f8` (0.22.2). The three overlaps—`README.md`, `docs/DORA.md` and `index.html`—all merged cleanly. The result keeps the owner-listens corrections, full social-card metadata, current version/footer, motion improvements and all debrief hooks.
+
+The current-main baseline passes **33 game tests**; the combined source passes **9 debrief contracts** and syntax checks for 21 JavaScript files and the root Python tools. `core.js` and `sim.js` are byte-identical between the previous PR head and this main. The debrief renderer, rules, styles and symbols are unchanged, so the earlier visual captures still describe those components; their sample run is not a new 0.22.2 playthrough. CI results for the updated commit and the lead's remaining live WebGL acceptance check are recorded on [PR #43](https://github.com/stevoblevo/livloch/pull/43).

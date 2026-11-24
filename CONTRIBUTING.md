@@ -10,7 +10,7 @@ If you only have five minutes: [play a First Rain](https://saelion.co/livloch) a
 |---|---|---|
 | Playing | Play a match and write a feel report: where it was fun, where you stopped | [Feel report](https://github.com/stevoblevo/livloch/issues/new?template=feel.yml) |
 | Your hardware | Send a frame-rate report from your phone, laptop or desktop (pause screen, "Copy the report") | [`performance` issues](https://github.com/stevoblevo/livloch/labels/performance) |
-| Listening | Play with sound on and tell us what you heard. Almost nobody has | [`sound` issues](https://github.com/stevoblevo/livloch/labels/sound) |
+| Listening | Play with sound on and tell us what you heard. So far only the owner has | [`sound` issues](https://github.com/stevoblevo/livloch/labels/sound) |
 | Fixing things | Take a bug, reproduce it, fix it with a test where the rule lives in the model | [`bug`](https://github.com/stevoblevo/livloch/labels/bug), [`good first issue`](https://github.com/stevoblevo/livloch/labels/good%20first%20issue) |
 | Motion and feel | How the paper heroes run, turn, land and shoot; hit reactions; camera | [`motion`](https://github.com/stevoblevo/livloch/labels/motion), [`feel`](https://github.com/stevoblevo/livloch/labels/feel) |
 | Drawing and painting | Painted sheets for towers, troopers, hollows, the Ness, trees; textures | [`art`](https://github.com/stevoblevo/livloch/labels/art), [`art/flats/README.md`](art/flats/README.md) |

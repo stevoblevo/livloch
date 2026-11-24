@@ -18,7 +18,7 @@
      harmonic seventh). Since 0.21 they are rounded to the nearest ordinary semitone unless the player turns on
      "Saelion tuning" in Settings, so by default every chime is in tune with the score (A major).
    - Securing soul orbs climbs a ladder of those steps while a combo lasts.
-   - Nobody in this project has listened to the mix on real speakers yet; levels were set by measurement
+   - Levels were set by measurement; the owner plays with sound on, and reports from other ears are wanted
      (LUFS for the score, A.offline for effects). */
 (function () {
 'use strict';
