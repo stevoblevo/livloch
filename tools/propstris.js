@@ -9,7 +9,7 @@ const LK = { hush: 0x161230, add: true, team: [0xff9a3c, 0x9fb4ff], snowcaps: tr
 const parent = new T.Group(), PG = P.troopers(T, LK, parent, null, h => new T.Color(h), o => o);
 console.log('Reign trooper ' + tri(PG.reign.geometry) + ' + lantern core ' + tri(PG.lantern.geometry));
 console.log('Hush small one ' + tri(PG.hush.geometry) + ' + eyes ' + tri(PG.eyes.geometry));
-console.log('hollow ' + tri(parent.children[0].geometry) + ' + eyes ' + tri(parent.children[1].geometry));
+console.log('hollow ' + tri(parent.children[0].geometry) + ' + lights ' + tri(parent.children[1].geometry) + ' (eyes, and since 0.25 the rift down its back and the tears on its flanks)');
 [['guardian', 2.4], ['warden', 3]].forEach(function (k) { const g = new T.Group(), lit = new T.Group();
   P.hushTower(T, { kind: k[0], r: k[1], x: 10, z: 80, team: 1 }, g, lit, { glowSprite: function () { return { material: { userData: {} } }; }, teamCol: 0x9fb4ff, LK: LK });
   console.log('Hush ' + k[0] + ': tissue ' + tri(lit.children[0].geometry) + ', light ' + tri(lit.children[1].geometry)); });

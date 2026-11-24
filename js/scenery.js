@@ -10,6 +10,10 @@
      Hush. One instanced draw; a pool dims when its structure goes dark and goes out when it falls.
    - Ground: the floor away from the threads goes darker and cooler (a hook in buildGround), and one baked mesh carries the
      grass tufts, glowing flowers and mushrooms; another the petal drifts under the blossom trees.
+   - The verge (0.25): the ground within about 4.4 m of each thread, which is most of the play camera's frame. One painted
+     ribbon per thread (a worn path the thread's light falls on, its edge, drifts against the thread, meadow dabs and small
+     flowers), flat on the ground so it never hides feet or soul orbs, blended over each look's own ground; and a line of low
+     plants stepping in to just outside where troopers march.
    - Sky: a ringed moon with a halo in front of the painted ridge, two bands of mist at the foot of the ridge, twinkling stars.
    - Air: fireflies by the trees and the water, and blossom petals tumbling down around the camera. Both animate on the GPU.
 
@@ -18,8 +22,8 @@
    - Every look gets its own palette below (PAL), so nothing here goes through the look's colour map: materials are
      flagged lk/bl/solid and geometry lk, instanced meshes ilk.
    - Instanced or baked; no per-frame allocation; nothing per frame on the CPU except the pools' dimming.
-   - Lighter graphics (R.low): fewer wall trees, plants, fireflies and petals. Reduced motion: no sway, flicker or petals;
-     fireflies and water move slowly. */
+   - Lighter graphics (R.low): fewer wall trees, plants, fireflies and petals, no verge and no verge plants. Reduced motion:
+     no sway, flicker or petals; fireflies and water move slowly. */
 (function () {
 'use strict';
 const LL = window.LL, C = LL.C, U = LL.U;

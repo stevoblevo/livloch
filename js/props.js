@@ -4,11 +4,15 @@
    - Read-only, like gfx.js: shapes and materials only. gfx.js calls in here from a few marked hook lines; nothing in here
      reads the sim except the unit passed to it.
    - Lore drives the shapes. Reign = warm lantern light: a trooper is a small cloaked lantern bearer in a straw hat like the
-     heroine's. The Hush = torn tissue paper, the coldest thing on screen, pale lilac eyes, and they steal light: a small one
-     is a tissue wraith with a ragged hem, a hollow is a big hunched one, a thief carries the light it took, and a Hush tower
-     is a crooked spire of layered torn tissue clutching a cold hoard of light at its top.
+     heroine's, and (0.25) a cape in the team's colour down the back like hers, because the player spends most of a match
+     behind their own troopers. The Hush = torn tissue paper, the coldest thing on screen, pale lilac eyes, and they steal
+     light: a small one is a tissue wraith with a ragged hem, a hollow is a big hunched one (0.25: with a rift of the cold
+     light it hoards torn down its back, a crest of shards, and tears on its flanks, so it reads from behind and the side),
+     a thief carries the light it took, and a Hush tower is a crooked spire of layered torn tissue clutching a cold hoard of
+     light at its top.
    - Cheap: each tower is two meshes (tissue, light) plus its glow sprite and ward; troopers stay instanced; every lantern,
-     stolen light and hollow's eyes share one Points draw. Sway is done on the GPU from one time uniform.
+     stolen light and hollow's eyes and rift share one Points draw; a hollow's rift and tears are in its eyes mesh. Sway is
+     done on the GPU from one time uniform.
    - One shader trick, used everywhere here: geometry carries `glw` (how much this vertex glows: torn edges, scarves) and
      `sway` (how much it moves in the wind: strips, hems). Emissive = material emissive x glw (x vertex colour for Reign).
    - Looks: Reign troopers are authored in Lantern colours and pass through each look's map like the rest of the valley
