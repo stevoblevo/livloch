@@ -18,6 +18,8 @@
      legs run, up to about 35 degrees; the chest turns back to the aim, so a strafe is a sideways run, not a sliding card.
    - Arms pump against the legs; the gun arm comes up to the aim (the hero's pitch) by IK; Anna winds up and throws.
      Ability poses (stomp, brace, throw), landing squash, the jump, a dash, riding a thread and the fall come from the rig.
+   - 0.25 air: each hero has its own air (see the "0.25 air" section): take-off, rise, top, fall and landing for all; Anna's
+     rock-hop and the Skein Doll's spinning tuck for their second jumps; Myra Belle's hover with fast wings; Dora's hat.
    - Cloth: hinged panels around the body that trail on springs (and swing past when you stop) and are pushed out by the
      knees and shins, so legs do not go through skirts. The braid is a verlet chain that keeps off the back. The lantern,
      the hat, yarn and spools are damped pendulums driven by how their anchor accelerates.
@@ -794,6 +796,88 @@ function dangle(fig, name, dt, o) {
   bone.rotation.set(S.x, 0, S.z);
 }
 
+/* ---------- 0.25 air ----------
+   Poses for the air, from the rig's air envelopes (st.airs, from LL.paperMotion's airStep) and the unit. Every hero: the
+   take-off (legs straight, toes pointed, arms swung up, chest up, cloth kicked), the rise (one knee up, the other leg
+   trailing, arms up and out), the top (knees tucked, arms wide), the fall (legs reaching down and apart, arms up for
+   balance) and the landing (the rig's squash: knees give, arms come forward and down). The second jump, by hero (AIR2):
+   Anna's rock-hop (one boot stamps down and back on nothing, the other knee drives up, the arms pump, the coat flares,
+   the braid is whipped down) and the Skein Doll's tuck (a loose forward somersault about her middle, knees in, arms and
+   yarn flung out). Myra Belle's hover: legs dangle and kick slowly, the body tilts toward where she drifts and bobs with
+   each beat, the skirt bells and flutters, the curl bounces, the wings open wider and beat fast. Dora's hat presses down
+   at the take-off, lifts off her head at the top and lands with her. Reduced motion: still shapes, no somersault, no beat. */
+const AIR2 = { anna: 'hop', skein: 'tuck' };
+const AF = { x: 0, y: 0, z: 0, p: 0 }, AA = { p: 0, ab: 0, el: 0 }, NOAIR = { tko: 0, rise: 0, apex: 0, fall: 0, dbl: 0, dblP: 1, hov: 0, tk: 9, n: 0 };
+function airPrep(fig, st, h, dt, red) {
+  const S = fig.S, A = st.airs || NOAIR;
+  const K = S.ak || (S.ak = { n: A.n, tk: 9, flip: 0, hopE: 0, tuckE: 0, hov: 0, land: 0 });
+  K.A = A; K.style = AIR2[fig.id] || 'hop';
+  const p = A.dblP;
+  K.hopE = K.style === 'hop' && p < 1 ? ss(0, 0.1, p) * (1 - ss(0.45, 1, p)) : 0;
+  K.tuckE = K.style === 'tuck' && p < 1 ? ss(0, 0.1, p) * (1 - ss(0.78, 1, p)) : 0;
+  K.flip = K.style === 'tuck' && p < 1 && !red ? TAU * (1 - Math.cos(Math.PI * p)) / 2 : 0;
+  K.hov = A.hov; K.land = red ? 0 : clamp(st.squash || 0, 0, 1);
+  const takeoff = A.tk < K.tk; K.tk = A.tk; // a new take-off or a new second jump: kick the cloth, the hat, the braid
+  if (!red && takeoff) { S.aflv = (S.aflv || 0) + 2.4; S.hatYv = (S.hatYv || 0) - 0.9; }
+  if (A.n !== K.n) { K.n = A.n; if (!red) { S.aflv = (S.aflv || 0) + (K.style === 'tuck' ? 3 : 2.6); airWhip(fig, h, K.n); } }
+  return K;
+}
+/* Foot targets in the air (the hips' ground frame: x left, y up from the soles' plane, z forward), blended in by air. */
+function airFoot(fig, K, k, side, fw, legL, air, t, red) {
+  const A = K.A; let R = A.rise, Ap = A.apex, F = A.fall; if (R + Ap + F < 1e-3) Ap = 1; const w = R + Ap + F;
+  let y = ((k ? 0.2 : 0.4) * R + (k ? 0.34 : 0.48) * Ap + (k ? 0.05 : 0.1) * F) / w;
+  let z = ((k ? -0.24 : 0.22) * R + (k ? -0.06 : 0.2) * Ap + (k ? -0.06 : 0.1) * F) / w;
+  let p = (0.55 * R + 0.4 * Ap + 0.3 * F) / w, x = side * fw * (1.05 + 0.2 * F / w);
+  const tk = A.tko; y += (0 - y) * tk; z += ((k ? -0.12 : 0.04) - z) * tk; p += (1.0 - p) * tk; // take-off: straight legs, toes pointed
+  if (K.hopE > 0) { const e = K.hopE; // the right boot stamps down and back on nothing; the left knee drives up
+    y += ((k ? -0.08 : 0.66) - y) * e; z += ((k ? -0.38 : 0.36) - z) * e; p += ((k ? -0.15 : 0.35) - p) * e; }
+  if (K.tuckE > 0) { const e = K.tuckE, l = red ? 0 : Math.sin(K.flip * 1.5 + k * 2.1) * 0.08; // knees in, loosely
+    y += (0.64 + l - y) * e; z += (0.32 - l - z) * e; p += (0.5 - p) * e; x += (side * fw * 1.5 - x) * e; }
+  if (K.hov > 0.001) { const e = K.hov, ph = (red ? 0 : t * 3.4) + k * Math.PI, kick = Math.max(0, Math.sin(ph)); // dangling, kicking slowly
+    y += (0.08 + 0.18 * kick - y) * e; z += (0.12 * Math.sin(ph) + (k ? -0.05 : 0.05) - z) * e; p += (0.6 + 0.2 * kick - p) * e; x += (side * fw * 0.85 - x) * e; }
+  AF.x += (x - AF.x) * air; AF.y += (fig.P.ankle + legL * y - AF.y) * air; AF.z += (z * legL - AF.z) * air; AF.p += (p - AF.p) * air;
+}
+/* Arm angles in the air (as the arm loop's p: + back, - forward and up; ab: out from the side; el: elbow bend), then the
+   landing. Seen from behind (the play camera) an arm raised forward hides behind the body, so the height is in ab: the
+   take-off throws both arms up and out in a V, the rise and the fall keep them up and out, the top a little lower. */
+function airArm(fig, K, k, side, air, red) {
+  const A = K.A; let R = A.rise, Ap = A.apex, F = A.fall; if (R + Ap + F < 1e-3) Ap = 1; const w = R + Ap + F;
+  let p = (-0.6 * R - 0.3 * Ap - 0.5 * F) / w, ab = side * (1.7 * R + 1.25 * Ap + 1.6 * F) / w, el = (0.55 * R + 0.35 * Ap + 0.7 * F) / w;
+  const tk = A.tko; p += (-0.55 - p) * tk; ab += (side * 2.5 - ab) * tk; el += (0.6 - el) * tk; // take-off: both arms up and out
+  if (K.hopE > 0) { const e = K.hopE; p += ((k ? -1.5 : 0.75) - p) * e; ab += (side * (k ? 0.35 : 0.3) - ab) * e; el += ((k ? 0.5 : 0.35) - el) * e; } // a pump against the legs
+  if (K.tuckE > 0) { const e = K.tuckE, fl = red ? 0 : Math.sin(K.flip + k * 2.4); p += (-0.5 + 0.7 * fl - p) * e; ab += (side * (1.35 + 0.2 * fl) - ab) * e; el += (0.8 + 0.4 * fl - el) * e; } // flung out, flopping
+  if (K.hov > 0.001) { const e = K.hov, b = red ? 0 : Math.sin(fig.S.wph || 0); p += (-0.35 + 0.06 * b - p) * e; ab += (side * (0.6 + 0.05 * b) - ab) * e; el += (0.55 - el) * e; }
+  AA.p += (p - AA.p) * air; AA.ab += (ab - AA.ab) * air; AA.el += (el - AA.el) * air;
+  const ld = K.land; if (ld > 0.001) { AA.p += (-0.65 - AA.p) * ld * 0.7; AA.ab += (side * 0.4 - AA.ab) * ld * 0.5; AA.el += (0.95 - AA.el) * ld * 0.6; }
+}
+/* The whole figure: the somersault and the hop's lean turn it about its middle; the hover tilts it toward the drift and
+   bobs it with the beat. Then the cloth flare spring (read by cloth()). */
+function airRoot(fig, K, dt, red) {
+  const S = fig.S, P = fig.P, r = fig.root, A = K.A;
+  let rx = K.flip + 0.22 * K.hopE - 0.08 * A.tko, rz = 0, dy = 0;
+  if (K.hov > 0.001 && !red) { const e = K.hov; rx += clamp(S.vz * 0.035, -0.12, 0.2) * e; rz -= clamp(S.vx * 0.04, -0.2, 0.2) * e; dy += 0.03 * Math.sin((S.wph || 0) - 0.6) * e; }
+  if (rx || rz) { const cy = P.pelv + 0.12, v = V('apv').set(0, cy, 0); r.rotation.set(rx, 0, rz); v.applyEuler(r.rotation); r.position.x -= v.x; r.position.y += cy - v.y; r.position.z -= v.z; }
+  r.position.y += dy;
+  const fT = red ? 0 : 0.14 * K.hov + 0.05 * K.hov * Math.sin((S.wph || 0) + 1.2) + 0.35 * K.tuckE + 0.12 * K.hopE + 0.1 * K.land;
+  if (S.afl == null) { S.afl = 0; S.aflv = S.aflv || 0; } spring(S, 'afl', 'aflv', fT, 70, 7, dt);
+}
+/* A second jump whips the braid: its links are given a speed down and to one side (alternating), growing to the tip. */
+function airWhip(fig, h, n2) { const c = fig.S.chbr; if (!c) return; const n = c.p.length - 1, s = n2 % 2 ? 1 : -1, lx = Math.cos(h.yaw || 0) * s, lz = -Math.sin(h.yaw || 0) * s;
+  for (let i = 1; i <= n; i++) { const k = i / n; c.q[i].y = c.p[i].y + 0.03 * k; c.q[i].x = c.p[i].x - lx * 0.04 * k; c.q[i].z = c.p[i].z - lz * 0.04 * k; } }
+/* After the pendulums: Dora's hat, the Skein Doll's yarn, Myra's curl and wings. */
+function airAfter(fig, K, dt, red, air, dash, mix) {
+  const S = fig.S, b = fig.b, A = K.A;
+  if (b.hat) { if (S.hatY == null) { S.hatY = 0; S.hatYv = S.hatYv || 0; } spring(S, 'hatY', 'hatYv', red ? 0 : 0.03 * A.apex + 0.04 * A.fall - 0.03 * K.land, 110, 8, dt);
+    b.hat.position.y = b.hat.userData.rest.y + S.hatY; b.hat.rotation.x += S.hatY * 1.2; }
+  if (K.tuckE > 0 && b.hairL) { const e = K.tuckE * 0.9; b.hairL.rotation.z += e; b.hairR.rotation.z -= e; b.hairB.rotation.x += e * 0.8; }
+  if (b.curl && K.hov > 0.001 && !red) b.curl.rotation.x += 0.35 * Math.sin((S.wph || 0) - 1.4) * K.hov;
+  if (b.wingL) { // folded, they flutter as before; hovering they open wider and beat fast: swept back and forth, tips up and down
+    const hv = red ? 0 : K.hov, f = red ? 0 : (air > 0.3 || dash > 0.3 ? 15 : 3 + 8 * mix) * (1 - hv) + 33 * hv, amp = red ? 0 : (0.12 + 0.3 * Math.max(mix, air)) * (1 - hv);
+    S.wph = (S.wph || 0) + dt * f; const sn = Math.sin(S.wph), fl = sn * amp, sweep = hv * (0.45 + 0.4 * sn), lift = hv * 0.55 * Math.sin(S.wph + 1.2) + (red ? K.hov * 0.35 : 0);
+    b.wingL.rotation.set(0.08, 0.1 + fl + sweep, lift); b.wingR.rotation.set(0.08, -0.1 - fl - sweep, -lift);
+    const sc = 1 + 0.3 * K.hov; b.wingL.scale.setScalar(sc); b.wingR.scale.setScalar(sc); }
+}
+
 /* ---------- the pose, every frame ---------- */
 /* st: LL.paperMotion.pose() for this unit this frame. h: the unit. o: { dt, t, reduced, dieT }. */
 H3.pose = function (fig, st, h, o) {
@@ -805,8 +889,9 @@ H3.pose = function (fig, st, h, o) {
   const sp = Math.hypot(S.vx, S.vz); S.sp = sp;
   if (sp > 0.35) { S.mdx = S.vx / sp; S.mdz = S.vz / sp; }
   const zip = !!h.zip, ground = h.onGround !== false && !zip, mix = red ? 0 : clamp(st.mix, 0, 1);
-  S.air += ((ground ? 0 : 1) - S.air) * ease(ground ? 22 : 10, dt); S.dash += ((h.dashT > 0 ? 1 : 0) - S.dash) * ease(h.dashT > 0 ? 30 : 8, dt); S.zip += ((zip ? 1 : 0) - S.zip) * ease(10, dt);
+  S.air += ((ground ? 0 : 1) - S.air) * ease(ground ? 22 : 18, dt); // 0.25 air: in at 18 (was 10), so the take-off shows S.dash += ((h.dashT > 0 ? 1 : 0) - S.dash) * ease(h.dashT > 0 ? 30 : 8, dt); S.zip += ((zip ? 1 : 0) - S.zip) * ease(10, dt);
   const air = red ? (ground ? 0 : 1) : S.air, dash = red ? 0 : S.dash, zk = S.zip;
+  const K = airPrep(fig, st, h, dt, red); // 0.25 air: where the body is in its airtime
   // where the hips face: toward the way the legs run (forward and sideways), or away from it (running backward)
   const al = Math.atan2(S.mdx, S.mdz), aa = Math.abs(al);
   let hyT = aa <= 1.75 ? clamp(al, -1.05, 1.05) * 0.6 : clamp(al - Math.sign(al) * Math.PI, -1, 1) * 0.42;
@@ -843,10 +928,8 @@ H3.pose = function (fig, st, h, o) {
     if (u < s) { const q = u / s; d = Dst * (0.5 - q); const heel = ss(0.55, 1, q); up = heel * 0.045 * mix; pitch = heel * (0.3 + 0.35 * runK) * mix - (1 - ss(0, 0.25, q)) * 0.18 * (1 - runK) * mix; }
     else { const w = (u - s) / (1 - s); d = Dst * (-0.5 + (1 - Math.cos(Math.PI * w)) / 2); lift = liftH * Math.sin(Math.PI * Math.pow(w, 0.72)); pitch = (0.95 * (1 - w) * (1 - w) * runK + 0.3 * (1 - w)) * mix - ss(0.75, 1, w) * 0.22 * mix; cross = Math.sin(Math.PI * w); }
     let gx = side * fw + gdx * d, gy = P.ankle + lift + up, gz = gdz * d + Math.abs(gdx) * 0.09 * cross * mix + (k ? -0.015 : 0.03) * (1 - mix);
-    // standing: feet a little apart, one a touch ahead; in the air: one knee up, the other trailing, reaching down to land
-    const fall = ss(0.1, -0.5, st.stretch || 0);
-    if (air > 0.001) { const ax = side * fw * 1.05, ay = P.ankle + legL * (k ? 0.16 : 0.34) * (1 - fall * 0.7) + legL * 0.04, az = (k ? -0.26 : 0.22) * legL * (1 - fall * 0.6);
-      gx += (ax - gx) * air; gy += (ay - gy) * air; gz += (az - gz) * air; pitch += (0.5 * (1 - fall) - pitch) * air; }
+    // standing: feet a little apart, one a touch ahead; in the air: by where the body is in its airtime (0.25 air, airFoot)
+    if (air > 0.001) { AF.x = gx; AF.y = gy; AF.z = gz; AF.p = pitch; airFoot(fig, K, k, side, fw, legL, air, t, red); gx = AF.x; gy = AF.y; gz = AF.z; pitch = AF.p; }
     if (dash > 0.001) { gx += (side * fw - gx) * dash; gy += (P.ankle + legL * (k ? 0.22 : 0.06) - gy) * dash; gz += ((k ? -0.5 : 0.28) * legL - gz) * dash; pitch += ((k ? 1.0 : 0.2) - pitch) * dash; }
     if (zk > 0.001) { gx += (side * fw * 0.8 - gx) * zk; gy += (P.ankle + legL * (k ? 0.3 : 0.22) - gy) * zk; gz += ((k ? -0.1 : 0.12) * legL - gz) * zk; pitch += (0.7 - pitch) * zk; }
     if (stomp > 0.001) { gx += (side * fw * 2.0 - gx) * stomp; }
@@ -880,7 +963,7 @@ H3.pose = function (fig, st, h, o) {
   for (let k = 0; k < 2; k++) {
     const side = k ? -1 : 1, n = k ? 'R' : 'L', A = b['arm' + n], F = b['fore' + n], Hd = b['hand' + n];
     let p = side * armSw * Math.sin(ph) + breath * 0.02, ab = (0.14 + 0.16 * runK) * side, el = 0.2 + 1.1 * runK * mix + 0.35 * Math.max(0, -p) * runK;
-    if (air > 0.001) { p += (-0.5 - p) * air; ab += (side * 0.75 - ab) * air; el += (0.5 - el) * air; }
+    AA.p = p; AA.ab = ab; AA.el = el; airArm(fig, K, k, side, air, red); p = AA.p; ab = AA.ab; el = AA.el; // 0.25 air: the air and the landing
     if (dash > 0.001) { p += (0.95 - p) * dash; ab += (side * 0.35 - ab) * dash; el += (0.25 - el) * dash; }
     if (zk > 0.001 && k === 1) { p += (-2.6 - p) * zk; ab += (-0.15 - ab) * zk; el += (0.3 - el) * zk; }
     else if (zk > 0.001) { p += (-0.4 - p) * zk; ab += (0.7 - ab) * zk; el += (0.6 - el) * zk; }
@@ -889,7 +972,7 @@ H3.pose = function (fig, st, h, o) {
   }
   if (D.pose) D.pose(fig, st, h, { dt: dt, t: t, red: red, mix: mix, runK: runK, air: air, ph: ph }); // 0.25 rook: a hero's own pose over the shared one, before the aim (Rook's lift, fins and lantern)
   // the aim: inverse kinematics toward a point ahead of the right shoulder along the aim, in the chest's frame
-  const thr = D.throws ? tw : 0, aimW = clamp(Math.max(aim, Math.abs(thr) * 1.4), 0, 1) * (1 - zk) * (1 - dash * 0.7);
+  const thr = D.throws ? tw : 0, aimW = clamp(Math.max(aim, Math.abs(thr) * 1.4), 0, 1) * (1 - zk) * (1 - dash * 0.7) * (1 - K.tuckE); // 0.25 air: no aim mid-somersault
   if (aimW > 0.002) {
     const cM = modelM(b.chest, Mx('cM')), cQi = Q('cQi').setFromRotationMatrix(cM).invert();
     const Ad = V('Ad').set(0, Math.sin(pitchA), Math.cos(pitchA)).applyQuaternion(cQi); // the aim, in the chest frame
@@ -907,6 +990,7 @@ H3.pose = function (fig, st, h, o) {
   // --- the whole figure: squash on landing, stretch going up, a shove back from a braced shot, a lunge on a throw
   const sy = 1 - Math.max(0, sq) * 0.07 + Math.max(0, st.stretch || 0) * 0.06 * air, sx = 1 + Math.max(0, sq) * 0.035;
   fig.root.scale.set(sx, sy, sx); fig.root.position.set(0, 0, -brace * 0.8 + Math.max(0, tw) * 0.08); fig.root.rotation.set(0, 0, 0);
+  airRoot(fig, K, dt, red); // 0.25 air: somersault, lean, the hover's tilt and bob; the cloth flare
   // --- cloth, braid, pendulums, wings
   cloth(fig, D.cloak || D.coat || D.skirt, h, st, dt, red, runK, air, dash, zk);
   const g = fig.root.parent; if (g) g.updateMatrixWorld(true);
@@ -917,9 +1001,7 @@ H3.pose = function (fig, st, h, o) {
     if (b.curl) dangle(fig, 'curl', dt, { lag: true, k: 90, c: 5, gain: 0.02, max: 0.5 });
     ['hairB', 'hairL', 'hairR', 'spA', 'spB'].forEach(function (n) { if (b[n]) dangle(fig, n, dt, { k: 60, c: 5, gain: 0.8, max: 0.9 }); });
   } else ['lant', 'hat', 'curl', 'hairB', 'hairL', 'hairR', 'spA', 'spB'].forEach(function (n) { if (b[n]) b[n].rotation.set(0, 0, 0); });
-  if (b.wingL) { const f = red ? 0 : (air > 0.3 || dash > 0.3 ? 15 : 3 + 8 * mix), amp = red ? 0 : 0.12 + 0.3 * Math.max(mix, air);
-    S.wph = (S.wph || 0) + dt * f; const fl = Math.sin(S.wph) * amp;
-    b.wingL.rotation.set(0.08, 0.1 + fl, 0); b.wingR.rotation.set(0.08, -0.1 - fl, 0); }
+  airAfter(fig, K, dt, red, air, dash, mix); // 0.25 air: Dora's hat, the Skein Doll's yarn, Myra's curl and wings (the wings' flutter moved here)
   // feet in the world, for dust under the real foot
   if (g) for (let k = 0; k < 2; k++) { const f = fig.feet[k]; _v.set(f.mx, 0, f.mz).applyMatrix4(g.matrixWorld); f.x = _v.x; f.z = _v.z; }
 };
@@ -941,6 +1023,7 @@ function cloth(fig, sp, h, st, dt, red, runK, air, dash, zk) {
   for (let i = 0; i < L.length; i++) {
     const pn = L[i], bone = b[pn.top], piv = bone.position, pivY = (hipsFrame ? P.pelv : fig.rig.a[fig.rig.i[sp.parent]][1]) + piv.y;
     let dx = S.tr, dz = -S.tp; // bottom displacement in radians: +x left, +z forward
+    if (S.afl) { dx += pn.rx * S.afl; dz += pn.rz * S.afl; } // 0.25 air: the cloth flares out (take-off, second jump, hover, landing)
     const fl = flut * Math.sin(ph * 2 + pn.a * 1.7 + tt * 2.3) + (red ? 0 : 0.015 * Math.sin(tt * 1.3 + pn.a * 2));
     dx += pn.rx * fl * 0.35; dz -= fl * (0.4 + 0.6 * Math.max(0, -pn.rz)); // the hem bounces along its trail, most at the back
     // keep off the legs: the cloth's radius at that height along this panel must pass outside the knee and shin
@@ -967,9 +1050,10 @@ function chain(fig, B, h, dt, red) {
   const air = B.braid ? 0 : 0.6, hvx = (h.vx || 0) * air, hvz = (h.vz || 0) * air; // ribbons catch the air
   const chest = b.chest; chest.updateMatrixWorld(); const cMi = Mx('bcm').copy(chest.matrixWorld).invert(), cMw = chest.matrixWorld;
   const cY = fig.rig.a[fig.rig.i.chest][1];
+  const gk = h.onGround === false && !h.zip && !(h.hoverT > 0) ? (B.braid ? 3 : 2.2) : 1; // 0.25 air: the model falls at 26 m/s2; at 11 the braid rose straight up off her head in every jump, so in the air it falls a touch faster than the body (ribbons slower: they float)
   S[key].acc += dt; let steps = 0;
   while (S[key].acc >= 1 / 90 && steps < 6) { S[key].acc -= 1 / 90; steps++; const hh = 1 / 90, dmp = B.braid ? 0.985 : 0.97;
-    for (let i = 1; i <= n; i++) { const p = P0[i], q = Q0[i]; const vx = (p.x - q.x) * dmp, vy = (p.y - q.y) * dmp, vz = (p.z - q.z) * dmp; q.copy(p); p.x += vx - hvx * hh * hh * 3; p.y += vy - (B.braid ? 11 : 7) * hh * hh; p.z += vz - hvz * hh * hh * 3; }
+    for (let i = 1; i <= n; i++) { const p = P0[i], q = Q0[i]; const vx = (p.x - q.x) * dmp, vy = (p.y - q.y) * dmp, vz = (p.z - q.z) * dmp; q.copy(p); p.x += vx - hvx * hh * hh * 3; p.y += vy - (B.braid ? 11 : 7) * gk * hh * hh; p.z += vz - hvz * hh * hh * 3; }
     for (let it = 0; it < 3; it++) {
       for (let i = 0; i < n; i++) { const a = P0[i], c = P0[i + 1], d = V('bd').subVectors(c, a), l = d.length() || 1e-6, e = (l - B.seg) / l; if (i === 0) c.addScaledVector(d, -e); else { a.addScaledVector(d, e * 0.5); c.addScaledVector(d, -e * 0.5); } }
       // keep behind the back: in the chest's frame, z must stay behind the cloth's back surface at that height

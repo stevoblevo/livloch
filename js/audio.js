@@ -149,6 +149,38 @@ A.frame = function (dt, W) {
   if (drone && W && W.player) { const hot = W.t - W.player.lastHurt < 4 ? 1 : 0; drone.fl.frequency.setTargetAtTime(200 + hot * 420, ctx.currentTime, 0.6); }
 };
 const ROOK_COL = (LL.HEROES.find(function (d) { return d.id === 'rook'; }) || {}).col; // 0.25 rook: his zone's toll carries his colour
+/* 0.25 AIR. Short sounds for each hero's air move, in the score's key (edo, A major): the plain jump keeps its puff of air;
+   Dora's jump adds a small lantern clink (E5 and A5); Anna's rock-hop is a knock of stone (a low thud on A2 to E2 and a
+   dry crack) with a hiss of grit; the Skein Doll's tuck is a yarn whip rising and a plucked C sharp; Myra's hover is a
+   flutter (filtered noise beaten at about the wings' rate, held while she hangs) over a soft A and C sharp, and it ends on
+   a falling third. Heard for the player's hero; other heroes' second jumps and hovers quietly by distance. */
+let hoverSnd = null;
+function flutter(dur, g) { // noise through a band-pass, its level beaten by a square LFO near the wings' rate; returns a stop()
+  if (!A.on || g <= 0.002) return null;
+  const t = ctx.currentTime, s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), a = ctx.createGain(), am = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+  s.buffer = nbuf; s.loop = true; fl.type = 'bandpass'; fl.frequency.value = 1500; fl.Q.value = 0.9;
+  lfo.type = 'square'; lfo.frequency.value = 5.2; lg.gain.value = 0.5; am.gain.value = 0.5; lfo.connect(lg); lg.connect(am.gain);
+  a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(g, t + 0.04); a.gain.setValueAtTime(g, t + dur - 0.12); a.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(fl); fl.connect(am); am.connect(a); a.connect(sfxBus); s.start(t, Math.random()); lfo.start(t); s.stop(t + dur + 0.02); lfo.stop(t + dur + 0.02);
+  return function () { const n = ctx.currentTime; try { a.gain.cancelScheduledValues(n); a.gain.setValueAtTime(Math.max(0.0001, a.gain.value), n); a.gain.exponentialRampToValueAtTime(0.0001, n + 0.08); s.stop(n + 0.1); lfo.stop(n + 0.1); } catch (er) {} };
+}
+function airSound(e, pl, near) {
+  const u = e.u; if (!u || !u.def) return; const mine = u === pl, g = mine ? 1 : 0.45 * near(u.x, u.z, 40), id = u.def.id;
+  if (e.k === 'jump' && !e.dbl) { if (!mine) return; noise(0.07, 0.05, 1200, 1); if (id === 'dora') { tone(edo(80), 0.12, 'triangle', 0.035); tone(edo(93), 0.09, 'sine', 0.02, 0, 0.03); } return; }
+  if (g < 0.02) return;
+  if (e.k === 'jump') {
+    if (id === 'anna') { noise(0.1, 0.13 * g, 700, 0.9, 'lowpass', 0, 160); tone(edo(0), 0.12, 'sine', 0.12 * g, edo(-13)); noise(0.05, 0.06 * g, 2600, 3, 'bandpass'); noise(0.22, 0.035 * g, 4200, 1, 'highpass', 0.04); }
+    else if (id === 'skein') { noise(0.18, 0.07 * g, 1100, 4, 'bandpass', 0, 5200); tone(edo(72), 0.1, 'triangle', 0.06 * g, 0, 0.05); }
+    else noise(0.07, 0.05 * g, 2400, 1);
+  } else if (e.k === 'hover') {
+    if (hoverSnd && mine) { hoverSnd(); hoverSnd = null; }
+    const H = u.def.air && u.def.air.hover, stop = flutter((H && H.t || 1.2) + 0.1, 0.07 * g); if (mine) hoverSnd = stop;
+    tone(edo(62), 0.35, 'sine', 0.05 * g); tone(edo(72), 0.4, 'sine', 0.035 * g, 0, 0.05);
+  } else if (e.k === 'hoverend') {
+    if (mine && hoverSnd) { hoverSnd(); hoverSnd = null; }
+    if (e.why !== 'land') tone(edo(72), 0.22, 'sine', 0.04 * g, edo(62));
+  }
+}
 A.fx = function (e, W, cam) {
   if (!A.on) return;
   const pl = W.player;
@@ -199,7 +231,7 @@ A.fx = function (e, W, cam) {
       if (e.u === pl) { noise(0.25, 0.12, 600, 1.2, 'bandpass', 0, 3200); tone(edo(e.i === 2 ? 49 : 62 + e.i * 5), 0.25, 'triangle', 0.1, edo(e.i === 2 ? 80 : 72)); } break;
     case 'blink': noise(0.2, 0.15 * near(e.x, e.z, 50), 3000, 3, 'bandpass', 0, 400); break;
     case 'zip': if (e.u === pl) tone(edo(31), 0.5, 'sawtooth', 0.06, edo(62)); break;
-    case 'jump': if (e.u === pl) noise(0.07, 0.05, e.dbl ? 2400 : 1200, 1); break;
+    case 'jump': case 'hover': case 'hoverend': airSound(e, pl, near); break; // 0.25 air
     case 'dash': if (e.u === pl) noise(0.16, 0.1, 1800, 0.8, 'bandpass', 0, 500); break;
     case 'reload': if (e.u === pl) { tone(edo(80), 0.04, 'square', 0.05); tone(edo(85), 0.04, 'square', 0.05, 0, e.u.def.gun.reload - 0.1); } break;
     case 'towershot': if (e.tp) { tone(edo(93), 0.18, 'sawtooth', 0.09, edo(49)); } else noise(0.1, 0.06 * near(e.u.x, e.u.z, 60), 2600, 4); break;

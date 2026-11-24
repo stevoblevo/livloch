@@ -86,6 +86,7 @@ function playerControl(dt) {
   const u = aim.unit;
   info.orb = !!aim.orb && ad <= range;
   info.hot = !!u && ad <= range && (!u.struct || S.vuln(u));
+  c.jumpHeld = !menu && I.jumpHeld; // 0.25 air: held jump keeps Myra Belle's hover going
   if (menu) { c.mx = c.mz = 0; c.fire = false; return; }
   const sy = Math.sin(view.yaw), cy = Math.cos(view.yaw);
   c.mx = -cy * I.mx + sy * I.my; c.mz = sy * I.mx + cy * I.my;
