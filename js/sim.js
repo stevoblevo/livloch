@@ -1273,8 +1273,9 @@ function rollStart(h, mx, mz) {
      thread. Now the fountain's mending pays: C.EMBER. The house that takes the light is mended and burns bright (fires
      faster) for a while, so a light walked to the house a hollow is about to reach can save it. One light, one house. A hero riding a
      thread keeps the light (it passes houses without stopping), so the rider chooses where to step off.
-   Bots follow the same rules: they land arrivals when they ride out, and a bot that went home hurt mends the house it
-   comes back to stand by. They do not plan around any of it. */
+   Bots follow the same rules: they land arrivals when they ride out, a bot that went home hurt mends the house it
+   comes back to stand by, and a bot shoots a slack house that is in its range. They do not plan around any of it:
+   no bot folds, walks a light to the house that needs it, or leaves its thread for the slack one. */
 function arrive(h) {
   const zp = h.zip, A = C.ARRIVE; if (!zp || zp.dir < 0 || rel(h.team, zp.lane, zp.s) - rel(h.team, zp.lane, zp.s0) < A.min) return false;
   const dmg = A.dmg + A.dmgMin * (W.t / 60), ts = rel(h.team, zp.lane, zp.s); let n = 0;
@@ -1445,7 +1446,7 @@ function think(h) {
   const ts = W.st[en][lane];
   const tower = ts.outer.alive ? ts.outer : (ts.inner.alive ? ts.inner : (lane === 1 || true ? W.patron[en] : null));
   let towerTs = tower === W.patron[en] ? L.len + 6 : rel(h.team, lane, tower.s);
-  const pushing = friendlyTroopersNear(h.team, tower.x, tower.z, tower.range - 2) > 0 || isSlack(tower); // 0.28 play: a slack house cannot fire, so a bot walks up to it
+  const pushing = friendlyTroopersNear(h.team, tower.x, tower.z, tower.range - 2) > 0;
   if (!pushing) standS = Math.min(standS, towerTs - tower.range - 4);
   else standS = Math.min(standS, towerTs - Math.min(d.aiRange * 0.8, 16));
   standS = U.clamp(standS, 8, L.len - 16);

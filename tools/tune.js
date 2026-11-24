@@ -31,11 +31,18 @@
               to its own house during a full red rain.
      3 Looking is an action. Answers the mood with the right view about five seconds after the warning; wears
               Rainwake through the rain; fetches a ripe big fruit within 55 m through its view, then back to snow.
-     4 Distance is not fixed. Rides threads (to the front, and home to heal); kills the west stray when its crease is
-              guarded and folds the lane next to it into its own; the Ness crease too once the Ness is down.
+     4 Distance is not fixed. Rides threads (to the front, where a long ride lands as an arrival, and home to heal);
+              kills the west stray when its crease is guarded and folds the next thread into its own, which shuts that
+              thread to the Hush for 45 s; the Ness crease too once the Ness is down. Keeps the crease for the red rain
+              when one is less than two minutes off, and folds 15 s into it, when the rain's hollows are on their way.
      5 You cannot keep everything lit. Stops running to every house under attack: leaves its thread only for an inner
-              house or the patron; walks home at 35%
-              health instead of 12% and comes back mended.
+              house or the patron. When a thread goes slack it leaves its own thread dark, rides the slack thread to
+              the far side's open house and takes it. A light from home (it still walks home only at 12%) goes to the
+              house that needs it most, not the first one passed.
+              (0.28: until 0.28 lesson 5 also walked home at 35%. Going home early, or by choice when its thread was
+              quiet, and carrying every light out, measured at no gain or a loss at 40 seeds on Cruel, even with the
+              light worth half a house: time off the thread costs more than a mended house returns. See
+              docs/evidence/play-0.28-notes.txt.)
 
    WHAT IT MEASURES. Per difficulty and lessons known: the long match's win rate, median length, how losses came (by the
    gutter after 20:00, or overrun), structures lost each side, the player's deaths and what killed it, the longest
@@ -59,10 +66,8 @@ function policy(W, L, seed) {
     for (const s of W.structs) if (s.team === 0) { if (st.hp[s.id] != null && s.hp < st.hp[s.id] - 1) st.hurtAt[s.id] = W.t; st.hp[s.id] = s.hp; }
     if ((st.buyT -= 0.2) <= 0) { st.buyT = 30; const b = p.def.build; for (let i = 0; i < b.length; i++) if (p.items.indexOf(b[i]) < 0) { if (p.souls >= LL.ITEMS[b[i]].cost) S.buy(p, b[i]); break; } }
     // retreat
-    const low = has(5) && !has('u') ? 0.35 : 0.12;
+    const low = 0.12;
     if (st.retreat) { if (hpF > 0.9) st.retreat = false; } else if (hpF < low) st.retreat = true;
-    // lesson 5: going home is chosen, not forced. Hurt enough for the fountain to pay, a house that wants a light, and a thread that will keep (its hollow down or far off): go now
-    else if (has(5) && !has('g') && !W.fallen && !p.ember && hpF < 1 - C.EMBER.need - 0.02 && !(W.slack.t > 0) && W.structs.some(s => s.team === 0 && s.alive && s.kind !== 'patron' && (s.dark || s.hp < s.maxHp * 0.7)) && !W.troopers.some(u => u.alive && u.team === 1 && u.big && u.lane === st.lane && u.z < 45)) st.retreat = true;
     // views (lesson 3)
     const m = W.mood;
     if (has(3)) {
@@ -80,15 +85,15 @@ function policy(W, L, seed) {
     st.lane = st.pick;
     const K = W.slack, slackOn = K.t > 0, slackSoon = K.warned || slackOn;
     for (const k of W.creases) if (k.t > 0 && k.team === 0 && k.from === st.lane) st.lane = k.to; // whoever folds its own thread away goes with its troopers
-    // lesson 4: a slack thread carries to the far side's open house, so that is where it goes. Lesson 5 goes only if its own thread will keep: folded away, or its hollow down or still far off
+    // lesson 5: a slack thread carries to the far side's open house. It leaves its own thread dark for fifty seconds and takes that house
     let raid = null;
-    if (has(4) && !has('s') && slackOn && hpF > 0.35) { const e = enemyNext(K.lane); if (S.slack(e) && S.vuln(e)) { const keeps = st.lane !== st.pick || K.lane === st.pick || !W.troopers.some(u => u.alive && u.team === 1 && u.big && u.lane === st.pick && u.z < 45); if (!has(5) || has('c') || keeps) { st.lane = K.lane; raid = e; } } }
+    if (has(5) && !has('s') && slackOn && hpF > 0.35) { const e = enemyNext(K.lane); if (S.slack(e) && S.vuln(e)) { st.lane = K.lane; raid = e; } }
     let fire = null; // a house of ours being hit
-    for (const s of W.structs) if (s.team === 0 && s.alive && st.hurtAt[s.id] > W.t - 2) { if (!has(5) || has('v') || s.kind !== 'guardian') { if (!fire || s.kind !== 'guardian') fire = s; } }
+    for (const s of W.structs) if (s.team === 0 && s.alive && st.hurtAt[s.id] > W.t - 2) { if (!has(5) || s.kind !== 'guardian') { if (!fire || s.kind !== 'guardian') fire = s; } }
     if (fire && fire.lane !== st.lane && !raid) st.lane = fire.lane;
     // lesson 5: a light from home goes to the house that needs it most, and the hero's thread waits
     let mend = null;
-    if (has(5) && !has('h') && p.ember && !st.retreat) { let bv = 0; for (const s of W.structs) { if (s.team !== 0 || !s.alive || s.kind === 'patron' || !S.vuln(s) || !(s.dark || s.hp <= s.maxHp * C.EMBER.under)) continue; let hol = 0; for (const u of W.troopers) if (u.alive && u.team === 1 && u.big && u.lane === s.lane && hyp(u.x - s.x, u.z - s.z) < 60) hol++; const v = (1 - s.hp / s.maxHp) + (s.dark ? 0.5 : 0) + (st.hurtAt[s.id] > W.t - 6 ? 0.5 : 0) + hol * 0.6 + (s.lane === st.pick ? 0.15 : 0); if (v > bv) { bv = v; mend = s; } } if (mend) st.lane = mend.lane; }
+    if (has(5) && !has('h') && p.ember && !st.retreat && !raid) { let bv = 0; for (const s of W.structs) { if (s.team !== 0 || !s.alive || s.kind === 'patron' || !S.vuln(s) || !(s.dark || s.hp <= s.maxHp * C.EMBER.under)) continue; let hol = 0; for (const u of W.troopers) if (u.alive && u.team === 1 && u.big && u.lane === s.lane && hyp(u.x - s.x, u.z - s.z) < 60) hol++; const v = (1 - s.hp / s.maxHp) + (s.dark ? 0.5 : 0) + (st.hurtAt[s.id] > W.t - 6 ? 0.5 : 0) + hol * 0.6 + (s.lane === st.pick ? 0.15 : 0); if (v > bv) { bv = v; mend = s; } } if (mend) st.lane = mend.lane; }
     const lane = st.lane, Ln = lanes[lane];
     LL.laneNearest(lane, p.x, p.z, Q); const myS = rel(0, lane, Q.s), onLane = Q.d < 6;
     // where to stand
@@ -96,7 +101,7 @@ function policy(W, L, seed) {
     const tw = enemyNext(lane), twS = tw === W.patron[en] ? Ln.len + 6 : rel(0, lane, tw.s);
     let pushing = false; for (const u of W.troopers) if (u.alive && u.team === 0 && hyp(u.x - tw.x, u.z - tw.z) < tw.range - 2) { pushing = true; break; }
     const window = has(2) && !has('k') && W.hollowT[lane] > 0 && pushing;
-    standS = Math.min(standS, pushing ? twS - (window ? 10 : 15) : twS - tw.range + (has(5) && !has('z') ? -4 : 3));
+    standS = Math.min(standS, pushing ? twS - (window ? 10 : 15) : twS - tw.range + 3);
     if ((raid || (has(2) && !has('k'))) && S.slack(tw) && S.vuln(tw) && hpF > 0.35) standS = twS - 14;
     if (raid && !onLane && standS - myS > 50 && S.zipEnd(0, lane) - myS > 30) { LL.lanePoint(lane, Q.s, P); st.join = true; } else st.join = false; // lesson 4: get onto the slack thread first, then ride it // lesson 2: a slack house cannot fire; this is the moment to stand under it
     if (has(2) && !has('k') && W.red > 0 && !W.thin) { const g = W.st[0][lane]; const own = g.outer.alive ? g.outer : g.inner; if (own.alive) standS = Math.min(standS, rel(0, lane, own.s) + 4); }
@@ -111,20 +116,16 @@ function policy(W, L, seed) {
     if (job === 'lane' && free && has(3) && !has('b') && !(m && !m.done) && !(W.red > 0)) { for (const f of W.fruit) if (f.ripe && f.lens && hyp(f.x - p.x, f.z - p.z) < 55) { st.wantLens = f.lens; S.setLens(f.lens); gx = f.x; gz = f.z; job = 'fruit'; break; } }
     if (job === 'lane' && !st.retreat && quiet && has(2) && !has('f')) { for (const f of W.fruit) if (f.ripe && !f.lens && hyp(f.x - p.x, f.z - p.z) < 30 && (f.k !== 'hips' || hpF < 0.8)) { gx = f.x; gz = f.z; job = 'fruit'; break; } }
     if (job === 'lane' && free && has(4)) {
-      // lesson 4: the fold. Kept for the slack thread when one is near: fold its own thread into the slack one and go with it, or the next thread into its own; otherwise the next thread into its own whenever a crease is free
-      const home = st.pick, near = has(5) && !W.short && !has('d') && (slackSoon || K.next - W.t < 110) && !W.fray;
+      // lesson 4: the fold. The next thread into its own, which shuts that thread to the Hush; kept for the rain when one is near, and folded once the rain's hollows are on their way
+      const home = st.pick;
       for (let i = 0; i < W.creases.length; i++) {
         const k = W.creases[i]; if (k.t > 0 || k.cd > 0 || (home !== k.a && home !== k.b)) continue;
-        const nb = home === k.b ? k.a : k.b; let from = nb, to = home;
-        if (near && slackSoon && K.lane !== home) { if (K.lane !== nb) continue; from = home; to = nb; }
-        const own = W.st[0][from], ownS = own.outer.alive ? own.outer : own.inner;
-        if (W.troopers.some(u => u.alive && u.team === 1 && u.big && u.lane === from && u.z <= -13) || !ownS.alive || (from !== home && ownS.hp < ownS.maxHp * 0.4)) continue;
+        const from = home === k.b ? k.a : k.b, to = home, own = W.st[0][from], ownS = own.outer.alive ? own.outer : own.inner;
+        if (W.troopers.some(u => u.alive && u.team === 1 && u.big && u.lane === from && u.z <= -13) || !ownS.alive || ownS.hp < ownS.maxHp * 0.4) continue;
         if (k.guard.alive) { if (i === 0 && hyp(k.x - p.x, k.z - p.z) < 60 && W.t > 40) { gx = k.guard.x; gz = k.guard.z; job = 'stray'; st.tgt = k.guard; } continue; }
-        if (near && !slackSoon) continue;
-        if (!has('n') && !W.fallen && W.red <= 0 && W.redNext - W.t < 110) continue; // lesson 4 with lesson 2: the crease is kept for the rain, when it shuts a thread to the rain's hollows
-        if (!has('n') && W.red > C.RED_T - 15) continue; // and folded once they are on their way
+        if (!has('n') && !W.fallen && !W.short && (W.red <= 0 ? W.redNext - W.t < 110 : W.red > C.RED_T - 15)) continue;
         gx = k.x; gz = k.z; job = 'fold';
-        if (S.creaseFor(p) === i && (!near || slackOn)) { const side = C.LANE_X[to] - k.x; c.ax = p.x + Math.sign(side || 1) * 10; c.az = p.z; c.ay = 1.5; if (wasFold === i) S.fold(p, i); else st.fold = i; }
+        if (S.creaseFor(p) === i) { const side = C.LANE_X[to] - k.x; c.ax = p.x + Math.sign(side || 1) * 10; c.az = p.z; c.ay = 1.5; if (wasFold === i) S.fold(p, i); else st.fold = i; }
         break;
       }
     }
