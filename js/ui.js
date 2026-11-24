@@ -17,6 +17,7 @@ const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', 
 UI.init = function (handlers) {
   H = handlers;
   const cfg = LL.cfg;
+  hatHudInit(); // 0.26 guard: Dora's hat and the touch Hat button
   // heroes
   const hw = $('heroes');
   LL.HEROES.forEach(function (d, i) {
@@ -374,6 +375,24 @@ function minimap(view) {
   const p = W.player;
   if (p.alive) { g.save(); g.translate(X(p.x), Y(p.z)); g.rotate(-view.yaw); g.fillStyle = LL.gfx.look.ui.me; g.strokeStyle = LL.gfx.look.ui.edge; g.lineWidth = 2; g.beginPath(); g.moveTo(0, -10); g.lineTo(7, 7); g.lineTo(0, 3); g.lineTo(-7, 7); g.closePath(); g.fill(); g.stroke(); g.restore(); }
 }
+/* 0.26 guard: Dora's straw hat. Three pips fill with thread boosts; charged, the hat glows and says its key (G, or R3 on a
+   pad), and on touch the Hat button appears; while it flies the hat is dim. Hidden for heroes without a hat. */
+function hatHudInit() {
+  const hud = document.createElement('div'); hud.id = 'hatHud'; hud.hidden = true; hud.setAttribute('aria-label', 'Hat');
+  hud.innerHTML = '<svg viewBox="0 0 28 16" aria-hidden="true"><path d="M1 12.6 Q14 9.6 27 12.6 L25.2 14.6 Q14 12.4 2.8 14.6Z"/><path d="M6.2 11.6 L14 1.6 L21.8 11.6 Q14 10 6.2 11.6Z"/></svg><i></i><i></i><i></i><b></b>';
+  const bt = $('bottom'); if (bt) bt.appendChild(hud);
+  const tb = document.createElement('button'); tb.className = 'tb'; tb.id = 'tHat'; tb.setAttribute('data-btn', 'hat'); tb.hidden = true; tb.textContent = 'Hat';
+  const t = $('touch'); if (t) t.appendChild(tb);
+}
+function hatHud(p) {
+  const hud = $('hatHud'), tb = $('tHat'); if (!hud) return; const Ht = p.def.air && p.def.air.hat, show = !!Ht && p.alive && !W.lean;
+  if (hud.hidden === show) hud.hidden = !show; if (!show) { if (tb && !tb.hidden) tb.hidden = true; return; }
+  const n = Math.min(p.hatN || 0, Ht.need), ready = n >= Ht.need && !p.hat, pips = hud.querySelectorAll('i');
+  for (let i = 0; i < pips.length; i++) { const on = p.hat ? false : i < n; if (pips[i].classList.contains('on') !== on) pips[i].classList.toggle('on', on); }
+  hud.classList.toggle('ready', ready); hud.classList.toggle('away', !!p.hat);
+  const k = LL.input.device === 'pad' ? 'R3' : 'G', kb = hud.querySelector('b'); if (kb.textContent !== k) kb.textContent = k;
+  if (tb && tb.hidden === ready) tb.hidden = !ready;
+}
 UI.frame = function (dt, w, view, info) {
   W = w; if ($('hud').hidden || !W.player) return;
   const p = W.player, d = p.def, R = LL.gfx;
@@ -404,6 +423,7 @@ UI.frame = function (dt, w, view, info) {
   $('hpFill').style.width = (hpF * 100) + '%'; $('shFill').style.width = Math.min(100, p.shield / p.maxHp * 100) + '%';
   $('hpTxt').textContent = Math.ceil(p.hp) + ' / ' + Math.round(p.maxHp);
   const am = $('ammo'); am.classList.toggle('rel', p.reloadT > 0); $('ammoN').textContent = p.reloadT > 0 ? '· · ·' : p.ammo + ' / ' + p.magSize;
+  hatHud(p); // 0.26 guard
   const st = $('stam'); if (st.children.length !== p.st.stam) { st.innerHTML = ''; for (let i = 0; i < p.st.stam; i++) st.appendChild(document.createElement('i')); }
   for (let i = 0; i < st.children.length; i++) st.children[i].className = i < p.stamina ? 'on' : '';
   const s = Math.floor(p.souls); $('soulN').textContent = s; $('lvl').textContent = 'Lv ' + p.level;

@@ -255,12 +255,13 @@ function lookP(LK, team) {
 }
 function heroMat(lp) {
   const m = new T.MeshPhongMaterial({ color: 0xffffff, vertexColors: true, map: atlas(), alphaTest: 0.5, side: T.DoubleSide, skinning: true, shininess: 2, specular: 0x000000 });
-  const U = { uRim: { value: lp.rim }, uRimK: { value: lp.rimK }, uLift: { value: lp.lift }, uGain: { value: lp.gain }, uSat: { value: lp.sat }, uTint: { value: lp.tint }, uEmK: { value: lp.emK }, uKey: { value: lp.key } };
+  const U = { uRim: { value: lp.rim }, uRimK: { value: lp.rimK }, uLift: { value: lp.lift }, uGain: { value: lp.gain }, uSat: { value: lp.sat }, uTint: { value: lp.tint }, uEmK: { value: lp.emK }, uKey: { value: lp.key },
+    uFray: { value: 0 }, uFT: { value: 0 }, uFrayC: { value: new T.Color(0x5fe8c8) } }; // 0.26 guard: the fray (Skye's guard), 0 for everyone else
   m.onBeforeCompile = function (sh) {
     for (const k in U) sh.uniforms[k] = U[k];
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aEm;\nattribute float aH;\nvarying float vEm;\nvarying float vH;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvEm = aEm; vH = aH;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uRim; uniform float uRimK; uniform float uLift; uniform float uGain; uniform float uSat; uniform vec3 uTint; uniform float uEmK; uniform float uKey;\nvarying float vEm;\nvarying float vH;')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uRim; uniform float uRimK; uniform float uLift; uniform float uGain; uniform float uSat; uniform vec3 uTint; uniform float uEmK; uniform float uKey; uniform float uFray; uniform float uFT; uniform vec3 uFrayC;\nvarying float vEm;\nvarying float vH;')
       .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb = mix(vec3(dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114))), diffuseColor.rgb, uSat) * uTint;')
       .replace('vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;', [
         'vec3 outgoingLight = (reflectedLight.directDiffuse + reflectedLight.indirectDiffuse) * uGain + diffuseColor.rgb * uLift;',
@@ -270,9 +271,12 @@ function heroMat(lp) {
         'vec3 hv = normalize(vViewPosition); float fr = 1.0 - clamp(abs(dot(normal, hv)), 0.0, 1.0);',
         'float rim = smoothstep(0.52, 0.96, fr) * clamp(normal.y * 0.65 + 0.55, 0.0, 1.0);',
         'outgoingLight += uRim * rim * uRimK * (0.3 + 0.7 * smoothstep(0.2, 0.75, vH));',
-        'outgoingLight += diffuseColor.rgb * vEm * uEmK;'].join('\n'));
+        'outgoingLight += diffuseColor.rgb * vEm * uEmK;',
+        // 0.26 guard: the fray. The body comes apart in level bands (threads) that slide up; what is left glows at its edges
+        'if (uFray > 0.001) { float bd = fract(vH * 31.0 - uFT * 1.6 + 0.12 * sin(vH * 9.0 + uFT * 2.7)); float cut = uFray * 0.66; if (bd < cut) discard;',
+        '  float ed = 1.0 - smoothstep(cut, cut + 0.16, bd); outgoingLight = mix(outgoingLight, uFrayC * 0.9, uFray * 0.45) + uFrayC * ed * uFray * 0.9; }'].join('\n'));
   };
-  m.customProgramCacheKey = function () { return 'hero3d1'; };
+  m.customProgramCacheKey = function () { return 'hero3d2'; }; // 0.26 guard: the fray changed the shader
   m.userData.U = U; // 0.25 rook: a figure may turn its own glow up (Rook's lantern in a lift)
   m.userData.lk = m.userData.bl = m.userData.solid = true;
   return m;
@@ -741,6 +745,7 @@ H3.build = function (t, h, ctx) {
     cycle: ((LL.paperMotion && LL.paperMotion.RIGS[id]) || { cycle: 3.4 }).cycle, cycK: 1, legL: P.hip - P.ankle,
     feet: [{ x: h.x, z: h.z }, { x: h.x, z: h.z }], ghosts: [], gk: 0,
     S: { vx: 0, vz: 0, sp: 0, mdx: 0, mdz: 1, hy: 0, air: 0, dash: 0, zip: 0, tp: 0, tpv: 0, tr: 0, trv: 0, dn: {}, braid: null, t: 0, aimS: 0 } };
+  fig.gctx = ctx || null; // 0.26 guard: guard meshes are built when first needed, with gfx's glow sprites
   ['hips', 'spine', 'chest', 'neck', 'head'].forEach(function (n) { b[n].rotation.order = 'YXZ'; });
   ['armL', 'armR'].forEach(function (n) { b[n].rotation.order = 'ZXY'; });
   return fig;
@@ -856,7 +861,7 @@ function airArm(fig, K, k, side, air, red) {
    bobs it with the beat. Then the cloth flare spring (read by cloth()). */
 function airRoot(fig, K, dt, red) {
   const S = fig.S, P = fig.P, r = fig.root, A = K.A;
-  let rx = K.flip + 0.22 * K.hopE - 0.08 * A.tko, rz = 0, dy = 0;
+  let rx = K.flip + 0.22 * K.hopE - 0.08 * A.tko, rz = K.groll || 0, dy = 0; // 0.26 guard: K.groll, Rook's barrel roll (guardPrep)
   if (K.hov > 0.001 && !red) { const e = K.hov; rx += clamp(S.vz * 0.035, -0.12, 0.2) * e; rz -= clamp(S.vx * 0.04, -0.2, 0.2) * e; dy += 0.03 * Math.sin((S.wph || 0) - 0.6) * e; }
   if (rx || rz) { const cy = P.pelv + 0.12, v = V('apv').set(0, cy, 0); r.rotation.set(rx, 0, rz); v.applyEuler(r.rotation); r.position.x -= v.x; r.position.y += cy - v.y; r.position.z -= v.z; }
   r.position.y += dy;
@@ -880,6 +885,10 @@ function airAfter(fig, K, dt, red, air, dash, mix) {
     const sc = 1 + 0.3 * K.hov; b.wingL.scale.setScalar(sc); b.wingR.scale.setScalar(sc); }
 }
 
+/* ---------- 0.26 guard (in progress: stubs until the guard visuals land) ---------- */
+function guardPrep() {}
+function guardPose() {}
+
 /* ---------- the pose, every frame ---------- */
 /* st: LL.paperMotion.pose() for this unit this frame. h: the unit. o: { dt, t, reduced, dieT }. */
 H3.pose = function (fig, st, h, o) {
@@ -894,6 +903,7 @@ H3.pose = function (fig, st, h, o) {
   S.air += ((ground ? 0 : 1) - S.air) * ease(ground ? 22 : 18, dt); // 0.25 air: in at 18 (was 10), so the take-off shows S.dash += ((h.dashT > 0 ? 1 : 0) - S.dash) * ease(h.dashT > 0 ? 30 : 8, dt); S.zip += ((zip ? 1 : 0) - S.zip) * ease(10, dt);
   const air = red ? (ground ? 0 : 1) : S.air, dash = red ? 0 : S.dash, zk = S.zip;
   const K = airPrep(fig, st, h, dt, red); // 0.25 air: where the body is in its airtime
+  guardPrep(fig, h, K, dt, red); // 0.26 guard: envelopes for the guards and the roll
   // where the hips face: toward the way the legs run (forward and sideways), or away from it (running backward)
   const al = Math.atan2(S.mdx, S.mdz), aa = Math.abs(al);
   let hyT = aa <= 1.75 ? clamp(al, -1.05, 1.05) * 0.6 : clamp(al - Math.sign(al) * Math.PI, -1, 1) * 0.42;
@@ -1004,6 +1014,7 @@ H3.pose = function (fig, st, h, o) {
     ['hairB', 'hairL', 'hairR', 'spA', 'spB'].forEach(function (n) { if (b[n]) dangle(fig, n, dt, { k: 60, c: 5, gain: 0.8, max: 0.9 }); });
   } else ['lant', 'hat', 'curl', 'hairB', 'hairL', 'hairR', 'spA', 'spB'].forEach(function (n) { if (b[n]) b[n].rotation.set(0, 0, 0); });
   airAfter(fig, K, dt, red, air, dash, mix); // 0.25 air: Dora's hat, the Skein Doll's yarn, Myra's curl and wings (the wings' flutter moved here)
+  guardPose(fig, h, K, dt, t, red); // 0.26 guard: the aegis and Anna's shield arm, Dora's bubble and hat, Skye's fray
   // feet in the world, for dust under the real foot
   if (g) for (let k = 0; k < 2; k++) { const f = fig.feet[k]; _v.set(f.mx, 0, f.mz).applyMatrix4(g.matrixWorld); f.x = _v.x; f.z = _v.z; }
 };
