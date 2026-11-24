@@ -42,6 +42,7 @@ if (document.body.dataset.look === 'origami') { /* */ } // and on this
 | 3 | [`js/motion.js`](../js/motion.js) | `LL.paperMotion` | How a painted body moves: stride by distance walked, aim, landing squash, lean, four damped springs for follow-through. Also a Node module, so tests can load it | a unit | its own rig object |
 | 4 | [`js/props.js`](../js/props.js) | `LL.props` | Hush towers, troopers on both sides, hollows, the light a thief carries, rocks. Built in code, instanced | the unit it is handed | Three.js objects |
 | 5 | [`js/scenery.js`](../js/scenery.js) | `LL.scenery` | Trees, the shader loch, pools of light, ground growth, moon, mist, stars, fireflies, petals. Optional: without it gfx falls back to cone trees and a flat loch | `W` | Three.js objects |
+| 5a | [`js/heroes3d.js`](../js/heroes3d.js) | `LL.heroes3d` | 0.24: the four heroes as small 3D figures with a skeleton (and the Echo), posed every frame from the motion rig. Presentation only | the unit and its pose | its own Three.js objects |
 | 5b | [`js/wardrobe.js`](../js/wardrobe.js) | `LL.wardrobe` (`WD`) | 0.23: things the player's hero wears or carries (trail, footfall, ring, light, dash), their unlock rules, the wardrobe screen and the end-screen box. Rules are pure and load under Node | `LL.cfg`, the player's hero model, events | its own Three.js objects, the DOM, `cfg.wear` and its counters |
 | 6 | [`js/gfx.js`](../js/gfx.js) | `LL.gfx` (`R`) | The scene: sky, ground, threads, structures, crowds, paper heroes, painted flats, the fox, cues, particles, camera, bloom and the per-view drawing pass | `W` | the canvas |
 | 7 | [`js/audio.js`](../js/audio.js) | `LL.audio` (`A`) | The score: eight recorded cues in `art/music/` on two crossfading decks that follow the match (see [`docs/MUSIC.md`](MUSIC.md)). The effects: a small WebAudio synth with no samples, written in 31 equal steps (`edo(n)`) and rounded to semitones unless "Saelion tuning" is on. Master, music and effects volumes and one mute | `W`, events | speakers |
@@ -78,7 +79,7 @@ Each file starts with a `DESIGN` comment that says what it may and may not do. R
 7. `UI.frame` and `A.frame`.
 8. Clear the one-shot edges. If frames keep coming slower than about 26 fps for several seconds, switch to Lighter graphics once.
 
-`R.frame` in order: heroes (paper pose, bend, dust, afterimages, falls) and the fox, troopers and thieves through the props hooks, structures, projectiles, soul orbs, zones, the camera (`R.camPose`, or the cinematic `SHOTS` when there is no player), health bars, cues, scenery's `frame`, then `draw()` (scene, bloom and the view's drawing pass).
+`R.frame` in order: heroes (the 3D figure's pose or the paper pose and bends, dust, afterimages, falls) and the fox, troopers and thieves through the props hooks, structures, projectiles, soul orbs, zones, the camera (`R.camPose`, or the cinematic `SHOTS` when there is no player), health bars, cues, scenery's `frame`, then `draw()` (scene, bloom and the view's drawing pass).
 
 ## Views (looks)
 
@@ -112,9 +113,23 @@ Helpers: `own(o)` and `own2(m)` in `gfx.js` and `props.js`, `mine(o)` and `share
 
 **To add a view:** add its id to `C.LENSES` in `core.js` (and a line in `C.MOODS` if it should answer a mood; the mood tests loop over every id), an entry in `LOOKS` with a `post` index in `gfx.js` (the look chips are made from `LOOKS`), a branch for that index in `mComp`'s shader, a palette in `PAL` in `scenery.js`, and CSS for `body[data-look="id"]` in `index.html`. If the view should do something, that rule goes in `sim.js` with a test.
 
+## 3D heroes (0.24)
+
+The owner, playing over the shoulder, found the painted cards wandering and sliding ("it just looks dumb"), so since 0.24 the heroes are small 3D figures, and painted paper is a setting (`cfg.heroes3d`, "Heroes as 3D figures", on by default). `js/heroes3d.js` builds each hero from Three.js primitives as one skinned mesh (Myra's wings are a second): vertex colours, one canvas atlas for faces, Dora's stag and the trims, Phong shading with a lift, a key light from the camera's side so a back seen from behind has form, the view's light as a rim, darker feet. Each view sets lift, saturation, tint and rim (`LOOKP`).
+
+The skeleton: hips, spine, chest, neck, head; arms (shoulder, elbow, hand); legs (hip, knee, foot); plus cloth panels round the body (Dora's cloak on the chest, Anna's coat and the smocks on the hips), chains (Anna's braid, Dora's scarf tails) and pendulums (Dora's lantern and hat, the Skein Doll's yarn, Myra's spools and curl, Myra's wings). Every frame `H3.pose(fig, st, unit, o)` takes `LL.paperMotion.pose()`'s output and the unit:
+
+- **Legs.** Each foot follows a planted-then-swing path along the direction the unit is actually moving (relative to its facing), and two-bone IK bends the knee. The rig's phase is distance walked; a foot stays planted as long as the leg can reach, and `H3.cyc` passes back a stride multiplier for the speed (`sc.cyc` in `motion.js`), so slow is a walk, fast a run with flight, and a planted foot does not skate. Left touches down at phase pi/2, right at 3pi/2, the moments the rig reports a contact, so the dust (`heroDust`, now under the real foot) and footsteps land with the foot.
+- **Hips and chest.** The hips turn toward the way the legs run (a strafe is a sideways run, a back-pedal runs backward), the spine and chest turn back to the aim; the stride twists the pelvis and counter-twists the shoulders; the body bobs, leans into the run and into a strafe.
+- **Arms.** They pump against the legs; while aiming (the rig's `aim`) the gun arm comes up by IK along the hero's `pitch`, two-handed for Dora and Myra; Anna's thrown hammer winds up over the shoulder and follows through (`throw`); a stomp throws the arms out.
+- **Events from the rig.** Landing squash, the jump (one knee up), a dash, riding a thread (one arm up), a braced shot (a shove back), recoil, idle weight shift and glances, breathing. The fall (`H3.fall`): knees give, the figure tips onto its face.
+- **Secondary.** Cloth panels trail on two springs and swing past when you stop, and each is swung out just far enough to clear the knees and shins near it. Chains are verlet in the world, kept off the back. Pendulums hang along gravity minus how their anchor accelerates.
+
+Afterimages are frozen copies of the skinned figure (`H3.ghost`, faded by `H3.step`); the wardrobe colours them as before. The Echo is the same figure, pale, running its own rig. Captures: `tools/shots/heroes3d.js` (close-ups by segment, every view, a turntable), `play.js` with `PAPER=1` for the cards.
+
 ## Paper heroes: from sheet to screen
 
-Heroes are flat painted cutouts that always face the camera, not 3D models.
+The painted cards, the look until 0.23 and still one setting away: flat painted cutouts that always face the camera.
 
 1. **Sheets.** A turnaround sheet has four figures in a row on flat mid-grey, feet on one baseline: front, left side, back, three-quarter. A motion sheet has seven: front, side and back with the arms removed, one arm from the side, one from the front, and the aiming pose from behind and from the side. Originals live in [`docs/sheets/`](sheets/).
 2. **Cut.** `python3 tools/sheet.py SHEET.png art/heroes/NAME.png` makes four equal cells with a transparent background. `python3 tools/motion.py SHEET.png art/heroes/NAME-motion.png` makes seven and prints the arm length. Both need Pillow and numpy.
