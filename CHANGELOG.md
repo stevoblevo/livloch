@@ -2,6 +2,9 @@
 
 Every version of Livloch, newest first. Each one from 0.4 on is a `release/X.Y` branch that never moves, and the published ones stay playable at [stevoblevo.github.io/livloch/versions/](https://stevoblevo.github.io/livloch/versions/). The reasons behind each step are in [`docs/PLAN.md`](docs/PLAN.md); where each was published is in [`docs/IMPORT.md`](docs/IMPORT.md).
 
+## 0.25
+**Rook, the air, and the world from behind.** Rook Vale, the Wick Aviator, joins as the fifth hero (from the Lantern Ford study): a cobalt courier with a lantern-kite on his back, Wick Skip, Lantern Lift (about a second of steerable rise to 4.2 m, then a glide you can aim and fire from; a thread you lift along catches you once and carries you further) and Landing Bell as his ultimate. Every hero moves through the air their own way: Dora one clean jump, Anna a rock-hop off thin air, the Skein Doll a loose somersault, Myra Belle a short hanging flight (hold jump: her wings beat and she hangs for up to 1.2 s, drifting and shooting). The camera follows height more slowly in the air, so a jump or a lift rises on screen. Your troopers wear warm team-colour capes you can see from behind, a hollow shows a cold rift of light down its spine when you chase it, and the ground along every thread is a worn, flowered path. The Dreamwalk end page explains each discovery as a labelled diagram (ChatGPT's PR #43).
+
 ## 0.24.1
 Myra's hair, after her turnaround: a tousled wavy bob with a swept fringe and locks that flip out at the jaw, shaded light on top and dark underneath. It read as a helmet with earmuffs from the front and a raspberry from behind.
 
