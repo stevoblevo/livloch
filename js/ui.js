@@ -226,6 +226,7 @@ UI.fx = function (e) {
         const hm = $('hitm'); if (hm.className !== 'kill' || !hm.getAnimations || !hm.getAnimations().length) { hm.className = ''; void hm.offsetWidth; hm.className = 'on'; }
       } else if (e.p === 2) { hurt = Math.min(1, hurt + 0.25 + e.amt / 300); if (e.amt > 30) LL.input.rumble(0.5, 120); }
       break;
+    case 'boon': if (e.u === pl || (e.who || []).indexOf(pl) >= 0) (e.who || []).forEach(function (u) { num(u.x, u.y + u.h + 0.2, u.z, '+' + Math.round(e.amt), 'mend'); }); break; // 0.26 guard: Myra Belle's boon, the mending it gave
     case 'soul':
       if (e.p && e.kind === 'secured') num(e.x, e.y, e.z, '+' + Math.round(e.val) + ' secured', 'soul');
       else if (e.p && e.kind === 'denied') num(e.x, e.y, e.z, 'denied +' + Math.round(e.val), 'soul');

@@ -12,3 +12,4 @@ body.touch #hatHud { right: calc(var(--sr) + 180px); left: auto; top: auto; bott
 body.lean #hatHud { display: none !important; }
 @media (prefers-reduced-motion: no-preference) { #hatHud.ready svg { animation: hatGlow 1.4s ease-in-out infinite; } }
 @keyframes hatGlow { 50% { filter: drop-shadow(0 0 7px rgba(233, 180, 76, 1)); } }
+#nums .mend { color: #d8b8ff; font-family: var(--f-sc); font-size: 16px; } /* Myra Belle's boon: what it mended */

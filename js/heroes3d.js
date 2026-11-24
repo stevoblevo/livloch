@@ -20,6 +20,8 @@
      Ability poses (stomp, brace, throw), landing squash, the jump, a dash, riding a thread and the fall come from the rig.
    - 0.25 air: each hero has its own air (see the "0.25 air" section): take-off, rise, top, fall and landing for all; Anna's
      rock-hop and the Skein Doll's spinning tuck for their second jumps; Myra Belle's hover with fast wings; Dora's hat.
+   - 0.26 guard: the guards on the second jump (Anna's aegis, Dora's astral bubble, Skye's fray), Dora's thrown hat and
+     Rook's barrel roll (see the "0.26 guard" section); gfx hands the guard events on through H3.guardEvent.
    - Cloth: hinged panels around the body that trail on springs (and swing past when you stop) and are pushed out by the
      knees and shins, so legs do not go through skirts. The braid is a verlet chain that keeps off the back. The lantern,
      the hat, yarn and spools are damped pendulums driven by how their anchor accelerates.
@@ -274,7 +276,7 @@ function heroMat(lp) {
         'outgoingLight += diffuseColor.rgb * vEm * uEmK;',
         // 0.26 guard: the fray. The body comes apart in level bands (threads) that slide up; what is left glows at its edges
         'if (uFray > 0.001) { float bd = fract(vH * 31.0 - uFT * 1.6 + 0.12 * sin(vH * 9.0 + uFT * 2.7)); float cut = uFray * 0.66; if (bd < cut) discard;',
-        '  float ed = 1.0 - smoothstep(cut, cut + 0.16, bd); outgoingLight = mix(outgoingLight, uFrayC * 0.9, uFray * 0.45) + uFrayC * ed * uFray * 0.9; }'].join('\n'));
+        '  float ed = 1.0 - smoothstep(cut, cut + 0.16, bd); outgoingLight = mix(outgoingLight, uFrayC * 0.9, uFray * 0.2) + uFrayC * ed * uFray * 0.75; }'].join('\n'));
   };
   m.customProgramCacheKey = function () { return 'hero3d2'; }; // 0.26 guard: the fray changed the shader
   m.userData.U = U; // 0.25 rook: a figure may turn its own glow up (Rook's lantern in a lift)
@@ -885,9 +887,176 @@ function airAfter(fig, K, dt, red, air, dash, mix) {
     const sc = 1 + 0.3 * K.hov; b.wingL.scale.setScalar(sc); b.wingR.scale.setScalar(sc); }
 }
 
-/* ---------- 0.26 guard (in progress: stubs until the guard visuals land) ---------- */
-function guardPrep() {}
-function guardPose() {}
+/* ---------- 0.26 guard ----------
+   What a second jump does in a fight, drawn from the unit (guardK, guardT, guardHp, hat, hatN, rollT, rollMax, rollDir;
+   read only) and from the guard events gfx hands on (H3.guardEvent). Each piece is built the first time a hero needs it.
+   - Anna, the aegis: a round bronze shield (an owl over an olive sprig inside a key-pattern band; an original design, no
+     coin or museum piece copied) raised on her left arm toward the aim, and round her front a faint golden arc that shows
+     the 120 degrees it covers. The play camera behind her sees the arc and the shield's rim; a block flashes both.
+   - Dora, the astral bubble: a shell of warm light round her, bright at its edge, with stars in it that twinkle; dimmer as
+     it fills, a flare where a hit lands, and it pops (swells and fades) when it ends.
+   - Skye, the fray: her body comes apart in level bands of thread (uFray in the hero shader) and seven loose strands of
+     copper, mint and cream wind out round her, then back in.
+   - Dora's hat: hidden on her head while it flies; a copy spins along the model's path with a warm glow. Charged, it glows
+     softly on her head. When it comes home it lands with a little bounce.
+   - Rook's barrel roll: one turn of the whole figure about its forward axis (guardPrep sets K.groll, airRoot applies it).
+   Reduced motion: still shapes (no twinkle, no sliding bands, still strands, no spin; the roll is a lean). Lighter graphics:
+   no strands. All of it is flagged so a look leaves its colours alone. */
+const GOLD = 0xffd27a;
+let DOT = null, AEGIS = null;
+function own3(m) { m.userData.lk = m.userData.bl = m.userData.solid = true; return m; }
+function dotTex() {
+  if (DOT) return DOT; const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d'), gr = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.3, 'rgba(255,255,255,0.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 32, 32);
+  return (DOT = new T.CanvasTexture(c));
+}
+/* the shield's face: hammered bronze, a key-pattern band, an owl with its wings folded over an olive sprig */
+function aegisTex() {
+  if (AEGIS) return AEGIS; const N = 256, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'), C0 = N / 2;
+  let gr = g.createRadialGradient(C0 - 30, C0 - 34, 10, C0, C0, C0); gr.addColorStop(0, '#f2c578'); gr.addColorStop(0.55, '#c08236'); gr.addColorStop(1, '#7a4618'); g.fillStyle = gr; g.fillRect(0, 0, N, N);
+  for (let i = 0; i < 220; i++) { const a = Math.random() * TAU, r = Math.sqrt(Math.random()) * C0; g.fillStyle = Math.random() < 0.5 ? 'rgba(255,230,170,0.08)' : 'rgba(60,30,8,0.09)'; g.beginPath(); g.arc(C0 + Math.cos(a) * r, C0 + Math.sin(a) * r, 3 + Math.random() * 5, 0, TAU); g.fill(); } // hammer marks
+  const ring = (r, w, col) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.arc(C0, C0, r, 0, TAU); g.stroke(); };
+  ring(124, 7, '#5a3010'); ring(116, 2, '#ffe0a0'); ring(94, 2, '#ffe0a0'); ring(90, 3, '#6a3a12');
+  // the key band between r 96 and 114: a square-wave line that steps in and out, 28 times round
+  g.strokeStyle = '#5a3010'; g.lineWidth = 3.2; g.beginPath(); const K = 28;
+  for (let k = 0; k <= K * 2; k++) { const a = k / (K * 2) * TAU, r0 = k % 2 ? 111 : 99, r1 = k % 2 ? 99 : 111; if (!k) g.moveTo(C0 + Math.cos(a) * r0, C0 + Math.sin(a) * r0); else g.lineTo(C0 + Math.cos(a) * r0, C0 + Math.sin(a) * r0); g.lineTo(C0 + Math.cos(a) * r1, C0 + Math.sin(a) * r1); }
+  g.stroke();
+  // the owl, embossed: a dark line under a light one, offset
+  const owl = (dx, dy, ink, fill) => {
+    g.save(); g.translate(C0 + dx, C0 + 6 + dy); g.strokeStyle = ink; g.lineWidth = 3; g.fillStyle = fill;
+    g.beginPath(); g.moveTo(-30, -38); g.lineTo(-18, -24); g.quadraticCurveTo(0, -32, 18, -24); g.lineTo(30, -38); g.quadraticCurveTo(38, -10, 30, 18); g.quadraticCurveTo(18, 46, 0, 50); g.quadraticCurveTo(-18, 46, -30, 18); g.quadraticCurveTo(-38, -10, -30, -38); g.closePath(); if (fill) g.fill(); g.stroke(); // head with ear tufts, the body
+    [-13, 13].forEach(function (x) { g.beginPath(); g.arc(x, -10, 11, 0, TAU); g.stroke(); g.beginPath(); g.arc(x, -10, 4.5, 0, TAU); g.fillStyle = ink; g.fill(); }); // the eyes
+    g.beginPath(); g.moveTo(-4, 0); g.lineTo(0, 9); g.lineTo(4, 0); g.stroke(); // the beak
+    [-1, 1].forEach(function (s) { g.beginPath(); g.moveTo(s * 26, 2); g.quadraticCurveTo(s * 30, 30, s * 8, 44); g.stroke(); for (let k = 0; k < 3; k++) { g.beginPath(); g.arc(s * (17 - k * 3), 16 + k * 9, 6, s > 0 ? Math.PI * 0.1 : Math.PI * 0.4, s > 0 ? Math.PI * 0.6 : Math.PI * 0.9); g.stroke(); } }); // folded wings, feathers
+    g.beginPath(); g.moveTo(-34, 56); g.quadraticCurveTo(0, 50, 36, 58); g.stroke(); // the sprig it stands on
+    for (let k = 0; k < 6; k++) { const x = -28 + k * 12, s = k % 2 ? -1 : 1; g.beginPath(); g.ellipse(x, 56 + s * 6, 6, 2.6, s * 0.6, 0, TAU); g.stroke(); } // olive leaves
+    [-7, 7].forEach(function (x) { g.beginPath(); g.moveTo(x - 4, 50); g.lineTo(x, 55); g.lineTo(x + 4, 50); g.stroke(); }); // the feet
+    g.restore(); };
+  owl(1.5, 1.5, 'rgba(255,232,180,0.75)', null); owl(0, 0, '#5a3010', 'rgba(150,90,30,0.35)');
+  AEGIS = new T.CanvasTexture(c); return AEGIS;
+}
+function aegisBuild(fig) {
+  const R0 = 0.33, grp = new T.Group(), tex = aegisTex();
+  const cap = new T.SphereGeometry(0.6, 28, 7, 0, TAU, 0, Math.asin(R0 / 0.6)); cap.rotateX(Math.PI / 2); cap.translate(0, 0, -0.6 * Math.cos(Math.asin(R0 / 0.6)));
+  const pa = cap.attributes.position, uv = cap.attributes.uv; for (let i = 0; i < pa.count; i++) uv.setXY(i, 0.5 + pa.getX(i) / (2 * R0), 0.5 + pa.getY(i) / (2 * R0));
+  const face = own3(new T.MeshPhongMaterial({ map: tex, emissiveMap: tex, emissive: 0x6a4420, color: 0xd8c0a0, shininess: 46, specular: 0x8a6a40, side: T.FrontSide }));
+  const back = own3(new T.MeshPhongMaterial({ color: 0x8a5a2a, emissive: 0x4a2c12, shininess: 30, specular: 0x6a4a28, side: T.BackSide }));
+  grp.add(new T.Mesh(cap, face)); grp.add(new T.Mesh(cap, back));
+  const rim = new T.Mesh(new T.TorusGeometry(R0, 0.024, 6, 40), own3(new T.MeshPhongMaterial({ color: 0xc89a58, emissive: 0x5a3a14, shininess: 70, specular: 0xc0a070 }))); grp.add(rim);
+  const strap = new T.Mesh(new T.BoxGeometry(0.16, 0.05, 0.03), back); strap.position.set(0, 0, -0.035); grp.add(strap);
+  grp.traverse(function (o) { if (o.isMesh) { o.frustumCulled = false; o.renderOrder = 1; } });
+  fig.b.chest.add(grp); grp.visible = false;
+  // the arc: 120 degrees of faint gold round her front, a key band at its top and foot, bright at its ends
+  const A = Math.PI / 3, arcG = new T.SphereGeometry(1.0, 28, 8, Math.PI / 2 - A, 2 * A, 0.78, 1.42);
+  const arcM = own3(new T.ShaderMaterial({ uniforms: { uA: { value: 0 }, uF: { value: 0 }, uT: { value: 0 }, uC: { value: new T.Color(GOLD) } }, transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide,
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: ['uniform float uA; uniform float uF; uniform float uT; uniform vec3 uC; varying vec2 vUv;',
+      'float band(float v0) { float by = (vUv.y - v0) / 0.07; if (by < 0.0 || by > 1.0) return 0.0; float bx = fract(vUv.x * 22.0);',
+      '  float l = step(abs(by - 0.12), 0.07) + step(abs(by - 0.88), 0.07); l += step(abs(bx - 0.25), 0.04) * step(by, 0.75) + step(abs(bx - 0.75), 0.04) * step(0.25, by); l += step(abs(by - 0.5), 0.06) * step(0.25, bx) * step(bx, 0.75); return min(l, 1.0); }',
+      'void main(){ float ex = min(vUv.x, 1.0 - vUv.x), ey = min(vUv.y, 1.0 - vUv.y);',
+      '  float edge = smoothstep(0.07, 0.0, ex) * 0.9 + smoothstep(0.05, 0.0, ey) * 0.6;',
+      '  float key = band(0.86) + band(0.07);',
+      '  float sheen = 0.06 + 0.05 * sin(vUv.x * 40.0 - uT * 2.0) * sin(vUv.y * 9.0);',
+      '  float k = (sheen + edge + key * 0.55) * uA * (1.0 + uF * 2.6) * smoothstep(0.0, 0.1, ey);',
+      '  gl_FragColor = vec4(uC * k * 0.55, 1.0); }'].join('\n') }));
+  const arc = new T.Mesh(arcG, arcM); arc.frustumCulled = false; arc.renderOrder = 3; arc.position.y = 1.15; arc.visible = false; fig.root.parent.add(arc);
+  return { grp: grp, face: face, rim: rim, arc: arc };
+}
+function aegisPose(fig, h, G, dt, t, red) {
+  const S = fig.S, e = S.gK === 'aegis' ? S.gE : 0; if (e < 0.005 && !G.ae) return;
+  const A = G.ae || (G.ae = aegisBuild(fig)), b = fig.b, show = e > 0.01;
+  A.grp.visible = A.arc.visible = show; if (!show) return;
+  // the shield: on her left forearm's side, in front of the chest, turned a little out to her left so its rim shows from behind
+  const up = red ? 1 : e; A.grp.position.set(0.4, -0.02 - 0.22 * (1 - up), 0.24 + 0.06 * up); A.grp.rotation.set(-0.08 - (fig.S.gPitch || 0) * 0.5, 0.85, 0); A.grp.scale.setScalar(0.72 + 0.28 * up);
+  A.face.emissiveIntensity = 0.55 + 1.1 * S.gFlash; A.rim.material.emissiveIntensity = 0.7 + 1.8 * S.gFlash;
+  A.arc.material.uniforms.uA.value = e; A.arc.material.uniforms.uF.value = S.gFlash; A.arc.material.uniforms.uT.value = red ? 0 : t;
+  // the arm that holds it: up and forward, the elbow bent across her front
+  const aL = b.armL, fL = b.foreL; aL.rotation.x += (-1.15 - aL.rotation.x) * e; aL.rotation.y += (0.35 - aL.rotation.y) * e; aL.rotation.z += (0.42 - aL.rotation.z) * e; fL.rotation.x += (-1.05 - fL.rotation.x) * e;
+}
+function bubbleBuild(fig) {
+  const mat = own3(new T.ShaderMaterial({ uniforms: { uT: { value: 0 }, uA: { value: 0 }, uFill: { value: 0 }, uHit: { value: 0 }, uHitD: { value: new T.Vector3(0, 0, 1) }, uPop: { value: 0 }, uCol: { value: new T.Color(0xffc46b) }, uCol2: { value: new T.Color(0x4a58d8) } },
+    transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide,
+    vertexShader: 'varying vec3 vN; varying vec3 vV; varying vec3 vD; void main(){ vD = normalize(position); vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }',
+    fragmentShader: ['uniform float uT; uniform float uA; uniform float uFill; uniform float uHit; uniform float uPop; uniform vec3 uHitD; uniform vec3 uCol; uniform vec3 uCol2; varying vec3 vN; varying vec3 vV; varying vec3 vD;',
+      'float h3(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }',
+      'void main(){ float fr = 1.0 - abs(dot(normalize(vN), normalize(vV))), rim = pow(fr, 2.3);',
+      '  vec3 q = vD * 9.0, c = floor(q), f = fract(q) - 0.5; float r = h3(c);',
+      '  float star = step(0.7, r) * smoothstep(0.22, 0.0, length(f)) * (0.6 + 0.4 * sin(uT * (2.0 + r * 4.0) + r * 40.0)) * 1.5;',
+      '  vec3 col = mix(uCol2, uCol, smoothstep(0.25, 0.95, fr)) * (0.05 + 0.75 * rim) + vec3(1.0, 0.92, 0.78) * star * 0.85;',
+      '  col += uCol * pow(max(dot(vD, uHitD), 0.0), 9.0) * uHit * 1.3;',
+      '  col *= (1.0 - 0.5 * uFill) * (1.0 + uPop * 1.6);',
+      '  gl_FragColor = vec4(col * uA, 1.0); }'].join('\n') }));
+  const m = new T.Mesh(new T.SphereGeometry(1, 32, 20), mat); m.frustumCulled = false; m.renderOrder = 3; m.visible = false; fig.root.parent.add(m); return m;
+}
+function bubblePose(fig, h, G, dt, t, red) {
+  const S = fig.S, on = S.gK === 'bubble', e = on ? S.gE : 0, pop = S.gPop != null && S.gPopK === 'bubble' ? S.gPop / 0.4 : -1;
+  if (e < 0.005 && pop < 0 && !G.bub) return;
+  const m = G.bub || (G.bub = bubbleBuild(fig)), u = m.material.uniforms, H = (h.def.air && h.def.air.guard) || { hp: 200 };
+  const vis = e > 0.01 || pop >= 0; m.visible = vis; if (!vis) return;
+  const sw = pop >= 0 ? 1 + 0.4 * pop : 0.86 + 0.14 * e; m.position.set(0, 1.2, 0); m.scale.set(1.08 * sw, 1.36 * sw, 1.08 * sw);
+  u.uT.value = red ? 0 : t; u.uA.value = pop >= 0 ? 0.9 * (1 - pop) * (1 - pop) : 0.9 * e; u.uFill.value = on && h.guardT > 0 ? 1 - h.guardHp / H.hp : u.uFill.value; u.uHit.value = S.gFlash; u.uPop.value = pop >= 0 ? 1 - pop : 0;
+}
+function hatBuild(fig) {
+  const prof = [[0.0005, 2.46], [0.1, 2.37], [0.25, 2.21], [0.42, 2.07], [0.58, 1.97], [0.615, 1.945], [0.6, 1.935], [0.4, 2.04], [0.19, 2.06]].map(function (p) { return new T.Vector2(p[0], p[1] - 2.08); });
+  const geo = new T.LatheGeometry(prof, 22), uv = geo.attributes.uv, c13 = cellUV(13, 0); for (let i = 0; i < uv.count; i++) uv.setXY(i, c13[0] + uv.getX(i) * (c13[2] - c13[0]), c13[1] + uv.getY(i) * (c13[3] - c13[1]));
+  const grp = new T.Group(); grp.add(new T.Mesh(geo, own3(new T.MeshPhongMaterial({ map: fig.mat.map, color: 0xf0b862, emissive: 0x5a3a14, shininess: 4, side: T.DoubleSide }))));
+  const band = new T.Mesh(new T.CylinderGeometry(0.205, 0.215, 0.07, 14, 1, true), own3(new T.MeshPhongMaterial({ color: 0x4a2a1c, emissive: 0x1a0e08, side: T.DoubleSide }))); band.position.y = 2.065 - 2.08; grp.add(band);
+  grp.traverse(function (o) { if (o.isMesh) o.frustumCulled = false; });
+  if (fig.gctx && fig.gctx.glow) { const gl = fig.gctx.glow(0xffc46b, 1.6, grp, 0, 0.04, 0); gl.material.userData.lk = true; gl.material.opacity = 0.5; }
+  grp.visible = false; fig.root.parent.add(grp); return grp;
+}
+function hatPose(fig, h, G, dt, t, red) {
+  const b = fig.b, Ht = h.def.air && h.def.air.hat; if (!b.hat || !Ht) return;
+  const fly = !!h.hat && h.alive !== false; b.hat.scale.setScalar(fly ? 1e-3 : 1);
+  if (fly || G.hat) { const m = G.hat || (G.hat = hatBuild(fig)); m.visible = fly;
+    if (fly) { const g = fig.root.parent, v = V('ghat').set(h.hat.x, h.hat.y, h.hat.z); g.worldToLocal(v); m.position.copy(v); G.spin = (G.spin || 0) + (red ? 0 : dt * 23); m.rotation.set(0.2, G.spin, 0); } }
+  const ready = !fly && (h.hatN || 0) >= Ht.need && h.alive !== false;
+  if (ready && !G.hatGlow && fig.gctx && fig.gctx.glow) { G.hatGlow = fig.gctx.glow(0xffd27a, 1.5, b.hat, 0, fig.P.headC + 0.2, 0); G.hatGlow.material.userData.lk = true; }
+  if (G.hatGlow) { G.hatGlow.visible = ready; if (ready) G.hatGlow.material.opacity = red ? 0.4 : 0.32 + 0.16 * Math.sin(t * 4.2); }
+}
+function frayBuild(fig) {
+  const N = 7, M = 34, geo = new T.BufferGeometry(), pos = new Float32Array(N * M * 3), col = new Float32Array(N * M * 3);
+  geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setAttribute('color', new T.BufferAttribute(col, 3));
+  const pts = new T.Points(geo, own3(new T.PointsMaterial({ map: dotTex(), size: 0.13, vertexColors: true, transparent: true, depthWrite: false, blending: T.AdditiveBlending })));
+  pts.frustumCulled = false; pts.renderOrder = 3; pts.visible = false; fig.root.parent.add(pts); return { pts: pts, N: N, M: M, pos: pos, col: col };
+}
+const FRAYC = [[0.88, 0.58, 0.37], [0.37, 0.91, 0.78], [0.96, 0.9, 0.78]];
+function frayPose(fig, h, G, dt, t, red) {
+  const S = fig.S, e = S.gK === 'fray' ? S.gE : 0, U = fig.mat.userData.U;
+  if (U && U.uFray) { U.uFray.value = e > 0.01 ? e : 0; U.uFT.value = red ? 0 : t; }
+  const low = !!(LL.gfx && LL.gfx.low); if ((e < 0.01 || low) && !G.fr) return;
+  const F = G.fr || (G.fr = frayBuild(fig)); F.pts.visible = e > 0.01 && !low; if (!F.pts.visible) return;
+  const tt = red ? 0 : t, fl = 1 + 1.5 * S.gFlash;
+  for (let s = 0, k = 0; s < F.N; s++) { const dir = s % 2 ? 1 : -1, C = FRAYC[s % 3];
+    for (let j = 0; j < F.M; j++, k++) { const q = j / (F.M - 1), end = Math.pow(Math.abs(q - 0.5) * 2, 3);
+      const a = s * TAU / F.N + dir * (q * 4.6 + tt * 3.1), r = 0.2 + e * (0.16 + 0.3 * (0.5 + 0.5 * Math.sin(q * 6 + s * 1.7 + tt * 2.3)) + 0.35 * end);
+      F.pos[k * 3] = Math.cos(a) * r; F.pos[k * 3 + 1] = 0.12 + q * 2.08 + e * 0.12 * Math.sin(q * 9 + tt * 4 + s); F.pos[k * 3 + 2] = Math.sin(a) * r;
+      const br = e * (0.45 + 0.35 * Math.sin(q * 21 + tt * 9 + s * 2)) * fl * (1 - 0.5 * end); F.col[k * 3] = C[0] * br; F.col[k * 3 + 1] = C[1] * br; F.col[k * 3 + 2] = C[2] * br; } }
+  F.pts.geometry.attributes.position.needsUpdate = true; F.pts.geometry.attributes.color.needsUpdate = true;
+}
+function guardPrep(fig, h, K, dt, red) {
+  const S = fig.S, on = h.alive !== false && h.guardT > 0 ? h.guardK : '';
+  if (on) S.gK = on; S.gE = (S.gE || 0) + ((on ? 1 : 0) - (S.gE || 0)) * ease(on ? 26 : 9, dt); if (S.gE < 0.004 && !on) S.gE = 0;
+  S.gFlash = Math.max(0, (S.gFlash || 0) - dt * 3.2); if (S.gPop != null) { S.gPop += dt; if (S.gPop > 0.4) S.gPop = null; }
+  S.gPitch = clamp(h.pitch || 0, -0.9, 0.9);
+  K.groll = 0;
+  if (h.rollT > 0 && h.rollMax > 0 && h.alive !== false) { const p = clamp(1 - h.rollT / h.rollMax, 0, 1), e = p * p * (3 - 2 * p); K.groll = red ? -(h.rollDir || 1) * 0.3 * Math.sin(Math.PI * p) : -(h.rollDir || 1) * TAU * e; }
+}
+function guardPose(fig, h, K, dt, t, red) {
+  const G = fig.G || (fig.G = {});
+  if (fig.id === 'anna') aegisPose(fig, h, G, dt, t, red);
+  else if (fig.id === 'dora') { bubblePose(fig, h, G, dt, t, red); hatPose(fig, h, G, dt, t, red); }
+  else if (fig.id === 'skein') frayPose(fig, h, G, dt, t, red);
+}
+/* gfx hands on the guard events for a hero with a figure: a block, a soak or a pass flashes the guard; a soak marks where;
+   the bubble's end pops it; the hat landing home bounces it on her head. */
+H3.guardEvent = function (fig, e) {
+  const S = fig.S;
+  if (e.k === 'guarded') { S.gFlash = 1;
+    if (e.how === 'absorb' && fig.G && fig.G.bub && fig.root.parent) { const v = V('gh').set(e.x, e.y, e.z); fig.root.parent.worldToLocal(v); v.y -= 1.2; v.x /= 1.08; v.y /= 1.36; v.z /= 1.08; if (v.lengthSq() > 1e-6) fig.G.bub.material.uniforms.uHitD.value.copy(v.normalize()); } }
+  else if (e.k === 'guardend') { S.gPop = 0; S.gPopK = e.kind; }
+  else if (e.k === 'hatback') S.hatYv = (S.hatYv || 0) - 1.4;
+};
 
 /* ---------- the pose, every frame ---------- */
 /* st: LL.paperMotion.pose() for this unit this frame. h: the unit. o: { dt, t, reduced, dieT }. */
