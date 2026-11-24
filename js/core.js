@@ -85,18 +85,21 @@ var C = LL.C = {
                 of the landing, or on that thread up to `reach` metres ahead of it, take `dmg` (+ `dmgMin` a minute) and
                 stagger (`slow` for `slowT` s); a hollow staggers and takes a quarter
        FOLD_CATCH  seconds a small Hush trooper caught in a folded-away thread's crease takes to crumple (a hollow
-                is pinned there instead until the crease lets go)
+                is pinned there instead until the crease lets go, losing FOLD_CRUSH of its health a second)
        EMBER    mending at home pays: a hero whom the fountain has mended by `need` of its health in one visit leaves
-                carrying a light; on foot within `r` of one of its side's hurt or dark houses, the light goes into that
-                house: lit again at once, and mended by `heal` of its health. One light at a time; lost on death
+                carrying a light; on foot within `r` of one of its side's houses that is dark or under `under` of its
+                health, the light goes in: lit again at once, mended by `heal` of its health, and bright for `bright`
+                seconds (it fires `fire` times as fast). One light at a time; lost on death
        SLACK    the tide between rains: every `every` s from `first` (halfway between two rains) one thread goes slack
                 for `t` s, said `warn` s ahead. The houses of both sides on it (never a patron) stop firing and lose
-                their protection, and take `mul` times the harm. The Hush leans on it (C.DIFF slackHollows). Not in
+                their protection, and take `mul` times the harm. The Hush leans on it (C.DIFF slackHollows). The thread
+                itself carries a rider farther while slack: to `ride`[0] of its length while the far guardian
+                stands, `ride`[1] once only the warden does (0.46 otherwise). Not in
                 First Rain or Ever Fallen, and never once the threads fray at 15:00 */
   ARRIVE: { min: 45, r: 8, reach: 24, dmg: 140, dmgMin: 10, slow: 0.5, slowT: 2.5 },
-  FOLD_CATCH: 2.5,
-  EMBER: { need: 0.4, r: 9, heal: 0.2 },
-  SLACK: { first: 150, every: 300, warn: 20, t: 50, mul: 1.5 }
+  FOLD_CATCH: 2.5, FOLD_CRUSH: 0.04,
+  EMBER: { need: 0.4, r: 9, heal: 0.3, under: 0.97, bright: 30, fire: 2 },
+  SLACK: { first: 150, every: 300, warn: 20, t: 50, mul: 1.5, ride: [0.58, 0.75] }
 };
 /* 0.27 tune: THE DIFFICULTY TABLE. One row per difficulty (0 Gentle, 1 Even, 2 Cruel); every number that differs by
    difficulty lives here, and tools/tune.js measures them against the agreed target (docs/PLAN.md: Even winnable with two

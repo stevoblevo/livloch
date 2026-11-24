@@ -315,7 +315,7 @@ UI.fx = function (e) {
     case 'pinned': feed('A <b>hollow</b> is pinned in the crease'); break;
     case 'unpinned': if (e.u.alive) feed('The crease lets the <b>hollow</b> go'); break;
     case 'ember': if (e.p) UI.banner('You leave with a light.', 'Walk it to one of your houses that is hurt or dark. One light, one house', 5); else feed(hname(e.u) + ' carries a light from home'); break;
-    case 'mended': if (e.p) UI.banner('The ' + C.LANE_NAME[e.s.lane] + ' ' + e.s.kind + ' takes the light.', e.relit ? 'Lit again, and mended' : 'Mended by ' + Math.round(e.amt), 3.5); else feed(hname(e.u) + ' mended the ' + C.LANE_NAME[e.s.lane] + ' ' + e.s.kind); break;
+    case 'mended': if (e.p) UI.banner('The ' + C.LANE_NAME[e.s.lane] + ' ' + e.s.kind + ' takes the light.', (e.relit ? 'Lit again, mended' : 'Mended by ' + Math.round(e.amt)) + ', and burning bright for ' + C.EMBER.bright + ' seconds', 3.5); else feed(hname(e.u) + ' mended the ' + C.LANE_NAME[e.s.lane] + ' ' + e.s.kind); break;
     case 'slackwarn': UI.banner('The ' + C.LANE_NAME[e.lane] + ' is going slack.', 'In ' + e.in + ' seconds nothing on it will be protected, theirs or yours', 5); break;
     case 'slack': UI.banner('The ' + C.LANE_NAME[e.lane] + ' has gone slack.', 'For ' + e.t + ' seconds its houses cannot fire and stand open' + (C.dif(W).slackHollows ? '. A hollow is coming down it' : ''), 5); feed('The <b>' + C.LANE_NAME[e.lane] + '</b> is slack'); break;
     case 'slackend': feed('The ' + C.LANE_NAME[e.lane] + ' pulls tight'); break;

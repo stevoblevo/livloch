@@ -37,7 +37,7 @@
     fold: ['The fold', 'After a crease\'s guard falls, activate the cleared crease to send your side\'s troopers onto the neighboring thread for 45 seconds. The thread they left is shut to the Hush until the crease lets go: small troopers that walk into it crumple, and a hollow is pinned there.'],
     // 0.28 play: three rules found by riding, by going home, and by watching the clock between rains
     arrive: ['Arrival', 'Let go of a thread after a long ride toward the front and the pull runs on: Hush troopers around the landing and along the thread ahead are struck and slowed. A ride home or a short hop lands quietly.'],
-    ember: ['A light from home', 'A hero the fountain has mended by a good part of its health in one visit leaves carrying a light. On foot beside one of its side\'s hurt or dark houses, the light goes in: the house is lit again and mended. One light at a time, and it goes out if its carrier falls. Match and First Rain only.'],
+    ember: ['A light from home', 'A hero the fountain has mended by a good part of its health in one visit leaves carrying a light. On foot beside one of its side\'s hurt or dark houses, the light goes in: the house is lit again, mended, and burns bright for a while. One light at a time, and it goes out if its carrier falls. Match and First Rain only.'],
     slack: ['The slack thread', 'Halfway between red rains one thread goes slack. Houses of both sides on it stop firing and lose their protection, and on Even and Cruel the Hush sends a hollow down it. Long match only.'],
     echo: ['Echo', 'Echo replays your recent movement and shots from the same places, with shots at 70% damage. It reaches six seconds back normally, or ten seconds in Memory.'],
     mercy: ['Mercy', 'When Reign has at least two more destroyed structures than Hush, Hush sends one fewer trooper per thread per wave and its thief spawn interval becomes 1.6 times longer.'],
@@ -247,7 +247,7 @@
             step('map-trifold', 'Activate the crease', 'Move close, then fold'),
             step('git-branch', 'Troopers cross threads', duration(foldT)),
             step('lock-open', 'Their thread is shut', 'Small ones crumple · a hollow is pinned', 'hush')
-          ]), 'After a crease\'s guard falls, activate that crease nearby. It redirects your side\'s troopers from one neighboring thread onto the other for ' + duration(foldT) + '. Until it lets go, the thread they left is shut to the Hush: small troopers that walk into the crease crumple and are gone, and a hollow is pinned there. What was already past the crease keeps coming.');
+          ]), 'After a crease\'s guard falls, activate that crease nearby. It redirects your side\'s troopers from one neighboring thread onto the other for ' + duration(foldT) + '. Until it lets go, the thread they left is shut to the Hush: small troopers that walk into the crease crumple and are gone, and a hollow is pinned there and pressed, losing health each second. What was already past the crease keeps coming.');
         break;
       // 0.28 play
       case 'arrive':
@@ -262,11 +262,11 @@
       case 'ember':
         var EM = C.EMBER || {}, emNeed = Math.round(positive(EM.need, 0.4) * 100), emHeal = Math.round(positive(EM.heal, 0.2) * 100);
         o = card('light', 'Mending at home sends you out with a light for one house.', 'flame', 'One light · +' + emHeal + '%',
-          diagram('chain', 'When the fountain mends ' + emNeed + '% of a hero\'s health in one visit, the hero leaves carrying a light. On foot beside a hurt or dark house of its side, the light goes in: the house is lit again and gains ' + emHeal + '% of its health. A rider on a thread keeps the light as it passes.', [
+          diagram('chain', 'When the fountain mends ' + emNeed + '% of a hero\'s health in one visit, the hero leaves carrying a light. On foot beside a hurt or dark house of its side, the light goes in: the house is lit again, gains ' + emHeal + '% of its health and fires faster for ' + positive(EM.bright, 30) + ' seconds. A rider on a thread keeps the light as it passes.', [
             step('heart', 'Mend at home', emNeed + '% in one visit', 'rain'),
             step('flame', 'Carry one light', 'Lost if you fall'),
-            step('house', 'Walk it to a house', 'Lit again · +' + emHeal + '% health', 'mint')
-          ], fallen ? 'Not in Ever Fallen' : 'One light at a time'), 'A hero whom the fountain has mended by ' + emNeed + '% of its health in one visit leaves carrying a light. On foot within ' + positive(EM.r, 9) + ' metres of one of its side\'s houses that is dark or missing more than ' + Math.round(emHeal / 2) + '% of its health, the light goes in: the house is lit again at once and gains ' + emHeal + '% of its health. One light at a time; a hero riding a thread keeps it; it goes out if its carrier falls. Ever Fallen has no such light.');
+            step('house', 'Walk it to a house', 'Lit again · +' + emHeal + '% · burns bright', 'mint')
+          ], fallen ? 'Not in Ever Fallen' : 'One light at a time'), 'A hero whom the fountain has mended by ' + emNeed + '% of its health in one visit leaves carrying a light. On foot within ' + positive(EM.r, 9) + ' metres of one of its side\'s houses that is dark or hurt, the light goes in: the house is lit again at once, gains ' + emHeal + '% of its health and fires ' + positive(EM.fire, 2) + ' times as fast for ' + positive(EM.bright, 30) + ' seconds. One light at a time; a hero riding a thread keeps it; it goes out if its carrier falls. Ever Fallen has no such light.');
         break;
       case 'slack':
         var SL = C.SLACK || {}, slT = positive(SL.t, 50), slMul = positive(SL.mul, 1.5), slHollows = ((C.DIFF || [])[W.diff == null ? 1 : W.diff] || {}).slackHollows;

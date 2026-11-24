@@ -659,6 +659,7 @@ function zipEnd(team, lane) {
   let f = 0.46;
   if (!mine.inner.alive) f = 0.12; else if (!mine.outer.alive) f = 0.28;
   else { if (!theirs.outer.alive) f = 0.66; if (!theirs.inner.alive) f = 0.84; }
+  if (W.slack.t > 0 && W.slack.lane === lane) f = Math.max(f, theirs.outer.alive ? C.SLACK.ride[0] : theirs.inner.alive ? C.SLACK.ride[1] : f); // 0.28 play: a slack thread carries all the way to the far side's open house
   return lanes[lane].len * f;
 }
 S.zipEnd = zipEnd;
@@ -702,7 +703,7 @@ function damage(t, amt, src, kind, crit) {
   }
   if (kind !== 'dot') {
     const pl = W.player, p = hero && hero === pl ? 1 : (t === pl ? 2 : 0);
-    fx({ k: 'hit', x: t.x, y: t.y + t.h * 0.7, z: t.z, amt: amt, crit: !!crit, p: p, kind: kind, tk: t.kind, team: t.team, big: !!t.big, struct: !!t.struct });
+    fx({ k: 'hit', x: t.x, y: t.y + t.h * 0.7, z: t.z, amt: amt, crit: !!crit, p: p, kind: kind, tk: t.kind, team: t.team, big: !!t.big, struct: !!t.struct, src: src }); // 0.28 play: src, for tools that ask what harmed a house; no rule reads it
   }
   if (t.hp <= 0) { t.hp = 0; kill(t, src, hero); }
   return amt;
@@ -1265,10 +1266,12 @@ function rollStart(h, mx, mz) {
      they came from open: the Hush walked down it unopposed, which is why folding measured at nothing. Now the thread
      folded away is shut to the Hush as well: a small one that walks into the crease while it holds is caught,
      crumples for C.FOLD_CATCH seconds and is gone (no souls, no orb); a hollow is too heavy to crumple and is pinned
-     there, unable to walk or strike, until the crease lets go. What was already past the crease keeps coming. So the
+     there, unable to walk or strike, and the crease presses C.FOLD_CRUSH of its health out of it each second until it
+     lets go. What was already past the crease keeps coming. So the
      fold is how a hero leaves a thread: fold it away and it will keep for C.FOLD_T seconds.
    A LIGHT FROM HOME (lesson 5). Houses never mended before; a hero who went home to mend only lost time on its
-     thread. Now the fountain's mending pays: C.EMBER. One light, one house: which one is the choice. A hero riding a
+     thread. Now the fountain's mending pays: C.EMBER. The house that takes the light is mended and burns bright (fires
+     faster) for a while, so a light walked to the house a hollow is about to reach can save it. One light, one house. A hero riding a
      thread keeps the light (it passes houses without stopping), so the rider chooses where to step off.
    Bots follow the same rules: they land arrivals when they ride out, and a bot that went home hurt mends the house it
    comes back to stand by. They do not plan around any of it. */
@@ -1295,27 +1298,36 @@ function emberStep(h, inFount, mended) {
   for (let i = 0; i < W.structs.length; i++) {
     const s = W.structs[i]; if (s.team !== h.team || !s.alive) continue;
     if (s.kind !== 'patron') any = true;
-    if (!(s.dark || s.hp <= s.maxHp * (1 - E.heal * 0.5)) || hyp(s.x - h.x, s.z - h.z) > E.r + s.r) continue;
+    if (!(s.dark || s.hp <= s.maxHp * E.under) || hyp(s.x - h.x, s.z - h.z) > E.r + s.r) continue;
     if (!best || (best.kind === 'patron' && s.kind !== 'patron')) best = s;
   }
   if (!best || (best.kind === 'patron' && any)) return;
   const relit = !!best.dark, hp0 = best.hp;
   if (relit) { best.dark = false; best.darkT = 0; for (let i = 0; i < W.thieves.length; i++) if (W.thieves[i].carry === best) W.thieves[i].carry = null; }
-  best.hp = Math.min(best.maxHp, best.hp + best.maxHp * E.heal); h.ember = false; h.mends = (h.mends || 0) + 1;
+  best.hp = Math.min(best.maxHp, best.hp + best.maxHp * E.heal); best.brightT = E.bright; h.ember = false; h.mends = (h.mends || 0) + 1;
   fx({ k: 'mended', u: h, s: best, amt: best.hp - hp0, relit: relit, p: h.isPlayer });
 }
 /* THE SLACK THREAD (lessons 2, 4 and 5). 0.27 measured four to five and a half minutes with no building falling: the
    opening before the first rain, and the wait between rains. Halfway between two rains one thread now goes slack
    (C.SLACK): its houses, both sides', stop firing and stand unprotected, and the Hush sends a hollow down it. For
    fifty seconds that thread is where a house falls, theirs or yours, and two other threads are not being watched.
-   Which thread is drawn from W.rng when it is announced, never the same one twice running. */
+   A slack thread also carries farther: while it is slack a rider goes all the way to the far side's open house
+   (zipEnd, C.SLACK.ride), past the fight in the middle, and lands there as an arrival.
+   Which thread: the most worn one, the thread whose houses, both sides' together, have lost the most (a thread where
+   one side has no house left comes last; W.rng breaks a tie, so the first is anyone's). The tide goes where the war
+   already is, so what is won or lost on a slack thread adds up instead of being spread over three. */
 function isSlack(s) { const K = W.slack; return K.t > 0 && s.struct && s.kind !== 'patron' && s.lane === K.lane; }
 S.slack = isSlack;
 function slackStep(dt) {
   const K = W.slack, D = C.SLACK; if (W.short || W.fallen) return;
   if (K.t > 0) { K.t -= dt; if (K.t <= 0 || W.fray) { K.t = 0; fx({ k: 'slackend', lane: K.lane }); } return; }
   if (W.fray) return;
-  if (!K.warned && W.t >= K.next - D.warn) { K.warned = true; let l = Math.floor(W.rng() * 3); if (l === K.lane) l = (l + 1 + Math.floor(W.rng() * 2)) % 3; K.lane = l; fx({ k: 'slackwarn', lane: l, in: D.warn }); }
+  if (!K.warned && W.t >= K.next - D.warn) {
+    K.warned = true; let l = -1, bw = -1e9; const o = Math.floor(W.rng() * 3);
+    for (let i = 0; i < 3; i++) { const ln = (o + i) % 3; let w = 0, sides = 0; for (let t = 0; t < 2; t++) { const st = W.st[t][ln]; w += (st.outer.alive ? 1 - st.outer.hp / st.outer.maxHp : 1) + (st.inner.alive ? 1 - st.inner.hp / st.inner.maxHp : 1); if (st.inner.alive) sides++; }
+      if (sides < 2) w -= 10; if (w > bw) { bw = w; l = ln; } }
+    K.lane = l; fx({ k: 'slackwarn', lane: l, in: D.warn });
+  }
   else if (K.warned && W.t >= K.next) {
     K.warned = false; K.next += D.every; K.t = D.t; K.n++;
     for (let i = 0; i < W.structs.length; i++) { const s = W.structs[i]; if (s.alive && isSlack(s)) s.tgt = null; }
@@ -1789,7 +1801,7 @@ function structStep(s, dt) {
   if (W.fallen && s.team === 0 && !s.dark && s.kind !== 'patron') { s.litT -= dt * (W.lens === 'memory' ? 0.5 : 1); if (s.litT <= 0) { s.dark = true; s.darkT = 0; fx({ k: 'snuff', u: s, faded: true }); } }
   if (isSlack(s)) { s.tgt = null; return; } // 0.28 play: on a slack thread no house fires
   if (s.dark) { if (s.darkT > 0) { s.darkT -= dt * (W.lens === 'memory' && s.team === 0 ? 2 : 1); if (s.darkT <= 0) { s.dark = false; fx({ k: 'relit', u: s }); } } s.tgt = null; return; }
-  s.atkT -= dt; s.scanT -= dt;
+  s.atkT -= dt * (s.brightT > 0 ? C.EMBER.fire : 1); s.scanT -= dt; if (s.brightT > 0) { s.brightT -= dt; if (s.brightT <= 0) fx({ k: 'brightend', u: s }); } // 0.28 play: a house that has just taken a light burns bright
   if (s.scanT <= 0) {
     s.scanT = 0.25; s.pressed = false;
     const us = W.units, en = 1 - s.team; let bt = null, btd = s.range, bh = null, bhd = s.range, focus = null;
@@ -1928,7 +1940,7 @@ S.step = function (dt) {
     if (!u.folded && u.z > -13 && u.z < 13) for (let k = 0; k < W.creases.length; k++) { const c = W.creases[k]; if (c.t > 0 && c.team === u.team && u.lane === c.from) { foldTrooper(u, c); break; }
       if (c.t > 0 && c.team !== u.team && u.lane === c.from) { if (u.big) pin = true; else if (!(u.caught > 0)) { u.caught = C.FOLD_CATCH; u.tgt = null; fx({ k: 'caught', u: u, i: k, x: u.x, z: u.z }); } break; } }
     if (u.caught > 0) { u.caught -= dt; u.vx = u.vz = 0; if (u.caught <= 0) { u.alive = false; fx({ k: 'death', u: u, x: u.x, y: u.y, z: u.z, team: u.team, kind: 'trooper', by: null, creased: true }); } continue; }
-    if (pin !== !!u.pinned) { u.pinned = pin; fx({ k: pin ? 'pinned' : 'unpinned', u: u, x: u.x, z: u.z }); } if (pin) { u.vx = u.vz = 0; u.tgt = null; continue; }
+    if (pin !== !!u.pinned) { u.pinned = pin; fx({ k: pin ? 'pinned' : 'unpinned', u: u, x: u.x, z: u.z }); } if (pin) { u.vx = u.vz = 0; u.tgt = null; damage(u, u.maxHp * C.FOLD_CRUSH * dt, null, 'dot'); continue; }
     trooperStep(u, dt);
   }
   for (i = 0; i < W.structs.length; i++) { const s = W.structs[i]; if (s.alive) { if (s.flash > 0) s.flash -= dt; structStep(s, dt); } }
