@@ -31,6 +31,9 @@
      light and run for the gate), and red rain every 300 s. This is Reignfawn's Hush, not a mirror team.
    - AIR (0.25): each hero moves through the air its own way, from `air` on its row in core.js: Dora one jump, Anna and
      the Skein Doll a second jump, Myra Belle a short hanging flight on her wings. Rules at heroJump.
+   - GUARDS (0.26): the second jump opens a short guard (Anna's aegis, Dora's bubble, Skye's fray), a jump over a thread
+     while moving along it is boosted, three boosts charge Dora's hat, a boosted hover ending on the thread mends Myra
+     Belle's side, and Rook's dash aloft is a barrel roll. Rules in the "0.26 guard" section after heroLand.
    - Pacing borrowed from Knight Side: Last Breath (once per life under 30% health) and Mercy (the Hush eases off when
      the Reign is two structures behind).
    - The sim talks to the outside only through W.fx, a list of plain event objects drained every frame by gfx, audio

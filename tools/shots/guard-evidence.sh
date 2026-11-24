@@ -2,7 +2,7 @@
 # 0.26 guard: the committed evidence from tools/shots/guard.js captures. Expects, under $SRC (default /tmp/guard/final):
 #   anna (HERO=1), anna-side (HERO=1 CAM=1.35 SEGS=guard), dora (HERO=0 SEGS=guard,boost), dora-hat (HERO=0 HUD=1 SEGS=hat),
 #   myra (HERO=2 HUD=1), skye (HERO=3), rook (HERO=4), skye-red and rook-red (REDUCED=1), dora-paper (PAPER=1 SEGS=guard),
-#   and audio.log (tools/shots/guard-audio.js). Writes docs/evidence/guard-0.26-*: contact sheets and one mp4 per hero
+#   skye-low (LOW=1 SEGS=guard) and audio.log (tools/shots/guard-audio.js). Writes docs/evidence/guard-0.26-*: contact sheets and one mp4 per hero
 #   (real time, 30 fps). Run from the repository root. Needs Pillow and ffmpeg.
 set -e
 SRC=${SRC:-/tmp/guard/final}; D=docs/evidence; S=tools/shots/rook-sheet.py; FONT=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
@@ -14,7 +14,7 @@ sheet dora-hat 4 dora-hat "13=13 thread boost 1 (pips)" "57=57 boost 2" "101=101
 sheet myra 4 myra "16=16 along the thread: jump" "27=27 the hover starts: thread boost" "29=29 the pull of light" "40=40 held up by the thread" "60=60 let go on the thread: boon" "62=62 the boon's rings" "86=86 again, an ally beside her" "97=97 boosted hover" "120=120" "133=133 spent on the thread: boon" "135=135 +50 to both" "140=140"
 sheet skye 4 skye "6=6 a shot lands, no guard yet" "22=22 second jump: she frays" "24=24 a shot passes through" "27=27 into the somersault" "30=30 through again" "35=35 and again" "40=40 whole again (0.6 s)" "45=45 shots land again" "112=112 along the thread: jump" "121=121 thread boost, fraying" "124=124" "128=128"
 sheet rook 4 rook "8=8 Lantern Lift" "30=30 aloft, a shot lands (no roll)" "34=34 dash aloft: barrel roll" "36=36 a shot misses" "38=38" "40=40" "42=42 misses" "44=44" "46=46 misses" "50=50 out of the roll" "70=70 glide" "100=100 landed"
-python3 $S "$D/guard-0.26-reduced.jpg" 4 "$SRC/skye-red/f022.png=Skye, reduced motion: still bands" "$SRC/skye-red/f030.png=no somersault, no strands motion" "$SRC/rook-red/f038.png=Rook, reduced: the roll is a lean" "$SRC/dora-paper/f030.png=painted paper: the bubble as a sphere" --crop 80,0,560,360 --scale 0.75
+python3 $S "$D/guard-0.26-reduced.jpg" 5 "$SRC/skye-red/f022.png=Skye, reduced motion: still bands" "$SRC/skye-red/f030.png=no somersault, no strands motion" "$SRC/rook-red/f038.png=Rook, reduced: the roll is a lean" "$SRC/dora-paper/f030.png=painted paper: the bubble as a sphere" "$SRC/skye-low/f027.png=Lighter graphics: no strands, no bloom" --crop 80,0,560,360 --scale 0.75
 [ -f "$SRC/audio.log" ] && sed -n '/^{/,/^}/p' "$SRC/audio.log" > "$D/guard-0.26-audio.json"
 mp4() { local out=$1 title=$2; shift 2; local ins=() fl="" n=0; for d in "$@"; do ins+=(-framerate 30 -i "$SRC/$d/f%03d.png"); fl="$fl[$n:v]drawtext=fontfile=$FONT:text='$title':x=12:y=12:fontsize=18:fontcolor=white:box=1:boxcolor=0x10101c@0.6[v$n];"; n=$((n+1)); done
   local cat=""; for i in $(seq 0 $((n-1))); do cat="$cat[v$i]"; done
