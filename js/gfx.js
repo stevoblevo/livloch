@@ -1223,7 +1223,7 @@ function airFx(e) {
   if (R.reduced) { if (e.k === 'jump' && e.dbl) emit(x, y, z, 8, 0xf4e8d6, 3, 0.35, -1, 0); return; }
   if (e.k === 'jump' && !e.dbl) {
     if (y < 0.6) for (let k = 0; k < 5; k++) { const a = k / 5 * 6.283 + Math.random(); puff(x + Math.cos(a) * 0.25, 0.1, z + Math.sin(a) * 0.25, Math.cos(a) * 1.4 + h.vx * 0.1, 0.25, Math.sin(a) * 1.4 + h.vz * 0.1, 0.22, 0.75, 0.45, 0.3); }
-    if (id === 'dora') { const L = airAt(h, 'lant', -0.3, 0.75, 0.05); for (let k = 0; k < 8; k++) emit(L.x, L.y - 0.1, L.z, 1, 0xffc46b, 0.7, 0.8, 1.3, -0.5); ring(x, y, z, 0.25, 1.1, 0xffc46b, 0.35); }
+    if (id === 'dora') { const L = airAt(h, 'lant', -0.3, 0.75, 0.05); for (let k = 0; k < 5; k++) emit(L.x, L.y - 0.1, L.z, 1, 0x6a4a1c, 0.7, 0.8, 1.3, -0.5); ring(x, y, z, 0.25, 1.1, 0xffc46b, 0.35); }
     return;
   }
   if (e.k === 'jump') {
@@ -1233,18 +1233,18 @@ function airFx(e) {
       for (let k = 0; k < 4; k++) puff(x - fx * 0.2 + (Math.random() - 0.5) * 0.3, y + 0.05, z - fz * 0.2 + (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 1.2, -0.4, (Math.random() - 0.5) * 1.2, 0.25, 0.85, 0.5, 0.38);
       ring(x, y - 0.06, z, 0.2, 1.0, 0xd8c8a8, 0.3);
     } else if (id === 'skein') { // yarn: copper and mint strands flung round her
-      for (let k = 0; k < 14; k++) emit(x, y + 0.9, z, 1, k % 3 ? 0xe0955f : 0x9fd4b0, 3.2, 0.55, 0.6, 4);
+      for (let k = 0; k < 6; k++) emit(x, y + 1.7, z, 1, k % 3 ? 0x3a2214 : 0x1c3024, 3.6, 0.45, 0.4, 5); // from her yarn; dark, because the particles are additive and bloom
       ring(x, y + 0.85, z, 0.3, 1.2, 0xe0955f, 0.3);
     } else emit(x, y, z, 8, 0xf4e8d6, 3, 0.35, -1, 0);
   } else if (e.k === 'hover') { // the wings open: a shimmer off each
-    for (let s = -1; s <= 1; s += 2) { const P = airAt(h, s > 0 ? 'wingL' : 'wingR', s * 0.4, 1.0, -0.3); for (let k = 0; k < 7; k++) emit(P.x, P.y, P.z, 1, k % 2 ? 0xe8c8ff : 0xffd6f0, 1.6, 0.7, 0.2, 1.2); }
-    ring(x, y + 0.05, z, 0.3, 1.3, 0xdcc0f0, 0.4);
-  } else if (e.k === 'hoverend') { for (let k = 0; k < 6; k++) emit(x, y + 0.9, z, 1, 0xe8c8ff, 0.8, 0.8, 0, 2.5); }
+    for (let s = -1; s <= 1; s += 2) { const P = airAt(h, s > 0 ? 'wingL' : 'wingR', s * 0.4, 1.0, -0.3); for (let k = 0; k < 3; k++) emit(P.x, P.y, P.z, 1, k % 2 ? 0x5a3c74 : 0x6a3a5a, 1.8, 0.6, 0.2, 1.2); }
+    ring(x, y + 0.05, z, 0.3, 1.2, 0x8a70a8, 0.35);
+  } else if (e.k === 'hoverend') { for (let k = 0; k < 3; k++) emit(x, y + 0.9, z, 1, 0x5a3c74, 0.8, 0.7, 0, 2.5); }
 }
-function airDust(m, h, dt) { // while hovering: lilac motes shaken off the wings, about 14 a second
-  m.airAcc = (m.airAcc || 0) + dt * 14;
+function airDust(m, h, dt) { // while hovering: lilac motes shaken off the wings, about 5 a second (additive: dark colours glow softly)
+  m.airAcc = (m.airAcc || 0) + dt * 5;
   while (m.airAcc >= 1) { m.airAcc -= 1; const s = Math.random() < 0.5 ? 1 : -1, P = airAt(h, s > 0 ? 'wingL' : 'wingR', s * 0.4, 1.0, -0.3);
-    emit(P.x + (Math.random() - 0.5) * 0.3, P.y + (Math.random() - 0.5) * 0.3, P.z + (Math.random() - 0.5) * 0.3, 1, Math.random() < 0.5 ? 0xe8c8ff : 0xffd6f0, 0.5, 0.9, -0.4, 0.6); }
+    emit(P.x + s * 0.15 + (Math.random() - 0.5) * 0.2, P.y + (Math.random() - 0.5) * 0.2, P.z + (Math.random() - 0.5) * 0.2, 1, Math.random() < 0.5 ? 0x4a3462 : 0x5a3050, 0.5, 0.8, -0.4, 0.6); }
 }
 function ghost(m, h, P, pt) {
   let gh = ghosts[ghostK];
@@ -1699,7 +1699,8 @@ R.frame = function (dt, view) {
   } else {
     /* CAMERA. Aim stays exact (yaw and pitch are never smoothed); the follow height lags a little behind jumps and landings,
        a wall pulls the camera in at once and lets it out slowly, and a dash or a thread ride widens the view a touch. */
-    if (pivotY == null || Math.abs(pl.y - pivotY) > 4 || R.reduced) pivotY = pl.y; else pivotY += (pl.y - pivotY) * (1 - Math.exp(-dt * (pl.y > pivotY ? 9 : 13)));
+    const inAir = pl.onGround === false && !pl.zip; // 0.25 air: in the air the height follows slowly (2.2 up, 4 down), so a jump rises on the screen and a hover hangs above the line; on the ground and on a thread as before
+    if (pivotY == null || Math.abs(pl.y - pivotY) > 4 || R.reduced) pivotY = pl.y; else pivotY += (pl.y - pivotY) * (1 - Math.exp(-dt * (pl.y > pivotY ? (inAir ? 2.2 : 9) : (inAir ? 4 : 13))));
     R.camPose(pl, view.yaw, view.pitch, view.zoom, cp);
     { const raw = R._btRaw == null ? 1 : R._btRaw; camBtS = raw < camBtS ? raw : camBtS + (raw - camBtS) * (1 - Math.exp(-dt * 3.5)); }
     fovKick += (((pl.dashT > 0 || pl.zip) && !R.reduced ? 1 : 0) - fovKick) * (1 - Math.exp(-dt * 7));

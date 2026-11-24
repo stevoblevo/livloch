@@ -5,7 +5,11 @@
    Env: LL_ROOT, HERO (0 Dora, 1 Anna, 2 Myra, 3 Skein), OUT, W/H, PORT (use 8850-8859), ZOOM (0..1, default 0.75),
    LOOK (a view id), PAPER=1 (the painted cards), SEGS (comma list of segment names to run, default all), STEP (frames
    between screenshots, default 1), LOOKS (comma list of view ids: instead of the segments, the three heroes on the field side by
-   side in each view, from behind and from the front), TURN=1 (a turntable of all four, idle then running; N frames per lap). */
+   side in each view, from behind and from the front), TURN=1 (a turntable of all four, idle then running; N frames per lap).
+   0.25 air: AIR=1 plays the hero's air move through the real model (LL.sim._t.heroStep: the jump, the second jump, the
+   hover, gravity and landing, two half-steps a frame as the game does), its events handed to the renderer, with the play
+   camera (ZOOM 0 unless set) behind the hero, or SIDE=1 with the camera to its side. Writes OUT/a###.png and OUT/air.json
+   (per frame: height, vertical speed, jumps, hover left, stamina, events, the hero's middle on screen). Ports 8860-8869. */
 const { chromium } = require('/opt/npm-tools/node_modules/playwright');
 const fs = require('fs'), http = require('http'), path = require('path');
 const root = process.env.LL_ROOT || process.cwd(), out = process.env.OUT || '/tmp/h3/x', hero = +(process.env.HERO || 0), W_ = +(process.env.W || 640), H_ = +(process.env.H || 480), port = +(process.env.PORT || 8851);
@@ -47,6 +51,35 @@ const SEGS = [
         v.target = { x: W.heroes.reduce((a, h) => a + h.x0, 0) / 4 - 0.4, y: 0, z: W.heroes[0].z0 + 0.4, dashT: 0, zip: null }; LL.gfx.frame(dt, v); }, { f: f, N: N });
       await pg.screenshot({ path: out + '/t' + String(f).padStart(3, '0') + '.png' });
     }
+    console.log(errs.length ? errs.join('\n') : 'no page errors'); await b.close(); srv.close(); return;
+  }
+  if (process.env.AIR) { // 0.25 air: the hero's air move, played by the model, from behind (or SIDE=1 from the side)
+    const id = await pg.evaluate(() => LL.sim.W.player.def.id), side = !!process.env.SIDE;
+    /* a plan per hero: frames (30 a second) at which to press jump, hold it, move ([forward, right] as fractions of full speed) and fire */
+    const P = { press: [], hold: [], move: [], fire: [], N: 0 };
+    const seq = (o) => { P.N = o.N; for (let f = 0; f < o.N; f++) { P.press[f] = (o.press || []).indexOf(f) >= 0; P.hold[f] = (o.hold || []).some(r => f >= r[0] && f < r[1]); P.fire[f] = (o.fire || []).some(r => f >= r[0] && f < r[1]);
+      let m = [0.5, 0]; (o.move || []).forEach(r => { if (f >= r[0] && f < r[1]) m = r[2]; }); P.move[f] = m; } };
+    if (side) { if (id === 'myra') seq({ N: 84, press: [10, 62], hold: [[10, 60], [62, 64]] }); else if (id === 'dora') seq({ N: 64, press: [10, 40], hold: [[10, 13], [40, 43]] }); else seq({ N: 64, press: [10, 20], hold: [[10, 13], [20, 23]] }); }
+    else if (id === 'dora') seq({ N: 112, press: [8, 45, 82], hold: [[8, 11], [45, 48], [82, 85]], fire: [[45, 70]], move: [[72, 112, [0, 0]]] });
+    else if (id === 'myra') seq({ N: 124, press: [8, 76, 88], hold: [[8, 62], [76, 79], [88, 106]], fire: [[30, 46]], move: [[24, 38, [0.2, 0.7]], [38, 52, [0.2, -0.7]], [64, 124, [0.4, 0]]] });
+    else seq({ N: 112, press: [8, 17, 56, 70], hold: [[8, 11], [17, 20], [56, 59], [70, 73]], fire: [[56, 66]], move: [[50, 100, [0.45, 0.3]], [100, 112, [0, 0]]] });
+    await pg.evaluate((o) => { const W = LL.sim.W, p = W.player, v = LL.dbg.view; p.useAI = false; p.stamina = 3; p.yaw = Math.PI; v.yaw = o.side ? Math.PI / 2 : Math.PI; v.pitch = -0.12; v.zoom = o.z;
+      for (let k = 0; k < 8; k++) LL.gfx.frame(1 / 30, v); }, { side: side, z: +(process.env.ZOOM || 0) });
+    const log = [];
+    for (let f = 0; f < P.N; f++) {
+      if (P.press[f]) await pg.evaluate(() => { LL.sim.W.player.stamina = 3; });
+      const r = await pg.evaluate((o) => {
+        const W = LL.sim.W, p = W.player, v = LL.dbg.view, c = p.ctl, dt = 1 / 30, yaw = Math.PI, fx = Math.sin(yaw), fz = Math.cos(yaw), rx = -fz, rz = fx;
+        c.ax = p.x + fx * 30; c.ay = 1.5; c.az = p.z + fz * 30; c.mx = fx * o.m[0] + rx * o.m[1]; c.mz = fz * o.m[0] + rz * o.m[1]; c.fire = o.fire; c.jumpHeld = o.hold; const ev = [];
+        for (let s = 0; s < 2; s++) { if (s === 0 && o.press) c.jump = true; W.t += dt / 2; LL.sim._t.heroStep(p, dt / 2); p.hp = p.maxHp; if (p.ammo < 2) p.ammo = p.magSize;
+          for (const e of W.fx) { if (e.u === p && /jump|hover/.test(e.k)) ev.push(e.k + (e.dbl ? ':dbl' : '') + (e.why ? ':' + e.why : '')); try { LL.gfx.fx(e); } catch (er) {} } W.fx.length = 0; }
+        W.projs.length = 0; LL.gfx.frame(dt, v); const q = {}; LL.gfx.project(p.x, p.y + 1.1, p.z, q);
+        return { y: +p.y.toFixed(3), vy: +p.vy.toFixed(2), j: p.jumps, hov: +(p.hoverT || 0).toFixed(2), g: p.onGround, st: p.stamina, ev: ev, sx: Math.round(q.x), sy: Math.round(q.y) };
+      }, { press: P.press[f], hold: P.hold[f], m: P.move[f], fire: P.fire[f] });
+      log.push(r); await pg.screenshot({ path: out + '/a' + String(f).padStart(3, '0') + '.png' });
+    }
+    fs.writeFileSync(out + '/air.json', JSON.stringify(log));
+    console.log(id, side ? 'side' : 'behind', log.map((r, i) => r.ev.length ? i + ':' + r.ev.join('+') : '').filter(Boolean).join(' '));
     console.log(errs.length ? errs.join('\n') : 'no page errors'); await b.close(); srv.close(); return;
   }
   if (process.env.LOOKS) { // every view: all four heroes standing in a row, from behind and from the front, after a few frames of running in place

@@ -1008,9 +1008,9 @@ function aiHero(h, dt) {
   botAir(h, dt); // 0.25 air
 }
 /* 0.25 air: bots. A hurt bot on the ground jumps (or dashes) as before 0.25; a bot whose hero has `air` also jumps now
-   and then while an enemy hero is in range, and plans the rest of the airtime at the take-off: a double-jumper jumps
-   again near the top (55%), a hoverer holds jump through the top and hangs for most of its hover (70% with an enemy
-   hero in range, else 40%). Both keep two stamina back for a dash. */
+   and then while an enemy hero (for the Reign, whose foes have no heroes: a hollow) is in range, and plans the rest of
+   the airtime at the take-off: a double-jumper jumps again near the top (55%), a hoverer holds jump through the top and
+   hangs for most of its hover (70% with that foe in range, else 40%). Both keep two stamina back for a dash. */
 function botJump(h, eh, ehD) {
   const c = h.ctl, A = h.def.air;
   if (W.t - h.lastHurt < 0.5 && h.onGround && W.rng() < 0.18) { if (W.rng() < 0.5) { c.jump = true; if (A) botAirPlan(h, eh, ehD); } else if (h.stamina >= 2) c.dash = true; }
