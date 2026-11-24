@@ -712,7 +712,7 @@ function buildPet() {
 }
 /* 0.24 heroes3d: 3D figures (default) or painted paper. Rebuilds only the heroes. */
 R.heroes3d = true;
-R.setHeroes3d = function (on) { on = !!on; if (on === R.heroes3d) return; R.heroes3d = on; if (!R.ok || !W || !dyn) return; heroM.forEach(function (g) { dyn.remove(g); }); heroM = W.heroes.map(heroModel); applyLook(); };
+R.setHeroes3d = function (on) { on = !!on; if (on === R.heroes3d) return; R.heroes3d = on; if (!R.ok || !W || !dyn) return; heroM.forEach(function (g) { dyn.remove(g); }); heroM = W.heroes.map(heroModel); if (echoM) { dyn.remove(echoM); echoM = null; } applyLook(); };
 R.setPet = function (on) { R.petEnabled = !!on; if (petM) petM.visible = R.petEnabled; if (petThread) petThread.visible = false; };
 function petStep(dt) {
   if (!petM) return;
@@ -1028,7 +1028,7 @@ function ring(x, y, z, r0, r1, col, life) {
 R.fx = function (e) {
   switch (e.k) {
     case 'echo': case 'echoend': for (let k = 0; k < 14; k++) emit(e.x, 0.4 + Math.random() * 1.6, e.z, 1, 0x9fd0ff, 2.2, 0.6, 1.5, 0); break;
-    case 'echoshot': emit(e.x, e.y, e.z, 2, 0x9fd0ff, 1.5, 0.25, 0, 0); break;
+    case 'echoshot': emit(e.x, e.y, e.z, 2, 0x9fd0ff, 1.5, 0.25, 0, 0); if (echoM && echoM.u) echoM.u.lastShotT = W.t; /* 0.24 heroes3d: the echo raises its aim */ break;
     case 'hit': {
       const col = e.tk === 'hero' ? 0xfff0d0 : (e.tk === 'trooper' ? 0xffc890 : 0xbfd0ff);
       if (e.kind === 'gun') emit(e.x, e.y, e.z, e.crit ? 5 : 2, e.crit ? 0xffe070 : col, 4, 0.3, 1);
@@ -1476,11 +1476,18 @@ R.frame = function (dt, view) {
   }
   { // the echo: a pale second self where the model says it is
     const e = W.echo;
+    if (e && !echoM && R.heroes3d && LL.heroes3d) { const fig = LL.heroes3d.build(T, W.player, { LK: LK }); // 0.24 heroes3d: the echo is the figure too, pale, running its own rig
+      if (fig) { LL.heroes3d.ghostly(fig); const m = new T.Group(); m.add(fig.root); m.fig = fig; m.rig = LL.paperMotion.create(); m.u = { def: W.player.def, id: -1, team: W.player.team, x: e.x, z: e.z, y: 0, vx: 0, vz: 0, vy: 0, yaw: e.yaw, pitch: 0, onGround: true, alive: true, lastShotT: -9 }; echoM = m; dyn.add(m); } }
     if (e && !echoM) { const id = W.player.def.id, pt = paperTex[id]; let m;
       if (pt) { const t = pt.clone(); t.needsUpdate = true; t.repeat.set(0.25, 1); t.offset.x = 0.5; const P = PAPER[id]; m = new T.Mesh(new T.PlaneGeometry(P.h * (pt.image.width / 4) / pt.image.height, P.h), new T.MeshBasicMaterial({ map: t, transparent: true, opacity: 0.55, color: 0x9fd0ff, side: T.DoubleSide, depthWrite: false })); m.userData.hy = P.h / 2; }
       else { m = new T.Mesh(new T.ConeGeometry(0.5, 2, 6), new T.MeshBasicMaterial({ color: 0x9fd0ff, transparent: true, opacity: 0.45, depthWrite: false })); m.userData.hy = 1; }
       m.material.userData.lk = true; m.material.userData.bl = true; m.material.userData.solid = true; echoM = m; dyn.add(m); }
-    if (echoM) { echoM.visible = !!e; if (e) { echoM.position.set(e.x, echoM.userData.hy + Math.sin(time * 6) * 0.05, e.z); echoM.rotation.y = Math.atan2(camPos.x - e.x, camPos.z - e.z); if (Math.random() < dt * 14) emit(e.x, 0.3 + Math.random() * 1.6, e.z, 1, 0x9fd0ff, 0.6, 0.5, 1.4, 0); } }
+    if (echoM && echoM.fig) { echoM.visible = !!e; if (e) { const u = echoM.u, k = 1 - Math.exp(-dt * 14), nx = u.x + (e.x - u.x) * k, nz = u.z + (e.z - u.z) * k; // 0.24 heroes3d
+        if (Math.hypot(e.x - u.x, e.z - u.z) > 6) { u.x = e.x; u.z = e.z; u.vx = u.vz = 0; } else if (dt > 0) { u.vx = (nx - u.x) / dt; u.vz = (nz - u.z) / dt; u.x = nx; u.z = nz; }
+        let dy = e.yaw - u.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); u.yaw += dy * k; echoM.position.set(u.x, 0, u.z); echoM.rotation.y = u.yaw;
+        scr.cyc = LL.heroes3d.cyc(echoM.fig, u); LL.heroes3d.pose(echoM.fig, LL.paperMotion.pose(echoM.rig, u, dt, W.t, R.reduced, scr), u, { dt: dt, t: time, reduced: R.reduced });
+        if (Math.random() < dt * 14) emit(u.x, 0.3 + Math.random() * 1.6, u.z, 1, 0x9fd0ff, 0.6, 0.5, 1.4, 0); } }
+    else if (echoM) { echoM.visible = !!e; if (e) { echoM.position.set(e.x, echoM.userData.hy + Math.sin(time * 6) * 0.05, e.z); echoM.rotation.y = Math.atan2(camPos.x - e.x, camPos.z - e.z); if (Math.random() < dt * 14) emit(e.x, 0.3 + Math.random() * 1.6, e.z, 1, 0x9fd0ff, 0.6, 0.5, 1.4, 0); } }
   }
   petStep(dt);
   // troopers

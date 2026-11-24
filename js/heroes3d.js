@@ -27,7 +27,7 @@
    - Presentation only: reads the unit and the pose it is handed, never writes either. Reduced motion: a still figure
      that still turns and aims.
    - Hooks, all marked "0.24 heroes3d": gfx.js heroModel (a figure in place of the paper), the hero loop (stride, pose,
-     fall), heroDust (dust under the real foot, afterimages), R.setHeroes3d; main.js, ui.js and index.html for the setting
+     fall), heroDust (dust under the real foot, afterimages), the Echo (a pale figure), R.setHeroes3d; main.js, ui.js and index.html for the setting
      (LL.cfg.heroes3d, on by default; painted paper stays one click away); motion.js takes sc.cyc. */
 (function (G) {
 'use strict';
@@ -220,8 +220,8 @@ function atlas() {
   at(12, function (g) { g.fillStyle = '#e2b04a'; g.beginPath(); g.arc(64, 64, 52, 0, TAU); g.fill(); g.fillStyle = '#b8862e'; g.beginPath(); g.arc(64, 64, 30, 0, TAU); g.fill(); });
   // 13 straw: woven panels and rings, pale so the vertex colour tints it
   at(13, function (g) { g.fillStyle = '#f4eee4'; g.fillRect(0, 0, 128, 128); g.fillStyle = 'rgba(120,80,40,0.10)'; for (let k = 0; k < 90; k++) g.fillRect((k * 53) % 128, (k * 29) % 128, 9, 2);
-    g.strokeStyle = 'rgba(110,70,30,0.55)'; g.lineWidth = 1.6; for (let x = 0; x <= 128; x += 8) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 128); g.stroke(); }
-    g.strokeStyle = 'rgba(110,70,30,0.32)'; g.lineWidth = 1.2; for (let y = 6; y < 128; y += 13) { g.beginPath(); g.moveTo(0, y); g.lineTo(128, y); g.stroke(); }
+    g.strokeStyle = 'rgba(120,80,35,0.42)'; g.lineWidth = 1.4; for (let x = 0; x <= 128; x += 8) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 128); g.stroke(); }
+    g.strokeStyle = 'rgba(120,80,35,0.24)'; g.lineWidth = 1.1; for (let y = 6; y < 128; y += 13) { g.beginPath(); g.moveTo(0, y); g.lineTo(128, y); g.stroke(); }
     g.fillStyle = 'rgba(90,50,20,0.7)'; g.fillRect(0, 118, 128, 10); });
   ATLAS = new T.CanvasTexture(cv); ATLAS.anisotropy = 4;
   return ATLAS;
@@ -385,7 +385,7 @@ HERO.dora = {
     // the mantle over the shoulders, so arms come out from under it
     B.add(shellG([[1.56, 0.13, 0.12, -0.01], [1.52, 0.22, 0.18, -0.015], [1.46, 0.31, 0.24, -0.02], [1.38, 0.35, 0.265, -0.025], [1.32, 0.36, 0.27, -0.025]], 18, 0.5, TAU - 0.5), null, function (lx, ly, lz, wx, wy) { return wy < 1.35 ? gold : red; }, 'chest');
     // the hat: wide straw cone with woven panels, a dark band, on its own bone (it bobs a little after the head)
-    B.add(new T.LatheGeometry([[0.0005, 2.46], [0.1, 2.37], [0.25, 2.21], [0.42, 2.07], [0.58, 1.97], [0.615, 1.945], [0.6, 1.935], [0.4, 2.04], [0.19, 2.06]].map(function (p) { return new T.Vector2(p[0], p[1]); }), 22), null, 0xd8a052, 'hat', { uv: cellUV(13, 0) });
+    B.add(new T.LatheGeometry([[0.0005, 2.46], [0.1, 2.37], [0.25, 2.21], [0.42, 2.07], [0.58, 1.97], [0.615, 1.945], [0.6, 1.935], [0.4, 2.04], [0.19, 2.06]].map(function (p) { return new T.Vector2(p[0], p[1]); }), 22), null, 0xf0b862, 'hat', { uv: cellUV(13, 0) });
     B.add(shellG([[2.1, 0.205, 0.205], [2.03, 0.215, 0.215]], 14, 0, TAU), null, 0x4a2a1c, 'hat');
     // the lantern, hanging from the right hand on its own bone: bail, cap, frame, glowing core
     const lx = -P.shX, ly = P.shY - P.upper - P.fore - 0.07, fr = 0x3a2a22, lc = ly - 0.17;
@@ -473,7 +473,7 @@ HERO.myra = {
   },
   wings: true,
   body: function (B, P) {
-    const sm = 0x7c2a4c, smD = 0x5e1f3a, gold = 0xe8b044, skin = 0xd49cc0, hair = 0x6a2a52, hairD = 0x521f40;
+    const sm = 0x7c2a4c, smD = 0x5e1f3a, gold = 0xe8b044, skin = 0xc88cb4, hair = 0x6a2a52, hairD = 0x521f40;
     legs(B, P, { thighR: 0.085, kneeR: 0.075, ankleR: 0.062, thigh: 0x4c2240, shin: 0x4c2240, boot: 0x6c2a4a, bootTop: 0.15, bootR: 0.072, footW: 0.075, footH: 0.065, lace: gold, sole: 0x3a1428 });
     const tw = torsoW(P), sk = this.skirt, pw = panelW(sk, 'hips');
     // the smock: a round bell from the collar down, with the skirt part on panels
@@ -494,7 +494,7 @@ HERO.myra = {
     // curly hair: a big round cap and curls round its edge; a curl on top on its own bone
     B.add(new T.SphereGeometry(1, 14, 9, Math.PI / 2 + 0.95, TAU - 1.9, 0, 1.95), M(0, P.headC + 0.05, -0.02, 0, 0, 0, P.headR * 1.16, P.headR * 1.12, P.headR * 1.14), function (lx, ly, lz) { return frac(Math.atan2(lx, lz) * 2.6 + ly * 3) < 0.2 ? hairD : hair; }, 'head');
     B.add(new T.SphereGeometry(1, 12, 4, 0, TAU, 0, 1.05), M(0, P.headC + 0.06, 0.02, 0.22, 0, 0, P.headR * 1.16, P.headR * 1.1, P.headR * 1.16), hair, 'head');
-    for (let i = 0; i < 9; i++) { const a = Math.PI * 0.5 + i / 8 * Math.PI, r = P.headR * 0.98, lo = i % 2; B.add(sph(8, 6), M(Math.sin(a) * r, P.headC - 0.07 - lo * 0.04, Math.cos(a) * r - 0.03, 0.3, a, 0, 0.16, 0.13 + lo * 0.02, 0.1), i % 3 ? hair : hairD, 'head'); } // clumps round the back and sides
+    for (let i = 0; i < 9; i++) { const a = Math.PI * 0.62 + i / 8 * Math.PI * 0.76, r = P.headR * 1.0, lo = i % 2; B.add(sph(8, 6), M(Math.sin(a) * r, P.headC - 0.07 - lo * 0.04, Math.cos(a) * r - 0.03, 0.3, a, 0, 0.16, 0.13 + lo * 0.02, 0.1), i % 3 ? hair : hairD, 'head'); } // clumps round the back and sides
     [[0.15, 0.2, -0.17], [-0.16, 0.19, -0.16]].forEach(function (c, i) { B.add(sph(8, 6), M(c[0], P.headC + c[1] - 0.04, c[2], 0, i, 0, 0.15, 0.12, 0.13), i % 2 ? hair : hairD, 'head'); }); // and toward the crown
     B.add(new T.TorusGeometry(0.07, 0.022, 5, 12, Math.PI * 1.4), M(0, P.headC + 0.36, -0.02, 0, Math.PI / 2, 0.4), hair, 'curl');
     // the spool she shoots with, in the right hand
@@ -685,7 +685,7 @@ H3.pose = function (fig, st, h, o) {
   const osc = -0.15 * sinp * (Gt.roll || 1) * (1 - 0.4 * runK);
   const back = gdz < -0.3 ? 1 : 0;
   const lean = ((0.05 + 0.2 * runK) * mix * (back ? 0.35 : 1) + (st.lean || 0) * 2.2) * (1 - air * 0.6) + dash * 0.42 + zk * 0.25 + stomp * 0.22 - brace * 1.2 + tw * 0.1;
-  const roll = (0.05 * sinp * (1 - 0.5 * runK) * (Gt.roll || 1) + idle * 0.03) * (1 - air);
+  const roll = (0.05 * sinp * (1 - 0.5 * runK) * (Gt.roll || 1) + idle * 0.03) * (1 - air) - clamp(S.vx * 0.012, -0.09, 0.09) * (1 - dash); // and a lean into a strafe
   const shift = (0.42 * fw * sinp * (1 - 0.5 * runK) * (Gt.shift || 1) + idle * 0.025) * (1 - air);
   b.hips.position.set(shift * chy, pelvY, -shift * shy);
   b.hips.rotation.set(lean, hy + osc, roll);
@@ -748,7 +748,7 @@ H3.pose = function (fig, st, h, o) {
     const cM = modelM(b.chest, Mx('cM')), cQi = Q('cQi').setFromRotationMatrix(cM).invert();
     const Ad = V('Ad').set(0, Math.sin(pitchA), Math.cos(pitchA)).applyQuaternion(cQi); // the aim, in the chest frame
     const shR = b.armR.position, reach = (P.upper + P.fore) * 0.9;
-    const Tg = V('Tg').copy(shR).add(V('Tin').set(0.03, 0.02, 0)).addScaledVector(Ad, reach).addScaledVector(Ad, -recoil * 0.08);
+    const Tg = V('Tg').copy(shR).add(V('Tin').set(D.two ? 0.02 : -0.05, 0.04, 0)).addScaledVector(Ad, reach).addScaledVector(Ad, -recoil * 0.08);
     if (thr < 0) Tg.lerp(V('Tw').copy(shR).add(V('Tw2').set(-0.04, 0.3, -0.2)), clamp(-thr * 1.2, 0, 1)); // wound back over the shoulder
     else if (thr > 0) Tg.lerp(V('Tr').copy(shR).add(V('Tr2').set(0.16, -0.18, 0.4)), clamp(thr * 0.7, 0, 1)); // thrown through
     const qa = Q('qa'), elb = ik2(shR, Tg, P.upper, P.fore, V('pr').set(-0.55, -0.6, -0.55).normalize(), qa, true);
@@ -782,7 +782,7 @@ H3.pose = function (fig, st, h, o) {
 function cloth(fig, sp, h, st, dt, red, runK, air, dash, zk) {
   if (!sp) return; const S = fig.S, b = fig.b, P = fig.P;
   const tpT = red ? 0 : clamp(S.vz * 0.075, -0.12, 0.62) * (1 - air * 0.4) + air * 0.35 * (st.stretch < 0 ? 1.2 : 0.5) + dash * 0.8 + zk * 0.5;
-  const trT = red ? 0 : clamp(-S.vx * 0.035, -0.26, 0.26);
+  const trT = red ? 0 : clamp(-S.vx * 0.028, -0.2, 0.2);
   spring(S, 'tp', 'tpv', tpT, 55, 6.5, dt); spring(S, 'tr', 'trv', trT, 55, 6.5, dt);
   // the legs, in the panels' parent frame
   const parent = b[sp.parent], hipsFrame = sp.parent === 'hips';
@@ -857,13 +857,19 @@ H3.ghost = function (fig, parent, col, add) {
     gh.frustumCulled = false; gh.renderOrder = 2; parent.add(gh); fig.ghosts[i] = gh;
   }
   const n = fig.bones.length * 16; gh.skeleton.boneMatrices.set(fig.skel.boneMatrices.subarray(0, n)); if (gh.skeleton.boneTexture) gh.skeleton.boneTexture.needsUpdate = true;
-  gh.material.color.setHex(col); gh.material.blending = add ? T.AdditiveBlending : T.NormalBlending; gh.userData.op = 0;
+  gh.material.color.setHex(col).multiplyScalar(add ? 0.5 : 1); gh.material.blending = add ? T.AdditiveBlending : T.NormalBlending; gh.userData.op = 0; // a whole figure covers more than a card did: dimmer
   gh.scale.set(1, 1, 1); gh.t = 0; gh.life = 0.24; gh.visible = true; if (GHOSTS.indexOf(gh) < 0) GHOSTS.push(gh);
   return gh;
 };
 H3.step = function (dt, add) {
   for (let i = GHOSTS.length - 1; i >= 0; i--) { const g = GHOSTS[i]; if (!g.visible) { GHOSTS.splice(i, 1); continue; } g.t += dt; const f = g.t / g.life;
-    if (f >= 1) { g.visible = false; GHOSTS.splice(i, 1); continue; } g.material.opacity = (g.userData.op || (add ? 0.55 : 0.3)) * (1 - f) * (1 - f); g.scale.y *= 1 + dt * 0.3; }
+    if (f >= 1) { g.visible = false; GHOSTS.splice(i, 1); continue; } g.material.opacity = (g.userData.op || (add ? 0.4 : 0.28)) * (1 - f) * (1 - f); g.scale.y *= 1 + dt * 0.3; }
+};
+/* The Echo (your last seconds replayed beside you): the same figure, pale and see-through, as the painted echo was. */
+H3.ghostly = function (fig, col) {
+  const mk = function (vc) { const m = new T.MeshBasicMaterial({ skinning: true, vertexColors: vc, color: col || 0x9fd0ff, transparent: true, opacity: 0.5, side: T.DoubleSide, map: vc ? atlas() : null, alphaTest: vc ? 0.5 : 0 }); m.userData.lk = m.userData.bl = m.userData.solid = true; return m; };
+  fig.mesh.material = mk(true); if (fig.wings) fig.wings.material = mk(true); if (fig.glow) fig.glow.visible = false;
+  return fig;
 };
 H3.HERO = HERO;
 H3._dbg = function (fig) { return { id: fig.id, tris: fig.tris, bones: fig.bones.length, draws: fig.draws }; }; // for tools
