@@ -2,13 +2,6 @@ MIT License
 
 Copyright (c) 2026 stevoblevo and Livloch contributors
 
-This license covers the source code of Livloch: the JavaScript in js/, the
-tools in tools/, index.html, the GitHub workflow and template files in .github/,
-and code snippets in the documentation. It does NOT cover the art, characters,
-story, music, sound recordings, concept plates, painted sheets, videos or the
-names Livloch and Saelion. Those stay the owner's, all rights reserved. The
-full list is in ASSETS.md.
-
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights

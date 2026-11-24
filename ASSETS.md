@@ -2,6 +2,8 @@
 
 Livloch's **code is MIT** (see [`LICENSE`](LICENSE)). Its **art, characters, story, music and names are not**. They belong to the owner ([@stevoblevo](https://github.com/stevoblevo)), all rights reserved.
 
+**What the MIT licence covers.** The licence in [`LICENSE`](LICENSE) applies to the source code of Livloch: the JavaScript in `js/`, the tools in `tools/`, `index.html`, the GitHub workflow and template files in `.github/`, and code snippets in the documentation. It does not cover the art, characters, story, music, sound recordings, concept plates, painted sheets, videos or the names Livloch and Saelion; those stay the owner's, all rights reserved, as listed below.
+
 In plain words: you may read, run, fork, change and reuse the code for anything, including your own games. You may not take the pictures, the music, the characters or the names and use them as your own. If you ship something built from this code, bring your own art and call it something else.
 
 This is a hobby project's honest summary, not advice from a lawyer, and no lawyer has reviewed it yet. If something here is unclear, open an issue and ask.
