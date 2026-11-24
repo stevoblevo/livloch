@@ -1,0 +1,4 @@
+# The owner is asked to review every pull request.
+# Agents and the owner push from the same account, so do not turn on
+# "Require review from Code Owners" unless there is a second maintainer.
+* @stevoblevo

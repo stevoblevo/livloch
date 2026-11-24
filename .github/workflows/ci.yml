@@ -1,0 +1,44 @@
+# Checks every pull request and every push to main. Safe for pull requests from forks:
+# it runs on `pull_request` (never `pull_request_target`), reads the repository only, and uses no secrets.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Syntax and rule tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Syntax check (node --check)
+        run: |
+          status=0
+          for f in js/*.js tools/*.js; do
+            node --check "$f" || { echo "::error file=$f::node --check failed"; status=1; }
+          done
+          exit $status
+
+      - name: Syntax check (Python tools)
+        run: python3 -m py_compile tools/*.py
+
+      - name: Rule regressions and the motion rig (node tools/test.js)
+        run: node tools/test.js

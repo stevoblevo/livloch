@@ -1,0 +1,61 @@
+name: Idea
+description: A mechanic, a view, a character, a sound, a fix for something dull. Small or wild.
+title: "Idea: "
+labels: ["idea"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Livloch's premise: paper troopers on three threads cancel each other exactly, and **the stalemate is the puzzle**. The player breaks the tie with clever, mostly unexplained means: the view, the fold, fruit, the loch, time. Ideas that add a new way to break the tie, or make an existing one easier to discover, fit best.
+
+        Worth a look first: [`docs/ROADMAP.md`](https://github.com/stevoblevo/livloch/blob/main/docs/ROADMAP.md), [`docs/PLAN.md`](https://github.com/stevoblevo/livloch/blob/main/docs/PLAN.md) (the fifteen modes, "what the player should learn without being told") and [`docs/experiments.md`](https://github.com/stevoblevo/livloch/blob/main/docs/experiments.md). For open-ended chat, Discussions is the better place.
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Gameplay or a rule
+        - A view (look)
+        - Art or the look of the valley
+        - Music or sound
+        - Controls or camera
+        - Story or characters
+        - Balance
+        - Tools, tests or docs
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What it is for
+      description: Which problem it solves, or which of the five lessons it teaches (equal force cancels; the world keeps time; looking is an action; distance is not fixed; you cannot keep everything lit).
+    validations:
+      required: false
+  - type: textarea
+    id: smallest
+    attributes:
+      label: The smallest version worth trying
+      description: What could be built in one pull request and judged by playing?
+    validations:
+      required: false
+  - type: textarea
+    id: works
+    attributes:
+      label: How we would know it works
+      description: What would a player do or say if it worked?
+    validations:
+      required: false
+  - type: checkboxes
+    id: build
+    attributes:
+      label: Building it
+      options:
+        - label: I would like to build this myself (or have my agent build it)

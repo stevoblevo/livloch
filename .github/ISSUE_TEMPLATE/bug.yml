@@ -1,0 +1,142 @@
+name: Bug report
+description: Something broke, drew wrong, ran slowly, or did not answer your hands.
+title: "Bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you. A small, exact report is worth more than a long one. If you can, say what you saw and how to make it happen again.
+
+        Security problems go to the [Security tab](https://github.com/stevoblevo/livloch/security) instead, privately.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you saw or heard, and what you expected instead.
+      placeholder: "The Hush tower on the East thread vanished when I changed to Origami. I expected it to stay."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen again
+      description: Steps from the title screen, if you know them. "Happened once, not sure how" is fine too.
+      placeholder: |
+        1. First rain, Dora, Even
+        2. Ride the East thread to the front
+        3. Press V until Origami
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The number at the bottom of the title screen (for example 0.20), or a commit if you ran it from the repository.
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where you played
+      options:
+        - saelion.co/livloch
+        - stevoblevo.github.io/livloch
+        - An older version under /versions/
+        - A local copy of the repository
+        - Somewhere else (say below)
+    validations:
+      required: true
+  - type: dropdown
+    id: view
+    attributes:
+      label: View (look) at the time
+      description: The look chips on the title and pause screens; V cycles them in play.
+      multiple: true
+      options:
+        - Cobalt Snow
+        - Inkblot Noir
+        - Lantern Night
+        - Knight Night
+        - Origami
+        - Hypermetapunk
+        - Rainwake
+        - Memory
+        - Not sure
+    validations:
+      required: false
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Mode
+      multiple: true
+      options:
+        - First rain
+        - The livelock (the long match)
+        - Ever Fallen
+        - Lean back
+        - Dreamwalk
+        - Watch it run
+        - Title screen, menus or the Cabinet
+    validations:
+      required: false
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      description: For example "Pixel 7", "MacBook Air M2", "Windows desktop, RTX 3060".
+    validations:
+      required: false
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: "Chrome 131, Safari 18, Firefox 133"
+    validations:
+      required: false
+  - type: dropdown
+    id: input
+    attributes:
+      label: Controls
+      multiple: true
+      options:
+        - Keyboard and mouse
+        - Touch
+        - Controller
+    validations:
+      required: false
+  - type: textarea
+    id: perf
+    attributes:
+      label: Frame-rate report (if it ran slowly)
+      description: Play for a few seconds, pause (Esc or P), find "How it is running" and press "Copy the report". Paste it here.
+      render: text
+    validations:
+      required: false
+  - type: textarea
+    id: console
+    attributes:
+      label: Errors from the browser console (optional)
+      description: On desktop, F12 or Cmd+Option+J opens it. Paste any red lines.
+      render: text
+    validations:
+      required: false
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots or a short clip
+      description: Drag files here. A picture of the moment helps more than anything else.
+    validations:
+      required: false
+  - type: dropdown
+    id: who
+    attributes:
+      label: Who found it
+      description: The project keeps these apart on purpose (see "Words for claims" in AGENTS.md).
+      options:
+        - A person playing
+        - An AI agent driving a browser
+        - Reading the code
+        - A headless tool or test
+    validations:
+      required: true
