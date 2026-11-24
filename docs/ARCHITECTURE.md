@@ -2,7 +2,7 @@
 
 A map for anyone about to change the code, person or agent. It describes the code as of 0.20; when a file's header comment and this page disagree, the header wins, and please fix this page.
 
-Livloch is one static page. `index.html` holds the markup and CSS, loads Three.js r128 from cdnjs, then ten plain scripts from `js/` in a fixed order. There is no build step, no bundler and no package to install. Every script is a self-contained function that hangs its part on one global, `LL`.
+Livloch is one static page. `index.html` holds the markup and shared CSS, loads the Dreamwalk field-note stylesheet from `css/debrief.css`, loads Three.js r128 from cdnjs, then twelve plain scripts from `js/` in a fixed order. There is no build step, no bundler and no package to install. Every script is a self-contained function that hangs its part on one global, `LL`.
 
 ## The one rule
 
@@ -47,10 +47,14 @@ if (document.body.dataset.look === 'origami') { /* */ } // and on this
 | 6 | [`js/gfx.js`](../js/gfx.js) | `LL.gfx` (`R`) | The scene: sky, ground, threads, structures, crowds, paper heroes, painted flats, the fox, cues, particles, camera, bloom and the per-view drawing pass | `W` | the canvas |
 | 7 | [`js/audio.js`](../js/audio.js) | `LL.audio` (`A`) | The score: eight recorded cues in `art/music/` on two crossfading decks that follow the match (see [`docs/MUSIC.md`](MUSIC.md)). The effects: a small WebAudio synth with no samples, written in 31 equal steps (`edo(n)`) and rounded to semitones unless "Saelion tuning" is on. Master, music and effects volumes and one mute | `W`, events | speakers |
 | 8 | [`js/input.js`](../js/input.js) | `LL.input` (`I`) | Keyboard and mouse, touch, gamepad, all feeding one small state; the last device touched sets a body class | devices | `I` |
-| 9 | [`js/ui.js`](../js/ui.js) | `LL.ui` (`UI`) | HUD, minimap, shop, title, pause, end screen, the Cabinet and Snuff | `W`, `LL.cfg` | the DOM |
-| 10 | [`js/main.js`](../js/main.js) | `LL.cfg` | States (title, play, pause, over), the loop, the player's hands on the hero, settings saved to `localStorage`, Cabinet feats | everything | `hero.ctl`, the model's few public actions |
+| 9 | [`js/debrief-data.js`](../js/debrief-data.js) | `LL.debriefData` | All 24 discovery descriptions, mode-aware quantities and labeled diagram data | `LL.C`, `W` | nothing after load |
+| 10 | [`js/debrief.js`](../js/debrief.js) | `LL.debrief` | Dreamwalk field notes, category filters, verdicts, notes and text export | discovered IDs, `W`, `LL.cfg` | the DOM, `cfg.calls`, `cfg.callNotes` |
+| 11 | [`js/ui.js`](../js/ui.js) | `LL.ui` (`UI`) | HUD, minimap, shop, title, pause, end screen, the Cabinet and Snuff | `W`, `LL.cfg` | the DOM |
+| 12 | [`js/main.js`](../js/main.js) | `LL.cfg` | States (title, play, pause, over), the loop, the player's hands on the hero, settings saved to `localStorage`, Cabinet feats | everything | `hero.ctl`, the model's few public actions |
 
 Each file starts with a `DESIGN` comment that says what it may and may not do. Read the header of any file before changing it.
+
+The end screen mounts `LL.debrief` from the existing `dreamSeen` IDs. It only describes discoveries and stores the player's design feedback; it never writes match state. The icon sprite is bundled at `art/ui/debrief-symbols.svg`. [The debrief handoff](DEBRIEF-SEMIOTICS.md) documents its data contract and standalone presentation fixture.
 
 ## The model: `W`
 
@@ -171,6 +175,7 @@ It joins the rest at lines marked `0.23 wardrobe`: `main.js` calls `WD.adopt` af
 | Where | What |
 |---|---|
 | [`tools/test.js`](../tools/test.js) | Rule regressions and the motion rig, under Node. Runs in CI on every pull request |
+| [`tools/test-debrief.js`](../tools/test-debrief.js) | Dreamwalk description, export and integration contracts, under Node. Runs in CI on every pull request |
 | [`tools/soak.js`](../tools/soak.js), [`fallen.js`](../tools/fallen.js), [`timeline.js`](../tools/timeline.js), [`redrain.js`](../tools/redrain.js) | Bot-only matches: win rates, Ever Fallen hold times, one match as a timeline, red-rain variants. Simulator results, never human results |
 | [`tools/propstris.js`](../tools/propstris.js) | Triangle counts of the props, under Node (needs a local three.js r128 in `THREE_JS`) |
 | [`tools/evidence.js`](../tools/evidence.js), [`tools/shots/`](../tools/shots/) | Headless Chrome captures through Playwright: frames, motion strips, draw calls, offline audio levels. See [`tools/shots/README.md`](../tools/shots/README.md) |

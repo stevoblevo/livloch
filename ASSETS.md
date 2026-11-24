@@ -29,6 +29,7 @@ The text strings inside the code (hero blurbs, menu lines, mood lines) ship unde
 |---|---|---|
 | [Three.js](https://threejs.org) r128 | MIT, © three.js authors | from cdnjs at page load; not copied into this repository |
 | Fonts: IM Fell English, IM Fell English SC, Spectral, Zen Maru Gothic, Newsreader, DM Mono | SIL Open Font License | from Google Fonts at page load |
+| [Phosphor Icons](https://phosphoricons.com), core 2.1.1 duotone | MIT, © 2023 Phosphor Icons | 43 symbols bundled in [`art/ui/debrief-symbols.svg`](art/ui/debrief-symbols.svg); [source record](art/ui/DEBRIEF-ICONS.md) and [full licence](art/ui/PHOSPHOR-LICENSE.txt). These third-party symbols retain their MIT licence. |
 
 ## Where the art and music came from
 
