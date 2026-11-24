@@ -157,6 +157,7 @@ function show(name) {
   if (name && LL.input.device !== 'touch') { const b = $(name).querySelector('.btn.primary, .btn'); if (b) try { b.focus({ preventScroll: true }); } catch (e) {} }
   else if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
 }
+UI.show = function (name) { show(name); }; // 0.23 wardrobe: js/wardrobe.js opens its own screen (#ward) through this
 UI.showTitle = function () { $('hud').hidden = true; document.body.classList.remove('lean'); show('title'); UI.record(); if (UI.modeLine) UI.modeLine(); };
 UI.startHUD = function (w) {
   W = w; const p = W.player, d = p.def;
@@ -179,6 +180,7 @@ UI.coach = function (text) { const c = $('coach'); c.hidden = !text; if (text) c
 UI.banner = function (text, small, secs) {
   const b = $('banner'); b.innerHTML = esc(text) + (small ? '<small>' + esc(small) + '</small>' : ''); b.classList.add('on'); bannerT = secs || 3.5;
 };
+UI.feed = function (html) { feed(html); }; // 0.23 wardrobe: js/wardrobe.js says "New in the wardrobe" here
 function feed(html) { const f = $('feed'), p = document.createElement('p'); p.innerHTML = html; f.appendChild(p); while (f.children.length > 4) f.removeChild(f.firstChild); setTimeout(function () { if (p.parentNode) p.parentNode.removeChild(p); }, 6000); }
 function num(x, y, z, text, cls) {
   const n = nums[numI]; numI = (numI + 1) % nums.length;

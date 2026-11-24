@@ -1007,6 +1007,7 @@ R.build = function (w) {
   if (SCN) SCN.world(W); // scenery: pools of light for this match's structures
   for (let i = 0; i < PN_MAX; i++) { pLife[i] = 0; pPos[i * 3 + 1] = -999; }
   rings.forEach(r => { r.life = 0; r.m.visible = false; });
+  if (LL.wardrobe) LL.wardrobe.build(scx()); // 0.23 wardrobe: the player's trail, footfall, ring and light, drawn for this look
   applyLook();
 };
 
@@ -1207,8 +1208,9 @@ function ghost(m, h, P, pt) {
   const v = m.paper.v == null ? 2 : m.paper.v, uv = gh.geometry.attributes.uv; for (let k = 0; k < uv.count; k++) uv.setX(k, (k % 2 ? 1 : 0) * 0.25 + v * 0.25); uv.needsUpdate = true;
   const wd = P.h * (pt.image.width / 4) / pt.image.height; gh.position.set(h.x, h.y, h.z); gh.rotation.set(0, Math.atan2(camPos.x - h.x, camPos.z - h.z), 0);
   gh.scale.set(wd * (m.paper.sign || 1), P.h, 1); gh.material.color.setHex(LK.team[h.team]).multiplyScalar(LK.add ? 0.55 : 1); gh.life = 0.24; gh.t = 0; gh.visible = true;
+  if (LL.wardrobe) LL.wardrobe.ghost(gh, h, LK.add); // 0.23 wardrobe: the player's dash colour (and puts the pooled copy back for others)
 }
-function stepGhosts(dt) { for (let i = 0; i < ghosts.length; i++) { const g = ghosts[i]; if (!g || !g.visible) continue; g.t += dt; const f = g.t / g.life; if (f >= 1) { g.visible = false; continue; } g.material.opacity = (LK.add ? 0.7 : 0.35) * (1 - f) * (1 - f); g.scale.y *= 1 + dt * 0.3; } }
+function stepGhosts(dt) { for (let i = 0; i < ghosts.length; i++) { const g = ghosts[i]; if (!g || !g.visible) continue; g.t += dt; const f = g.t / g.life; if (f >= 1) { g.visible = false; continue; } g.material.opacity = (g.userData.op || (LK.add ? 0.7 : 0.35)) * (1 - f) * (1 - f); /* 0.23 wardrobe: userData.op, a dense dash colour */ g.scale.y *= 1 + dt * 0.3; } }
 /* TITLE CAMERA (0.20). The title screen used to circle the valley from high up. Now it is a slow trailer: a run of
    shots, each a gentle move with eased ends — gliding low along the middle thread, craning up over the loch, circling a
    lantern house, drifting past the Hush side, then the wide view — cut together, about twelve seconds each. Reduced
@@ -1310,6 +1312,7 @@ R.frame = function (dt, view) {
   // heroes
   for (i = 0; i < heroM.length; i++) {
     const m = heroM[i], h = m.unit;
+    if (h.isPlayer && LL.wardrobe) LL.wardrobe.hero(m, h, dt, time, camPos); // 0.23 wardrobe: what the player wears (reads the last frame's pose)
     /* A FALL (0.20): a hero who goes down tips over backward like a card knocked flat, with a puff of dust, instead of
        vanishing. Presentation only: the model has already removed them. */
     if (!h.alive) {

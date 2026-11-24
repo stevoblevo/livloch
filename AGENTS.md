@@ -41,7 +41,7 @@ Every script, source picture and decision lives in this repository, not in a tem
 | Command | What it tells you |
 |---|---|
 | `for f in js/*.js tools/*.js; do node --check $f; done` | syntax only |
-| `node tools/test.js` | rule regressions and the motion rig: no Hush heroes, Last Breath once per life, Mercy threshold, theft refund, guardian blackout timing, hollow respawn, red-rain cycle, fruit, view-bound fruit, moods, Ever Fallen, Lean Back, Echo, Dreamwalk, goals, First Rain, the fox unlock, model independent of the renderer |
+| `node tools/test.js` | rule regressions and the motion rig: no Hush heroes, Last Breath once per life, Mercy threshold, theft refund, guardian blackout timing, hollow respawn, red-rain cycle, fruit, view-bound fruit, moods, Ever Fallen, Lean Back, Echo, Dreamwalk, goals, First Rain, the fox unlock, the wardrobe's unlock rules and old saves, model independent of the renderer |
 | `node tools/soak.js [n]` | bot-only win rates per difficulty |
 | `node tools/timeline.js [difficulty] [seed]` | one bot match as a timeline |
 | `node tools/redrain.js [n]` | red-rain experiment variants, bots only |

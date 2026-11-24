@@ -42,6 +42,7 @@ if (document.body.dataset.look === 'origami') { /* */ } // and on this
 | 3 | [`js/motion.js`](../js/motion.js) | `LL.paperMotion` | How a painted body moves: stride by distance walked, aim, landing squash, lean, four damped springs for follow-through. Also a Node module, so tests can load it | a unit | its own rig object |
 | 4 | [`js/props.js`](../js/props.js) | `LL.props` | Hush towers, troopers on both sides, hollows, the light a thief carries, rocks. Built in code, instanced | the unit it is handed | Three.js objects |
 | 5 | [`js/scenery.js`](../js/scenery.js) | `LL.scenery` | Trees, the shader loch, pools of light, ground growth, moon, mist, stars, fireflies, petals. Optional: without it gfx falls back to cone trees and a flat loch | `W` | Three.js objects |
+| 5b | [`js/wardrobe.js`](../js/wardrobe.js) | `LL.wardrobe` (`WD`) | 0.23: things the player's hero wears or carries (trail, footfall, ring, light, dash), their unlock rules, the wardrobe screen and the end-screen box. Rules are pure and load under Node | `LL.cfg`, the player's hero model, events | its own Three.js objects, the DOM, `cfg.wear` and its counters |
 | 6 | [`js/gfx.js`](../js/gfx.js) | `LL.gfx` (`R`) | The scene: sky, ground, threads, structures, crowds, paper heroes, painted flats, the fox, cues, particles, camera, bloom and the per-view drawing pass | `W` | the canvas |
 | 7 | [`js/audio.js`](../js/audio.js) | `LL.audio` (`A`) | The score: eight recorded cues in `art/music/` on two crossfading decks that follow the match (see [`docs/MUSIC.md`](MUSIC.md)). The effects: a small WebAudio synth with no samples, written in 31 equal steps (`edo(n)`) and rounded to semitones unless "Saelion tuning" is on. Master, music and effects volumes and one mute | `W`, events | speakers |
 | 8 | [`js/input.js`](../js/input.js) | `LL.input` (`I`) | Keyboard and mouse, touch, gamepad, all feeding one small state; the last device touched sets a body class | devices | `I` |
@@ -133,6 +134,12 @@ Stride length and hem height per hero are in `RIGS` in `motion.js`.
 - Scenery: `SCN.begin` and `SCN.groundTint` (before the ground is coloured), `SCN.build` (loch, moon, mist, stars), `SCN.trees` and `SCN.world` (once the match exists), `SCN.frame`.
 
 Both are presentation only: they read the unit or `W` they are handed and never write to the model. Both keep per-frame work on the GPU and draw with a handful of instanced or baked meshes. Scenery thins itself under Lighter graphics (`R.low`); both go still under reduced motion (`R.reduced`).
+
+## The wardrobe (0.23)
+
+Rewards you can see (roadmap phase 1). `js/wardrobe.js` holds a catalogue of seventeen things in five slots (trail, footfall, ring, light, dash), in the order a player meets them, each with a rule that reads only saved settings: First Rains finished (`cfg.rains`), First Rain stars all told (`cfg.starsTotal`), goals ever done (`cfg.goalsEver`), Cabinet secrets (`cfg.unl`), lights brought back in Ever Fallen (`cfg.lightsTotal`), livelock wins per difficulty (`cfg.winsBy`), best stars. What is worn is `cfg.wear`. It changes no rule and nothing in `W`; only a person earns things, as with the Cabinet.
+
+It joins the rest at lines marked `0.23 wardrobe`: `main.js` calls `WD.adopt` after loading settings (defaults and repair for old saves) and `WD.fx` after each event; `gfx.js` calls `WD.build` in `R.build`, `WD.hero` at the top of the hero loop for the player only, and `WD.ghost` at the end of `ghost()` (and reads `userData.op` in `stepGhosts`); `ui.js` exposes `UI.feed` and `UI.show`; `index.html` has the title button, the `#ward` screen, `css/wardrobe.css` and the script, before `gfx.js`. In the valley it draws with its own three instanced quad systems, a ring decal and a light on a spring, flagged so the looks leave its colours alone; colours per look are in `WD.PAL`. To add a thing: an entry in `WD.ITEMS` (where it sits is where it comes on the ladder), its colours in `PAL`, and for a trail or footfall its motion in `FX`; `tools/test.js` checks the ladder still gives something every match or two. Captures: `tools/shots/wardrobe.js`.
 
 ## How to add ...
 
