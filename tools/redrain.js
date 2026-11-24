@@ -1,5 +1,6 @@
 // Red-rain experiments from handoff issue #3. Run: node tools/redrain.js [matches per cell]
-// Bots only. The sim uses Math.random in places, so repeat runs differ; treat small gaps as noise.
+// Bots only. The sim is seeded (0.27, #27), so a repeat run prints the same table; a gap between variants is real for these
+// seeds, but a dozen matches is still a small sample.
 const path = require('path');
 require(path.join(__dirname, '..', 'js', 'core.js')); require(path.join(__dirname, '..', 'js', 'sim.js'));
 const S = LL.sim, n = +process.argv[2] || 12;

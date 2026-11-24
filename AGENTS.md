@@ -42,7 +42,7 @@ Every script, source picture and decision lives in this repository, not in a tem
 |---|---|
 | `for f in js/*.js tools/*.js; do node --check $f; done` | syntax only |
 | `node tools/test.js` | rule regressions and the motion rig: no Hush heroes, Last Breath once per life, Mercy threshold, theft refund, guardian blackout timing, hollow respawn, red-rain cycle, fruit, view-bound fruit, moods, Ever Fallen, Lean Back, Echo, Dreamwalk, goals, First Rain, the fox unlock, the wardrobe's unlock rules and old saves, model independent of the renderer |
-| `node tools/soak.js [n]` | bot-only win rates per difficulty |
+| `node tools/soak.js [n] [first seed]` | bot-only win rates per difficulty, one reproducible line per seed (length, result, structures standing, a fingerprint of the event stream) |
 | `node tools/timeline.js [difficulty] [seed]` | one bot match as a timeline |
 | `node tools/redrain.js [n]` | red-rain experiment variants, bots only |
 | `node tools/evidence.js` | headless Chrome frames and an offline audio measurement into `docs/evidence/`; needs `playwright`, a Chrome binary (`CHROME`), and a local `three.min.js` r128 (`THREE_JS`) |
@@ -59,7 +59,7 @@ Bot results are simulator results. Never report them as human play. Browser-agen
 ## Gotchas already paid for
 - Three r128 sizes `InstancedMesh.instanceColor` from `.count` at the first `setColorAt`. Allocate it at full capacity before setting `count = 0` (see `initColor` in `gfx.js`). Getting this wrong made bullets, soul orbs and bar fills invisible from 0.1 to 0.6.
 - A live `AnalyserNode` in headless Chrome did not register new sources. Audio is measured by `LL.audio.offline`, which renders one event in an `OfflineAudioContext`.
-- The sim uses `Math.random` in a few places, so it is not deterministic for a given seed. Treat small differences between runs as noise.
+- The sim is seeded since 0.27 (#27): one seed and one set of inputs give one match, so a bot result that changes is a real change, and `node tools/soak.js` lines can be diffed. In `sim.js` and `core.js` draw from `W.rng()`, never `Math.random`, and keep time as `W.t`; `tools/test.js` fails otherwise. Any change to what the model draws, or in what order, shifts every bot match after it: post soaks before and after rather than reading the shift as a regression.
 - `R.setLook()` rebuilds the whole scene. Anything you build must survive being built again, and must be flagged (`userData.lk`, `bl`, `solid`, `ilk`, `rt`; see `docs/ARCHITECTURE.md`) if the look's colour map should leave it alone.
 - Headless captures use a software renderer (SwiftShader). They show what is drawn, never how fast a real device draws it.
 

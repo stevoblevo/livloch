@@ -43,7 +43,7 @@ The owner asked ChatGPT to make the end page clear through semiotics, in collabo
 - **Echo (0.14) has only been tested for correctness**, not for whether it is fun or findable.
 - **No art slot yet** for fruit bushes, the strays or the fold cranes (#39).
 - **0.20's known soft spots:** the ground beside the threads (#29), the moon (#30), Reign trooper backs at distance (#31), hollows from behind (#32), Origami blossoms too grey (#33). The cinematic title camera is built but hidden behind the painting (#36).
-- **The sim is not deterministic for a seed** (`Math.random` in a few timers), so bot results are noisy and replays cannot be built (#27).
+- **The sim is deterministic for a seed since 0.27** (#27). Replays could now be built on a stored seed and the inputs; nobody has built one.
 
 ## Waiting on pictures
 Towers, both troopers, hollows, small ones, the castle and floating islands for the backdrop, the Ness, pines, rocks (houses, the far ridge and all four heroes are done). The prompt is with ChatGPT; slots are in `art/flats/README.md`. Anyone may offer sheets: #35.

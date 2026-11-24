@@ -281,12 +281,14 @@ test('air (0.25): a hero row without `air` jumps exactly as before 0.25', () => 
   assert.ok(Math.abs(t1 - e1[0].at - 2 * 9.6 / C.GRAV) < 0.04, 'one jump is 0.74 s in the air: ' + (t1 - e1[0].at).toFixed(3));
 });
 test('air (0.25): bots use the moves: double-jumpers jump again now and then, a bot Myra Belle hangs', () => {
-  const got = { anna: 0, skein: 0, myra: 0 };
-  /* Bots choose by Math.random (the sim is not yet seeded, issue #27), so this counts over four seeds and asks that each move
-     is used at all, plus a total: with two seeds and a floor of 2 each it failed about one run in eight (lead, 0.25). */
+  const got = { anna: [], skein: [], myra: [] };
+  /* Seeded since 0.27 (#27), so these counts are the same every run. Measured at 0.27 for seeds 3 to 6: Anna 6 2 3 3,
+     the Skein Doll 5 8 0 6, Myra Belle 3 5 5 2. The floors sit well under that so a retune that shifts the draws still
+     passes, and a bot that stops using its air fails. */
   for (const id in got) for (const seed of [3, 4, 5, 6]) { const W = world({ heroPick: LL.HEROES.findIndex(d => d.id === id), seed: seed }); const ev = run(W, 240, keepAlive);
-    got[id] += ev.filter(e => e.u && e.u.def && e.u.def.id === id && ((e.k === 'jump' && e.dbl) || e.k === 'hover')).length; }
-  assert.ok(got.anna >= 1 && got.skein >= 1 && got.myra >= 1 && got.anna + got.skein + got.myra >= 6, 'second jumps and hovers by bots over four 4-minute runs each: ' + JSON.stringify(got));
+    got[id].push(ev.filter(e => e.u && e.u.def && e.u.def.id === id && ((e.k === 'jump' && e.dbl) || e.k === 'hover')).length); }
+  for (const id in got) { const sum = got[id].reduce((a, b) => a + b, 0), used = got[id].filter(n => n > 0).length;
+    assert.ok(sum >= 6 && used >= 3, id + ': second jumps and hovers in four 4-minute runs (seeds 3 to 6): ' + got[id].join(' ')); }
 });
 test('air poses (0.25): the rig\'s air clocks: take-off, the top, the fall, a second jump, the hover, the landing', () => {
   const M = require(path.join(__dirname, '..', 'js', 'motion.js')), m = M.create(), u = { x: 0, z: 0, yaw: 0, onGround: true, vy: 0, jumps: 0, def: { id: 'skein' }, lastShotT: -99 };
@@ -397,21 +399,25 @@ test('boon (0.26): a hover the thread boosted that ends still on it mends Myra B
   assert.ok(Math.abs(vyB + H.sink * C.TBOOST.sinkK) < 0.2, 'the thread holds her up: she sinks at ' + (-vyB).toFixed(2) + ' m/s, not ' + H.sink);
 });
 test('bots (0.26): under fire a bot opens its guard (Rook rolls) and the guard catches hits', () => {
-  /* Bots choose by Math.random (issue #27); each hero gets 12 s under steady fire (a 15-damage hit from 10 m in front every
-     0.6 s), and the counts are summed over three seeds with floors far below what they usually reach. */
-  const got = {}; for (const id of ['anna', 'dora', 'skein', 'rook']) { got[id] = { guard: 0, guarded: 0 };
+  /* Each hero gets 12 s under steady fire (a 15-damage hit from 10 m in front every 0.6 s) on seeds 3, 4 and 5. Seeded
+     since 0.27 (#27); measured then, guards/guarded per run: Anna 5/5 6/11 5/7, Dora 5/10 6/12 6/11, the Skein Doll 4/4
+     6/6 5/5, Rook 2/2 4/3 7/4. Every run must guard and catch at least once; the sums must reach 8. */
+  const got = {}; for (const id of ['anna', 'dora', 'skein', 'rook']) { got[id] = { guard: 0, guarded: 0, runs: [] };
     for (const seed of [3, 4, 5]) { const { W, h } = gHero(id, -24, 20, { seed: seed }); h.useAI = true; const f = foe(W, h.x, h.z + 10); let next = 0.5;
       const ev = gRun(W, h, 12, (i, t) => { if (id === 'rook' && h.onGround && h.cds[1] <= 0) h.ctl.ab[1] = true; if (t >= next) { next += 0.6; f.x = h.x + Math.sin(h.yaw) * 10; f.z = h.z + Math.cos(h.yaw) * 10; S._t.damage(h, 15, f, 'unit'); } h.hp = h.maxHp; });
-      got[id].guard += ev.filter(e => e.k === 'guard' || e.k === 'roll').length; got[id].guarded += airK(ev, 'guarded').length; } }
-  for (const id in got) assert.ok(got[id].guard >= 3 && got[id].guarded >= 3, id + ': ' + JSON.stringify(got[id])); if (process.env.SHOW) console.log('      ' + JSON.stringify(got));
+      const g = ev.filter(e => e.k === 'guard' || e.k === 'roll').length, d = airK(ev, 'guarded').length; got[id].guard += g; got[id].guarded += d; got[id].runs.push(g + '/' + d);
+      assert.ok(g >= 1 && d >= 1, id + ', seed ' + seed + ': the bot guards under fire and the guard catches a hit (' + g + '/' + d + ')'); } }
+  for (const id in got) assert.ok(got[id].guard >= 8 && got[id].guarded >= 8, id + ': ' + JSON.stringify(got[id])); if (process.env.SHOW) console.log('      ' + JSON.stringify(got));
 });
 test('bots (0.26): whole matches: they boost along their own threads, Dora throws her hat, and nothing breaks', () => {
   const got = { tboost: 0, hat: 0, cuts: 0, boon: 0, guard: 0 }; let bad = 0;
-  for (const id of ['dora', 'anna', 'skein', 'myra']) for (const seed of [3, 4, 5, 6]) { const W = world({ heroPick: LL.HEROES.findIndex(d => d.id === id), seed: seed });
+  for (const id of ['dora', 'anna', 'skein', 'myra']) for (const seed of [3, 4, 5, 6]) { const W = world({ heroPick: LL.HEROES.findIndex(d => d.id === id), seed: seed }), tb0 = got.tboost;
     for (let i = 0; i < 150 * 30 && !W.over; i++) { keepAlive(W); S.step(1 / 30); for (const e of W.fx) { if (e.k === 'hatthrow') got.hat++; else if (e.k === 'hatcut') got.cuts++; else if (e.k in got) got[e.k]++; } W.fx.length = 0;
-      if (i % 30 === 0 && !W.heroes.every(u => [u.x, u.y, u.z, u.vx, u.vy, u.vz, u.hp].every(Number.isFinite) && (!u.hat || [u.hat.x, u.hat.y, u.hat.z].every(Number.isFinite)))) bad++; } }
-  assert.strictEqual(bad, 0, 'every number stays finite'); // (measured over seeds 1 to 8: 4 to 24 boosts and 0 to 5 hat throws a seed)
-  assert.ok(got.tboost >= 10 && got.hat >= 1 && got.cuts >= 1 && got.guard >= 20, 'over 16 bot runs of 150 s: ' + JSON.stringify(got));
+      if (i % 30 === 0 && !W.heroes.every(u => [u.x, u.y, u.z, u.vx, u.vy, u.vz, u.hp].every(Number.isFinite) && (!u.hat || [u.hat.x, u.hat.y, u.hat.z].every(Number.isFinite)))) bad++; }
+    assert.ok(got.tboost > tb0, id + ', seed ' + seed + ': the bots boost along a thread at least once in 150 s'); }
+  assert.strictEqual(bad, 0, 'every number stays finite');
+  /* seeded since 0.27 (#27); measured then over these 16 runs: 48 boosts, 3 hat throws, 5 cuts, 84 guards */
+  assert.ok(got.tboost >= 30 && got.hat >= 2 && got.cuts >= 2 && got.guard >= 50, 'over 16 bot runs of 150 s: ' + JSON.stringify(got));
 });
 /* 0.23 WARDROBE. The unlock rules are pure functions of the saved settings; js/wardrobe.js loads under Node without a page. */
 const WD = (require(path.join(__dirname, '..', 'js', 'wardrobe.js')), LL.wardrobe);
@@ -570,7 +576,8 @@ test('roll (0.26): Rook\'s dash aloft is a barrel roll to one side; shots from a
   h.stamina = 3; ev = gRun(W, h, 0.05, (i) => { h.ctl.mx = 0; h.ctl.mz = 1; if (i === 0) h.ctl.dash = true; }); assert.strictEqual(airK(ev, 'roll')[0].dir, 1, 'with the stick ahead it goes the other way from the last');
 });
 /* ---------- 0.26 ness: the chomp and the flood ----------
-   The sim still uses Math.random (issue #27), so staged tests place every piece by hand and whole-match tests sum over seeds. */
+   Staged tests place every piece by hand. The sim is seeded since 0.27 (#27), so the whole-match test below asks each match
+   for its own flood, bite, fishing trip and kill, as well as totals over the eight. */
 const NS = S.NESS;
 function nessUp(o) { const W = world(o), n = W.ness; n.respT = 0; S.step(1 / 30); n.rise = 1; n.chompT = 0; n.floodAt = 1e9; n.floodHp = true; W.fx.length = 0; W.waveT = 1e9; W.thiefT = 1e9;
   W.heroes.forEach((h, i) => { h.useAI = false; h.x = -60 + i * 3; h.z = -100; h.ctl.mx = h.ctl.mz = 0; }); return W; } /* lead, 0.26: the first step above lets bots steer; their stick would stay on ctl */
@@ -685,7 +692,7 @@ test('the Ness roams and chomps in the flood, goes home, and killing it out ther
 test('whole bot matches with the Ness: floods end, nobody stays in the jaws, bots dodge some bites and ride threads, fishing goes on', () => {
   let floods = 0, tells = 0, bitten = 0, dodged = 0, zips = 0, fishing = 0, downs = 0, over = 0, longest = 0;
   for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
-    const W = world({ seed: seed, heroPick: seed % LL.HEROES.length, difficulty: seed % 3 }); let fl0 = -1, heldT = 0, ok = true; const tgt = {};
+    const W = world({ seed: seed, heroPick: seed % LL.HEROES.length, difficulty: seed % 3 }); let fl0 = -1, heldT = 0, ok = true; const tgt = {}, b = [floods, tells, fishing, downs];
     for (let i = 0; i < 1300 * 30 && !W.over; i++) {
       S.step(1 / 30);
       for (const e of W.fx) {
@@ -700,10 +707,49 @@ test('whole bot matches with the Ness: floods end, nobody stays in the jaws, bot
     }
     assert.ok(ok, 'seed ' + seed + ': every number stays finite'); assert.ok(W.over, 'seed ' + seed + ': the match ends (' + W.t.toFixed(0) + ' s)'); over++;
     assert.ok(!W.ness.out || W.flood, 'seed ' + seed + ': the Ness is only out of the loch in a flood');
+    assert.ok(floods > b[0] && tells > b[1] && fishing > b[2] && downs > b[3], 'seed ' + seed + ': a flood, a hero picked, a fishing trip and the Ness landed in every match');
   }
-  assert.ok(floods >= 8, 'a flood in every match: ' + floods); assert.ok(longest < 25, 'the longest flood: ' + longest.toFixed(1) + ' s');
-  assert.ok(tells >= 8, 'heroes are picked: ' + tells); assert.ok(bitten >= 2 && dodged >= 2, 'bots dodge some bites and take some: ' + dodged + ' dodged, ' + bitten + ' bitten');
-  assert.ok(zips >= 5, 'bots take the threads in a flood: ' + zips); assert.ok(fishing >= 4, 'bots still go fishing: ' + fishing); assert.ok(downs >= 4, 'and still land the Ness: ' + downs);
+  /* measured at 0.27 over these eight: 15 floods, 36 tells, 17 bitten, 19 dodged, 39 rides in a flood, 16 fishing, 13 downs */
+  assert.ok(longest < 25, 'the longest flood: ' + longest.toFixed(1) + ' s');
+  assert.ok(tells >= 24, 'heroes are picked: ' + tells); assert.ok(bitten >= 8 && dodged >= 8, 'bots dodge some bites and take some: ' + dodged + ' dodged, ' + bitten + ' bitten');
+  assert.ok(zips >= 20, 'bots take the threads in a flood: ' + zips); assert.ok(fishing >= 12, 'bots still go fishing: ' + fishing); assert.ok(downs >= 8, 'and still land the Ness: ' + downs);
+});
+/* 0.27 SEED (#27). Every random draw in the model goes through W.rng, so one seed and one set of inputs give one match.
+   trace() steps a world under a script and keeps what a replay would need: every event in order, with units written as
+   kind#id, and the state at the end (the clock, every unit, souls, troopers, the Ness, the flood, kills, the generator). */
+function trace(o, secs, script) {
+  const W = world(o), evs = [], ref = (k, v) => (k !== '' && v && typeof v === 'object' && 'id' in v && 'kind' in v) ? v.kind + '#' + v.id : v;
+  for (let i = 0; i < Math.round(secs * 30) && !W.over; i++) { if (script) script(W, i); S.step(1 / 30); for (const e of W.fx) evs.push(JSON.stringify(Object.assign({ at: W.t }, e), ref)); W.fx.length = 0; }
+  const n = W.ness, f = W.flood;
+  const state = JSON.stringify({ t: W.t, over: W.over, winner: W.winner, kills: W.kills, units: W.units.map(u => [u.kind + '#' + u.id, u.team, u.alive, u.x, u.y, u.z, u.hp, u.souls]),
+    troopers: W.troopers.filter(u => u.alive).length, ness: n && [n.alive, n.x, n.z, n.hp, n.count, !!n.out], flood: f && [f.ph, f.t], red: W.red, lights: W.lights, next: W.rng() });
+  return { W, evs, state, kinds: evs.map(s => JSON.parse(s).k).join(' ') };
+}
+/* a player who is not a bot: walks, aims, fires, jumps, dashes, changes view and calls a thread on fixed frames */
+const scripted = (W, i) => { const h = W.player, c = h.ctl; h.useAI = false; const t = i / 30;
+  c.mx = Math.sin(t * 0.7); c.mz = Math.cos(t * 0.3); c.ax = h.x + Math.sin(t) * 25; c.az = h.z + 25; c.ay = 1.5; c.fire = (i % 90) < 50;
+  c.jump = i % 47 === 0; c.dash = i % 173 === 0; if (i % 600 === 300) S.setLens(C.LENSES[(i / 600 | 0) % C.LENSES.length]); };
+test('seeded (0.27): one seed and one set of inputs give one match, event for event; another seed gives another', () => {
+  for (const o of [{ seed: 41, auto: false }, { seed: 42, dream: true, difficulty: 2 }, { seed: 43, mode: 'fallen', heroPick: 3 }]) {
+    const a = trace(o, 120, o.auto === false ? scripted : null);
+    trace(Object.assign({}, o, { seed: o.seed + 1000 }), 20);
+    const b = trace(o, 120, o.auto === false ? scripted : null), c = trace(Object.assign({}, o, { seed: o.seed + 1 }), 120, o.auto === false ? scripted : null);
+    assert.ok(a.evs.length > 100, 'enough happens to compare: ' + a.evs.length + ' events');
+    assert.strictEqual(b.kinds, a.kinds, JSON.stringify(o) + ': the same event kinds in the same order');
+    const at = a.evs.findIndex((e, i) => e !== b.evs[i]); assert.strictEqual(at, -1, JSON.stringify(o) + ': first different event ' + at + ': ' + a.evs[at] + ' / ' + b.evs[at]);
+    assert.strictEqual(b.state, a.state, JSON.stringify(o) + ': the same end state');
+    assert.notStrictEqual(c.state, a.state, JSON.stringify(o) + ': another seed, another match'); assert.notStrictEqual(c.evs.join('\n'), a.evs.join('\n'));
+  }
+  assert.ok(S.newWorld({ seed: 9 }).rng() === S.newWorld({ seed: 9 }).rng() && LL.rng(9)() !== LL.rng(10)(), 'the generator is keyed by the seed alone');
+  for (const f of ['core.js', 'sim.js']) { const src = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/.*$/gm, '$1');
+    assert.ok(!/Math\.random|Date\.now|performance\.now/.test(src), f + ': the model draws only from W.rng and keeps only W.t'); }
+});
+test('seeded (0.27): a whole bot match with a fixed seed plays out the same to the last second', () => {
+  for (const o of [{ seed: 6, heroPick: 1, difficulty: 0 }, { seed: 2, mode: 'short', heroPick: 4, difficulty: 2 }]) {
+    const a = trace(o, 1500), b = trace(o, 1500);
+    assert.ok(a.W.over, JSON.stringify(o) + ': the match ends (' + a.W.t.toFixed(0) + ' s)'); assert.strictEqual(b.W.t, a.W.t, 'it ends at the same moment'); assert.strictEqual(b.W.winner, a.W.winner);
+    assert.strictEqual(b.evs.length, a.evs.length, 'the same number of events'); assert.ok(a.evs.every((e, i) => e === b.evs[i]), 'event for event'); assert.strictEqual(b.state, a.state, 'the same end state');
+  }
 });
 test('the model never reads the look: sim and core have no presentation references', () => {
   for (const f of ['core.js', 'sim.js']) { const src = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8').replace(/typeof window !== 'undefined' \? window : globalThis/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/.*$/gm, '$1'); // comments may talk about the rule; code may not break it
