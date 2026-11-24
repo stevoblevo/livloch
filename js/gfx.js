@@ -23,6 +23,7 @@ let dummy, tmpC, v1, v2, v3;
 let world, dyn, sky, stars;
 let tr = [null, null], hushEyes, trHat, barBg, barFill, projMesh, orbMesh, parts, staticGlow;
 let nessM = null, nessY = -11, creaseM = [], cueDash = null, cueRings = [], fruitM = [], groundTex = null, petM = null, petThread = null, fovKick = 0, pivotY = null, camBtS = 1;
+let pivotV = 0, holdK = 0, holdSide = 1; // 0.28 look: the follow height's speed; how far the camera has swung out to show a hero held by the Ness, and to which side
 R.petEnabled = false;
 R.reduced = false; try { R.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
 let heroM = [], structM = [], strayM = [], knotPool = [], fawnPool = [], zonePool = [], rings = [];
@@ -148,7 +149,7 @@ function applyLook() {
 }
 function construct() {
   if (scene) scene.traverse(function (o) { if (o.geometry) o.geometry.dispose(); if (o.material && o.material.dispose) o.material.dispose(); });
-  mats = {}; tcCache = {}; fruitM = []; cueDash = null; cueRings = []; creaseM = []; heroM = []; echoM = null; petM = null; petThread = null; pivotY = null; camBtS = 1; structM = []; strayM = []; knotPool = []; fawnPool = []; zonePool = []; rings = []; nessM = null; R.decor = false;
+  mats = {}; tcCache = {}; fruitM = []; cueDash = null; cueRings = []; creaseM = []; heroM = []; echoM = null; petM = null; petThread = null; pivotY = null; camBtS = 1; pivotV = 0; holdK = 0; /* 0.28 look */ structM = []; strayM = []; knotPool = []; fawnPool = []; zonePool = []; rings = []; nessM = null; R.decor = false;
   renderer.setClearColor(LK.clear);
   scene = new T.Scene(); scene.fog = new T.Fog(LK.fog[0], LK.fog[1], LK.fog[2]);
   scene.add(new T.HemisphereLight(LK.hemi[0], LK.hemi[1], LK.hemi[2]));
@@ -1170,7 +1171,21 @@ R.camPose = function (h, yaw, pitch, zoom, out) {
   }
   if (W && h === W.player) { R._btRaw = bt; if (bt > camBtS) bt = camBtS; } // pulled in at once by a wall, eased back out in R.frame
   if (bt < 1) { bt = Math.max(0.12, bt - 0.06); cx = px + (cx - px) * bt; cy = py + (cy - py) * bt; cz = pz + (cz - pz) * bt; }
-  out.x = cx; out.y = cy; out.z = cz; out.dx = fx; out.dy = fy; out.dz = fz; out.dist = dist * bt; return out;
+  out.x = cx; out.y = cy; out.z = cz; out.dx = fx; out.dy = fy; out.dz = fz; out.dist = dist * bt;
+  /* 0.28 look: HELD BY THE NESS. Behind the hero the camera sat in the jaw and saw a dark box. While held (holdK, eased in
+     R.frame) it swings out to the side of the head, 7 m off and in front of the snout, level with the mouth, looking at
+     the hero between the teeth. Nothing can be aimed while held; as the hero is let go it swings back. The pose, direction
+     included, is the camera's real one, and main.js aims along it, so the crosshair stays true while it swings back. */
+  if (holdK > 0.001 && W && h === W.player && W.ness) {
+    const n = W.ness, nfx = Math.sin(n.yaw), nfz = Math.cos(n.yaw), sx = nfz * holdSide, sz = -nfx * holdSide, k = holdK * holdK * (3 - 2 * holdK);
+    const hx = h.x + sx * 7 + nfx * 3.4, hy = h.y + 0.9, hz = h.z + sz * 7 + nfz * 3.4;
+    const tx = h.x - nfx * 0.5, ty = h.y + 0.55, tz = h.z - nfz * 0.5;
+    let ddx = tx - hx, ddy = ty - hy, ddz = tz - hz; const dl = Math.hypot(ddx, ddy, ddz) || 1; ddx /= dl; ddy /= dl; ddz /= dl;
+    out.x += (hx - out.x) * k; out.y += (hy - out.y) * k; out.z += (hz - out.z) * k;
+    let ox = fx + (ddx - fx) * k, oy = fy + (ddy - fy) * k, oz = fz + (ddz - fz) * k; const ol = Math.hypot(ox, oy, oz) || 1; out.dx = ox / ol; out.dy = oy / ol; out.dz = oz / ol;
+    out.dist += (dl - out.dist) * k;
+  }
+  return out;
 };
 R.project = function (x, y, z, out) {
   v1.set(x, y, z).project(camera);
@@ -1783,7 +1798,21 @@ R.frame = function (dt, view) {
     /* CAMERA. Aim stays exact (yaw and pitch are never smoothed); the follow height lags a little behind jumps and landings,
        a wall pulls the camera in at once and lets it out slowly, and a dash or a thread ride widens the view a touch. */
     const inAir = pl.onGround === false && !pl.zip; // 0.25 air: in the air the height follows slowly (2.2 up, 4 down), so a jump rises on the screen and a hover hangs above the line; on the ground and on a thread as before
-    if (pivotY == null || Math.abs(pl.y - pivotY) > 4 || R.reduced) pivotY = pl.y; else pivotY += (pl.y - pivotY) * (1 - Math.exp(-dt * (pl.y > pivotY ? (inAir ? 2.2 : 9) : (inAir ? 4 : 13))));
+    /* 0.28 look: the follow height is a critically damped spring (no snap when the rate changes on landing) on a leash:
+       the hero may rise up to 1.1 m above it, so a jump, a thread boost or a lift still climbs the screen, but may fall
+       at most 0.5 m below it, so a landing after a big boost is never left at the bottom of the frame; on the ground it
+       settles back in about a third of a second. It only moves the point the camera orbits, so aim stays exact. */
+    if (pivotY == null || Math.abs(pl.y - pivotY) > 9 || R.reduced) { pivotY = pl.y; pivotV = 0; }
+    else {
+      const w = inAir ? 3.6 : 9; let left = dt;
+      while (left > 1e-6) { const hh = Math.min(left, 1 / 120); pivotV += (w * w * (pl.y - pivotY) - 2 * w * pivotV) * hh; pivotY += pivotV * hh; left -= hh; }
+      if (pl.y - pivotY > 1.1) { pivotY = pl.y - 1.1; pivotV = Math.max(pivotV, pl.vy || 0); }
+      else if (pivotY - pl.y > 0.5) { pivotY = pl.y + 0.5; pivotV = Math.min(pivotV, pl.vy || 0); }
+      if (!inAir && pivotY < pl.y && pivotV < 0) pivotV = 0;
+    }
+    { const want = pl.held && W.ness ? 1 : 0; // 0.28 look: the swing out while held, and which side it goes (the nearer one)
+      if (want && holdK < 0.01) { const nfx = Math.sin(W.ness.yaw), nfz = Math.cos(W.ness.yaw); holdSide = (-Math.cos(view.yaw) * nfz - Math.sin(view.yaw) * nfx) < 0 ? -1 : 1; }
+      holdK = R.reduced ? want : holdK + (want - holdK) * (1 - Math.exp(-dt * (want ? 3.2 : 6))); if (holdK < 0.002) holdK = want ? holdK : 0; }
     R.camPose(pl, view.yaw, view.pitch, view.zoom, cp);
     { const raw = R._btRaw == null ? 1 : R._btRaw; camBtS = raw < camBtS ? raw : camBtS + (raw - camBtS) * (1 - Math.exp(-dt * 3.5)); }
     fovKick += (((pl.dashT > 0 || pl.zip) && !R.reduced ? 1 : 0) - fovKick) * (1 - Math.exp(-dt * 7));
