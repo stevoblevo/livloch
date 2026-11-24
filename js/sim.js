@@ -1259,12 +1259,14 @@ function rollStart(h, mx, mz) {
    in win rate (docs/evidence/tune-0.27-after.txt). These rules give each a consequence a player can see. None is
    explained in the match before it happens; each says what it did the first time, like every other system here.
    ARRIVAL (lesson 4). A thread carries more than the rider. Let go after C.ARRIVE.min metres toward the front (or ride
-     to its end) and the landing staggers the small Hush around it. Riding home, or a short hop, lands quietly.
+     to its end) and the pull runs on: the Hush around the landing, and along that thread for C.ARRIVE.reach metres
+     ahead of it, is struck and staggers. Riding home, or a short hop, lands quietly.
    THE FOLD CATCHES (lesson 4). The crease always sent the folder's troopers to the next thread and left the thread
      they came from open: the Hush walked down it unopposed, which is why folding measured at nothing. Now the thread
-     folded away is shut to the small Hush as well: one that walks into the crease while it holds is caught, crumples
-     for C.FOLD_CATCH seconds and is gone (no souls, no orb). A hollow is too heavy to catch and walks through, so a
-     thread folded away with a hollow on it is still a thread left dark.
+     folded away is shut to the Hush as well: a small one that walks into the crease while it holds is caught,
+     crumples for C.FOLD_CATCH seconds and is gone (no souls, no orb); a hollow is too heavy to crumple and is pinned
+     there, unable to walk or strike, until the crease lets go. What was already past the crease keeps coming. So the
+     fold is how a hero leaves a thread: fold it away and it will keep for C.FOLD_T seconds.
    A LIGHT FROM HOME (lesson 5). Houses never mended before; a hero who went home to mend only lost time on its
      thread. Now the fountain's mending pays: C.EMBER. One light, one house: which one is the choice. A hero riding a
      thread keeps the light (it passes houses without stopping), so the rider chooses where to step off.
@@ -1272,13 +1274,15 @@ function rollStart(h, mx, mz) {
    comes back to stand by. They do not plan around any of it. */
 function arrive(h) {
   const zp = h.zip, A = C.ARRIVE; if (!zp || zp.dir < 0 || rel(h.team, zp.lane, zp.s) - rel(h.team, zp.lane, zp.s0) < A.min) return false;
-  const dmg = A.dmg + A.dmgMin * (W.t / 60); let n = 0;
+  const dmg = A.dmg + A.dmgMin * (W.t / 60), ts = rel(h.team, zp.lane, zp.s); let n = 0;
   for (let i = 0; i < W.troopers.length; i++) {
-    const u = W.troopers[i]; if (!u.alive || u.team === h.team || hyp(u.x - h.x, u.z - h.z) > A.r + u.r) continue;
+    const u = W.troopers[i]; if (!u.alive || u.team === h.team) continue;
+    const ahead = u.lane === zp.lane ? rel(h.team, u.lane, u.s) - ts : -1;
+    if (hyp(u.x - h.x, u.z - h.z) > A.r + u.r && !(ahead >= 0 && ahead <= A.reach && Math.abs(u.lat || 0) < 5)) continue;
     n++; applySlow(u, A.slow, A.slowT); damage(u, u.big ? dmg * 0.25 : dmg, h, 'ab');
   }
   h.arrivals = (h.arrivals || 0) + 1;
-  fx({ k: 'arrive', u: h, x: h.x, z: h.z, r: A.r, n: n, p: h.isPlayer });
+  fx({ k: 'arrive', u: h, x: h.x, z: h.z, r: A.r, reach: A.reach, lane: zp.lane, n: n, p: h.isPlayer });
   return true;
 }
 /* The fountain has mended this much of the hero in one visit: it leaves with a light. Called from heroStep. */
@@ -1920,8 +1924,11 @@ S.step = function (dt) {
   for (i = 0; i < W.troopers.length; i++) {
     const u = W.troopers[i]; if (!u.alive) continue;
     if (u.flash > 0) u.flash -= dt;
-    if (!u.folded && u.z > -13 && u.z < 13) for (let k = 0; k < W.creases.length; k++) { const c = W.creases[k]; if (c.t > 0 && c.team === u.team && u.lane === c.from) { foldTrooper(u, c); break; } if (c.t > 0 && c.team !== u.team && u.lane === c.from && !u.big && !(u.caught > 0)) { u.caught = C.FOLD_CATCH; u.tgt = null; fx({ k: 'caught', u: u, i: k, x: u.x, z: u.z }); break; } } // 0.28 play: the fold catches the small Hush on the thread folded away
-    if (u.caught > 0) { u.caught -= dt; u.vx = u.vz = 0; if (u.caught <= 0) { u.alive = false; fx({ k: 'death', u: u, x: u.x, y: u.y, z: u.z, team: u.team, kind: 'trooper', by: null, creased: true }); } continue; } // 0.28 play: caught, it crumples and is gone
+    let pin = false; // 0.28 play: this line and the next three; the fold's own line is as it was
+    if (!u.folded && u.z > -13 && u.z < 13) for (let k = 0; k < W.creases.length; k++) { const c = W.creases[k]; if (c.t > 0 && c.team === u.team && u.lane === c.from) { foldTrooper(u, c); break; }
+      if (c.t > 0 && c.team !== u.team && u.lane === c.from) { if (u.big) pin = true; else if (!(u.caught > 0)) { u.caught = C.FOLD_CATCH; u.tgt = null; fx({ k: 'caught', u: u, i: k, x: u.x, z: u.z }); } break; } }
+    if (u.caught > 0) { u.caught -= dt; u.vx = u.vz = 0; if (u.caught <= 0) { u.alive = false; fx({ k: 'death', u: u, x: u.x, y: u.y, z: u.z, team: u.team, kind: 'trooper', by: null, creased: true }); } continue; }
+    if (pin !== !!u.pinned) { u.pinned = pin; fx({ k: pin ? 'pinned' : 'unpinned', u: u, x: u.x, z: u.z }); } if (pin) { u.vx = u.vz = 0; u.tgt = null; continue; }
     trooperStep(u, dt);
   }
   for (i = 0; i < W.structs.length; i++) { const s = W.structs[i]; if (s.alive) { if (s.flash > 0) s.flash -= dt; structStep(s, dt); } }

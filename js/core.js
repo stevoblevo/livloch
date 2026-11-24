@@ -82,8 +82,10 @@ var C = LL.C = {
   /* 0.28 play: lessons 4 and 5 made to matter. Rules in sim.js under "0.28 play"; why, and the measurements, in
      docs/evidence/play-0.28-*.txt.
        ARRIVE   a rider who lets go of a thread after `min` metres toward the front lands with it: small Hush within `r`
-                take `dmg` (+ `dmgMin` a minute) and stagger (`slow` for `slowT` s); a hollow staggers and takes a quarter
-       FOLD_CATCH  seconds a small Hush trooper caught in a folded-away thread's crease takes to crumple
+                of the landing, or on that thread up to `reach` metres ahead of it, take `dmg` (+ `dmgMin` a minute) and
+                stagger (`slow` for `slowT` s); a hollow staggers and takes a quarter
+       FOLD_CATCH  seconds a small Hush trooper caught in a folded-away thread's crease takes to crumple (a hollow
+                is pinned there instead until the crease lets go)
        EMBER    mending at home pays: a hero whom the fountain has mended by `need` of its health in one visit leaves
                 carrying a light; on foot within `r` of one of its side's hurt or dark houses, the light goes into that
                 house: lit again at once, and mended by `heal` of its health. One light at a time; lost on death
@@ -91,7 +93,7 @@ var C = LL.C = {
                 for `t` s, said `warn` s ahead. The houses of both sides on it (never a patron) stop firing and lose
                 their protection, and take `mul` times the harm. The Hush leans on it (C.DIFF slackHollows). Not in
                 First Rain or Ever Fallen, and never once the threads fray at 15:00 */
-  ARRIVE: { min: 45, r: 8, dmg: 140, dmgMin: 10, slow: 0.5, slowT: 2.5 },
+  ARRIVE: { min: 45, r: 8, reach: 24, dmg: 140, dmgMin: 10, slow: 0.5, slowT: 2.5 },
   FOLD_CATCH: 2.5,
   EMBER: { need: 0.4, r: 9, heal: 0.2 },
   SLACK: { first: 150, every: 300, warn: 20, t: 50, mul: 1.5 }
