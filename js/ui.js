@@ -159,12 +159,42 @@ function show(name) {
 }
 UI.show = function (name) { show(name); }; // 0.23 wardrobe: js/wardrobe.js opens its own screen (#ward) through this
 UI.showTitle = function () { $('hud').hidden = true; document.body.classList.remove('lean'); show('title'); UI.record(); if (UI.modeLine) UI.modeLine(); };
+
+/* 0.26 shots: the ammo row. One icon in the shape of the gun's shot per round (or per few rounds for a big magazine, at most
+   AMMO_MAX icons); full ones in the hero's colour, spent ones faint; while reloading they fill from the left. */
+const AMMO_MAX = 14, AMMO_SHAPES = {
+  dora: '<circle cx="5" cy="14" r="4.3"/><path d="M5 1.5 7.6 8H2.4z" opacity=".7"/>',
+  anna: '<rect x="3.9" y="7" width="2.2" height="14.5" rx="1"/><rect x="0.8" y="1.5" width="8.4" height="5.6" rx="1.2"/>',
+  myra: '<rect x="0.8" y="1.5" width="8.4" height="3.4" rx="1.2"/><rect x="2.8" y="4.5" width="4.4" height="12" rx="1"/><rect x="0.8" y="16.1" width="8.4" height="3.4" rx="1.2"/><path d="M7 19 8.6 22" stroke="currentColor" stroke-width="1" fill="none"/>',
+  skein: '<path d="M4.4 3.5h1.2v14.6L5 22l-.6-3.9z"/><ellipse cx="5" cy="3.8" rx="1.5" ry="2.4" fill="none" stroke="currentColor" stroke-width=".9"/>',
+  rook: '<path d="M5 1.5 9 10.5 5 20.5 1 10.5z"/><path d="M5 7.5 6.8 11 5 15 3.2 11z" class="ic2"/>'
+};
+let ammoPer = 1, ammoIcons = [], ammoKey = '', relMax = 0;
+function ammoBuild(d) {
+  const row = $('ammoI'); if (!row) return;
+  const mag = d.gun.mag; ammoPer = Math.ceil(mag / AMMO_MAX); const n = Math.ceil(mag / ammoPer);
+  const sh = AMMO_SHAPES[d.id] || AMMO_SHAPES.dora; let h = '';
+  for (let i = 0; i < n; i++) h += '<svg viewBox="0 0 10 23" aria-hidden="true">' + sh + '</svg>';
+  row.innerHTML = h; row.dataset.hero = d.id; row.style.setProperty('--n', n);
+  ammoIcons = Array.prototype.slice.call(row.children); ammoKey = ''; relMax = 0;
+}
+function ammoRow(p) {
+  if (!ammoIcons.length) return;
+  let have = p.ammo;
+  if (p.reloadT > 0) { relMax = Math.max(relMax, p.reloadT); have = p.magSize * (1 - p.reloadT / (relMax || 1)); } else relMax = 0;
+  const key = Math.round(have * 4) + (p.reloadT > 0 ? 'r' : ''); if (key === ammoKey) return; ammoKey = key;
+  for (let i = 0; i < ammoIcons.length; i++) {
+    const f = Math.max(0, Math.min(1, (have - i * ammoPer) / ammoPer)); ammoIcons[i].style.opacity = (0.2 + 0.8 * f).toFixed(2);
+    ammoIcons[i].classList.toggle('on', f >= 0.99);
+  }
+}
 UI.startHUD = function (w) {
   W = w; const p = W.player, d = p.def;
   $('hud').hidden = false; show(null);
   $('hud').style.setProperty('--hc', d.css);
   for (let i = 0; i < 3; i++) { const b = $('ab' + i); b.querySelector('span').textContent = d.ab[i].name; b.title = d.ab[i].name + ': ' + d.ab[i].desc; }
   $('gunN').textContent = d.gun.name;
+  ammoBuild(d); // 0.26 shots: a row of icons in the gun's shape
   $('feed').innerHTML = ''; $('dead').hidden = true; lastSouls = -1; hurt = 0;
   nums.forEach(n => { n.life = 0; n.el.style.opacity = 0; });
   document.body.classList.toggle('lean', !!W.lean); dreamSeen = []; dreamQ = []; dreamT = 0; wasMercy = false; $('dreamCard').hidden = true; $('lFast').hidden = !W.dream; $('lFast').textContent = '1×'; $('calls').hidden = true;
@@ -404,6 +434,7 @@ UI.frame = function (dt, w, view, info) {
   $('hpFill').style.width = (hpF * 100) + '%'; $('shFill').style.width = Math.min(100, p.shield / p.maxHp * 100) + '%';
   $('hpTxt').textContent = Math.ceil(p.hp) + ' / ' + Math.round(p.maxHp);
   const am = $('ammo'); am.classList.toggle('rel', p.reloadT > 0); $('ammoN').textContent = p.reloadT > 0 ? '· · ·' : p.ammo + ' / ' + p.magSize;
+  ammoRow(p); // 0.26 shots
   const st = $('stam'); if (st.children.length !== p.st.stam) { st.innerHTML = ''; for (let i = 0; i < p.st.stam; i++) st.appendChild(document.createElement('i')); }
   for (let i = 0; i < st.children.length; i++) st.children[i].className = i < p.stamina ? 'on' : '';
   const s = Math.floor(p.souls); $('soulN').textContent = s; $('lvl').textContent = 'Lv ' + p.level;

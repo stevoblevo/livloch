@@ -132,6 +132,13 @@ button { font: inherit; color: inherit; }
 #ammo { min-width: 78px; text-align: right; font-family: var(--f-display); font-size: 28px; font-variant-numeric: tabular-nums; line-height: 1; text-shadow: 0 1px 3px var(--shc); padding-bottom: 4px; }
 #ammo small { display: block; font-family: var(--f-sc); font-size: 12px; letter-spacing: 0.08em; color: var(--paper-dim); }
 #ammo.rel { color: var(--gold); }
+#ammoI { display: flex; justify-content: flex-end; gap: 1px; margin-bottom: 4px; color: var(--hc, var(--gold)); --ic2: #5fe6d0; } /* 0.26 shots */
+#ammoI svg { width: 9px; height: 21px; fill: currentColor; flex: none; filter: drop-shadow(0 1px 1px var(--shc)); }
+#ammoI[data-hero="rook"] .ic2 { fill: var(--ic2); }
+#ammoI[data-hero="skein"] svg { width: 7px; }
+#ammoI[data-hero="anna"] svg, #ammoI[data-hero="myra"] svg { width: 11px; height: 23px; margin: 0 1px; }
+#ammoI[data-hero="dora"] svg { width: 8px; height: 20px; }
+body.touch #ammo { display: flex; flex-direction: column; align-items: flex-end; } body.touch #ammoN { order: 1; } body.touch #ammoI { order: 2; margin: 3px 0 1px; } body.touch #gunN { order: 3; } body.touch #ammoI svg { width: 6px; height: 15px; } body.touch #ammoI[data-hero="anna"] svg, body.touch #ammoI[data-hero="myra"] svg { width: 8px; height: 17px; } body.touch #ammoI[data-hero="skein"] svg { width: 5px; }
 #dead { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at center, rgba(40, 10, 16, 0.25), rgba(10, 4, 8, 0.7)); text-align: center; }
 #dead h2 { margin: 0; font-family: var(--f-display); font-style: italic; font-weight: 400; font-size: clamp(28px, 5vw, 46px); }
 #dead p { margin: 6px 0 14px; font-family: var(--f-sc); letter-spacing: 0.1em; color: var(--paper-dim); }
@@ -352,7 +359,7 @@ body[data-look="glow"] #app::after { content: ""; position: absolute; inset: 0; 
         <button class="ab" id="ab0" data-btn="ab0"><b>Q</b><span></span><i></i><em></em></button>
         <button class="ab" id="ab1" data-btn="ab1"><b>E</b><span></span><i></i><em></em></button>
         <button class="ab" id="ab2" data-btn="ab2"><b>F</b><span></span><i></i><em></em></button>
-        <div id="ammo"><span id="ammoN">0</span><small id="gunN"></small></div>
+        <div id="ammo"><div id="ammoI"></div><span id="ammoN">0</span><small id="gunN"></small></div>
       </div>
     </div>
     <div id="dead" hidden><div><h2 id="deadH">You came apart.</h2><p>Re-threading in <b id="deadT">0</b></p><button class="btn" id="bDeadShop">Spend souls while you wait</button></div></div>
@@ -491,6 +498,7 @@ body[data-look="glow"] #app::after { content: ""; position: absolute; inset: 0; 
 <script src="js/scenery.js"></script>
 <script src="js/heroes3d.js"></script><!-- 0.24 heroes3d: the heroes as 3D figures; before gfx.js, which calls it -->
 <script src="js/wardrobe.js"></script><!-- 0.23 wardrobe: before gfx.js, which calls it -->
+<script src="js/shots.js"></script><!-- 0.26 shots: a look per gun; before gfx.js, which calls it -->
 <script src="js/gfx.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/input.js"></script>
