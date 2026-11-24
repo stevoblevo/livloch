@@ -59,7 +59,7 @@ function policy(W, L, seed) {
     for (const s of W.structs) if (s.team === 0) { if (st.hp[s.id] != null && s.hp < st.hp[s.id] - 1) st.hurtAt[s.id] = W.t; st.hp[s.id] = s.hp; }
     if ((st.buyT -= 0.2) <= 0) { st.buyT = 30; const b = p.def.build; for (let i = 0; i < b.length; i++) if (p.items.indexOf(b[i]) < 0) { if (p.souls >= LL.ITEMS[b[i]].cost) S.buy(p, b[i]); break; } }
     // retreat
-    const low = has(5) ? 0.35 : 0.12;
+    const low = has(5) && !has('u') ? 0.35 : 0.12;
     if (st.retreat) { if (hpF > 0.9) st.retreat = false; } else if (hpF < low) st.retreat = true;
     // lesson 5: going home is chosen, not forced. Hurt enough for the fountain to pay, a house that wants a light, and a thread that will keep (its hollow down or far off): go now
     else if (has(5) && !has('g') && !W.fallen && !p.ember && hpF < 1 - C.EMBER.need - 0.02 && !(W.slack.t > 0) && W.structs.some(s => s.team === 0 && s.alive && s.kind !== 'patron' && (s.dark || s.hp < s.maxHp * 0.7)) && !W.troopers.some(u => u.alive && u.team === 1 && u.big && u.lane === st.lane && u.z < 45)) st.retreat = true;
@@ -83,7 +83,7 @@ function policy(W, L, seed) {
     // lesson 5: the slack thread is where a house will fall. With no crease to take its own thread along, it crosses only while that thread will keep: its hollow down or still far off
     if (has(5) && !has('s') && slackOn && st.lane === st.pick && K.lane !== st.pick && !W.troopers.some(u => u.alive && u.team === 1 && u.big && u.lane === st.pick && u.z < 45)) st.lane = K.lane;
     let fire = null; // a house of ours being hit
-    for (const s of W.structs) if (s.team === 0 && s.alive && st.hurtAt[s.id] > W.t - 2) { if (!has(5) || s.kind !== 'guardian') { if (!fire || s.kind !== 'guardian') fire = s; } }
+    for (const s of W.structs) if (s.team === 0 && s.alive && st.hurtAt[s.id] > W.t - 2) { if (!has(5) || has('v') || s.kind !== 'guardian') { if (!fire || s.kind !== 'guardian') fire = s; } }
     if (fire && fire.lane !== st.lane) st.lane = fire.lane;
     // lesson 5: a light from home goes to the house that needs it most, and the hero's thread waits
     let mend = null;
@@ -95,7 +95,7 @@ function policy(W, L, seed) {
     const tw = enemyNext(lane), twS = tw === W.patron[en] ? Ln.len + 6 : rel(0, lane, tw.s);
     let pushing = false; for (const u of W.troopers) if (u.alive && u.team === 0 && hyp(u.x - tw.x, u.z - tw.z) < tw.range - 2) { pushing = true; break; }
     const window = has(2) && !has('k') && W.hollowT[lane] > 0 && pushing;
-    standS = Math.min(standS, pushing ? twS - (window ? 10 : 15) : twS - tw.range + (has(5) ? -4 : 3));
+    standS = Math.min(standS, pushing ? twS - (window ? 10 : 15) : twS - tw.range + (has(5) && !has('z') ? -4 : 3));
     if (has(2) && !has('k') && S.slack(tw) && S.vuln(tw) && hpF > 0.35) standS = twS - 14; // lesson 2: a slack house cannot fire; this is the moment to stand under it
     if (has(2) && !has('k') && W.red > 0 && !W.thin) { const g = W.st[0][lane]; const own = g.outer.alive ? g.outer : g.inner; if (own.alive) standS = Math.min(standS, rel(0, lane, own.s) + 4); }
     standS = U.clamp(standS, 8, Ln.len - 16);
