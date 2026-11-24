@@ -705,6 +705,43 @@ test('whole bot matches with the Ness: floods end, nobody stays in the jaws, bot
   assert.ok(tells >= 8, 'heroes are picked: ' + tells); assert.ok(bitten >= 2 && dodged >= 2, 'bots dodge some bites and take some: ' + dodged + ' dodged, ' + bitten + ' bitten');
   assert.ok(zips >= 5, 'bots take the threads in a flood: ' + zips); assert.ok(fishing >= 4, 'bots still go fishing: ' + fishing); assert.ok(downs >= 4, 'and still land the Ness: ' + downs);
 });
+/* 0.27 SEED (#27). Every random draw in the model goes through W.rng, so one seed and one set of inputs give one match.
+   trace() steps a world under a script and keeps what a replay would need: every event in order, with units written as
+   kind#id, and the state at the end (the clock, every unit, souls, troopers, the Ness, the flood, kills, the generator). */
+function trace(o, secs, script) {
+  const W = world(o), evs = [], ref = (k, v) => (k !== '' && v && typeof v === 'object' && 'id' in v && 'kind' in v) ? v.kind + '#' + v.id : v;
+  for (let i = 0; i < Math.round(secs * 30) && !W.over; i++) { if (script) script(W, i); S.step(1 / 30); for (const e of W.fx) evs.push(JSON.stringify(Object.assign({ at: W.t }, e), ref)); W.fx.length = 0; }
+  const n = W.ness, f = W.flood;
+  const state = JSON.stringify({ t: W.t, over: W.over, winner: W.winner, kills: W.kills, units: W.units.map(u => [u.kind + '#' + u.id, u.team, u.alive, u.x, u.y, u.z, u.hp, u.souls]),
+    troopers: W.troopers.filter(u => u.alive).length, ness: n && [n.alive, n.x, n.z, n.hp, n.count, !!n.out], flood: f && [f.ph, f.t], red: W.red, lights: W.lights, next: W.rng() });
+  return { W, evs, state, kinds: evs.map(s => JSON.parse(s).k).join(' ') };
+}
+/* a player who is not a bot: walks, aims, fires, jumps, dashes, changes view and calls a thread on fixed frames */
+const scripted = (W, i) => { const h = W.player, c = h.ctl; h.useAI = false; const t = i / 30;
+  c.mx = Math.sin(t * 0.7); c.mz = Math.cos(t * 0.3); c.ax = h.x + Math.sin(t) * 25; c.az = h.z + 25; c.ay = 1.5; c.fire = (i % 90) < 50;
+  c.jump = i % 47 === 0; c.dash = i % 173 === 0; if (i % 600 === 300) S.setLens(C.LENSES[(i / 600 | 0) % C.LENSES.length]); };
+test('seeded (0.27): one seed and one set of inputs give one match, event for event; another seed gives another', () => {
+  for (const o of [{ seed: 41, auto: false }, { seed: 42, dream: true, difficulty: 2 }, { seed: 43, mode: 'fallen', heroPick: 3 }]) {
+    const a = trace(o, 120, o.auto === false ? scripted : null);
+    trace(Object.assign({}, o, { seed: o.seed + 1000 }), 20);
+    const b = trace(o, 120, o.auto === false ? scripted : null), c = trace(Object.assign({}, o, { seed: o.seed + 1 }), 120, o.auto === false ? scripted : null);
+    assert.ok(a.evs.length > 100, 'enough happens to compare: ' + a.evs.length + ' events');
+    assert.strictEqual(b.kinds, a.kinds, JSON.stringify(o) + ': the same event kinds in the same order');
+    const at = a.evs.findIndex((e, i) => e !== b.evs[i]); assert.strictEqual(at, -1, JSON.stringify(o) + ': first different event ' + at + ': ' + a.evs[at] + ' / ' + b.evs[at]);
+    assert.strictEqual(b.state, a.state, JSON.stringify(o) + ': the same end state');
+    assert.notStrictEqual(c.state, a.state, JSON.stringify(o) + ': another seed, another match'); assert.notStrictEqual(c.evs.join('\n'), a.evs.join('\n'));
+  }
+  assert.ok(S.newWorld({ seed: 9 }).rng() === S.newWorld({ seed: 9 }).rng() && LL.rng(9)() !== LL.rng(10)(), 'the generator is keyed by the seed alone');
+  for (const f of ['core.js', 'sim.js']) { const src = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/.*$/gm, '$1');
+    assert.ok(!/Math\.random|Date\.now|performance\.now/.test(src), f + ': the model draws only from W.rng and keeps only W.t'); }
+});
+test('seeded (0.27): a whole bot match with a fixed seed plays out the same to the last second', () => {
+  for (const o of [{ seed: 6, heroPick: 1, difficulty: 0 }, { seed: 2, mode: 'short', heroPick: 4, difficulty: 2 }]) {
+    const a = trace(o, 1500), b = trace(o, 1500);
+    assert.ok(a.W.over, JSON.stringify(o) + ': the match ends (' + a.W.t.toFixed(0) + ' s)'); assert.strictEqual(b.W.t, a.W.t, 'it ends at the same moment'); assert.strictEqual(b.W.winner, a.W.winner);
+    assert.strictEqual(b.evs.length, a.evs.length, 'the same number of events'); assert.ok(a.evs.every((e, i) => e === b.evs[i]), 'event for event'); assert.strictEqual(b.state, a.state, 'the same end state');
+  }
+});
 test('the model never reads the look: sim and core have no presentation references', () => {
   for (const f of ['core.js', 'sim.js']) { const src = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8').replace(/typeof window !== 'undefined' \? window : globalThis/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/.*$/gm, '$1'); // comments may talk about the rule; code may not break it
     for (const bad of [/\bLL\.gfx\b/, /\bLL\.ui\b/, /\bdocument\b/, /\bwindow\b/, /\blook\b/i, /\bLK\b/, /localStorage/]) assert.ok(!bad.test(src), f + ' mentions ' + bad); }
