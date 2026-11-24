@@ -1,0 +1,91 @@
+0.25 world: cost of issues #29, #31, #32. Measured in headless Chrome (SwiftShader) and under Node; shows what is drawn, not how fast a real device draws it.
+
+== Per asset (Node) ==
+tools/propstris.js, before (origin/work/0.25 at 23e2545):
+  Reign trooper 364 + lantern core 12
+  Hush small one 132 + eyes 8
+  hollow 368 + eyes 8
+tools/propstris.js, after:
+  Reign trooper 428 + lantern core 12
+  Hush small one 132 + eyes 8
+  hollow 457 + lights 96 (eyes, and since 0.25 the rift down its back and the tears on its flanks)
+tools/scenerytris.js, before:
+  normal            plant mesh 39544 triangles, verge 0 triangles in 0 draws
+  Lighter graphics  plant mesh 18537 triangles, verge 0 triangles in 0 draws
+tools/scenerytris.js, after:
+  normal            plant mesh 47335 triangles, verge 6776 triangles in 1 draw
+  Lighter graphics  plant mesh 18537 triangles, verge 0 triangles in 0 draws
+
+== The verge alone, in the browser ==
+  Cobalt Snow, shot 'ground': 104 draw calls and 356796 triangles with the verge, 103 and 350020 with it hidden: 1 draw call, 6776 triangles.
+
+
+== Lighter graphics, whole scene (tools/shots/world.js LOW=1; before -> after) ==
+  Cobalt Snow ground: 102 -> 102 draw calls, 234282 -> 234538 triangles (+256: the capes on the 4 Reign troopers in the shot)
+  Cobalt Snow reign:  106 -> 106 draw calls, 240254 -> 241406 triangles (+1152: the capes on 18 troopers)
+  Origami ground:      94 ->  94 draw calls, 234074 -> 234330 triangles (+256)
+  Origami reign:       98 ->  98 draw calls, 240046 -> 241198 triangles (+1152)
+  Under Lighter graphics the ground gets nothing: no verge, no new plants. The capes and hollow backs are part of the props and
+  are there in both modes (64 more triangles per Reign trooper, 177 per hollow, no draw calls).
+
+== Normal graphics, whole scene per staged shot (tools/shots/world.js; before -> after) ==
+  Expected difference in every shot: +1 draw call and +14,567 triangles (verge 6,776 + plant mesh 7,791), plus 64 per Reign
+  trooper and 177 per hollow in the shot. Knight Night, Rainwake and Memory (a separate run) match that exactly. In the first
+  run (the other five looks) every shot also has 1 draw call and 602 triangles (346 in Hypermetapunk) more than expected; it is
+  the same in every shot of that run, so it is one more object in that frozen match (the sim uses Math.random, and each run
+  plays 20 s of bots first), not this work.
+
+look shot | draw calls before -> after (diff) | triangles before -> after (diff); scene only, bloom and post off; normal graphics
+snow reign | 106 -> 108 (+2) | 347347 -> 363668 (+16321)
+snow reignnear | 106 -> 108 (+2) | 345079 -> 361016 (+15937)
+snow hollowback | 88 -> 90 (+2) | 333777 -> 349251 (+15474)
+snow hollowfar | 97 -> 99 (+2) | 334864 -> 350338 (+15474)
+snow hollowside | 91 -> 93 (+2) | 335910 -> 351256 (+15346)
+snow hollowfront | 107 -> 109 (+2) | 340072 -> 355418 (+15346)
+snow smalls | 101 -> 103 (+2) | 340759 -> 355928 (+15169)
+snow ground | 102 -> 104 (+2) | 341375 -> 356800 (+15425)
+snow groundwest | 99 -> 101 (+2) | 339334 -> 354631 (+15297)
+snow groundside | 93 -> 95 (+2) | 337765 -> 353062 (+15297)
+ink reign | 108 -> 110 (+2) | 347587 -> 363908 (+16321)
+ink reignnear | 108 -> 110 (+2) | 345319 -> 361256 (+15937)
+ink hollowback | 94 -> 96 (+2) | 334337 -> 349811 (+15474)
+ink hollowfar | 103 -> 105 (+2) | 335502 -> 350976 (+15474)
+ink hollowside | 95 -> 97 (+2) | 336310 -> 351656 (+15346)
+ink hollowfront | 109 -> 111 (+2) | 340312 -> 355658 (+15346)
+ink smalls | 104 -> 106 (+2) | 341157 -> 356324 (+15167)
+ink ground | 104 -> 106 (+2) | 341615 -> 357040 (+15425)
+ink groundwest | 100 -> 102 (+2) | 339494 -> 354791 (+15297)
+ink groundside | 94 -> 96 (+2) | 337925 -> 353222 (+15297)
+lantern reign | 106 -> 108 (+2) | 347347 -> 363668 (+16321)
+lantern reignnear | 106 -> 108 (+2) | 345079 -> 361016 (+15937)
+lantern hollowback | 88 -> 90 (+2) | 333777 -> 349251 (+15474)
+lantern hollowfar | 97 -> 99 (+2) | 334864 -> 350338 (+15474)
+lantern hollowside | 91 -> 93 (+2) | 335910 -> 351256 (+15346)
+lantern hollowfront | 107 -> 109 (+2) | 340072 -> 355418 (+15346)
+lantern smalls | 101 -> 103 (+2) | 340759 -> 355928 (+15169)
+lantern ground | 102 -> 104 (+2) | 341375 -> 356800 (+15425)
+lantern groundwest | 99 -> 101 (+2) | 339334 -> 354631 (+15297)
+lantern groundside | 93 -> 95 (+2) | 337765 -> 353062 (+15297)
+origami reign | 98 -> 100 (+2) | 347139 -> 363460 (+16321)
+origami reignnear | 98 -> 100 (+2) | 344871 -> 360808 (+15937)
+origami hollowback | 82 -> 84 (+2) | 333573 -> 349047 (+15474)
+origami hollowfar | 91 -> 93 (+2) | 334660 -> 350134 (+15474)
+origami hollowside | 84 -> 86 (+2) | 335704 -> 351050 (+15346)
+origami hollowfront | 99 -> 101 (+2) | 339864 -> 355210 (+15346)
+origami smalls | 93 -> 95 (+2) | 340551 -> 355720 (+15169)
+origami ground | 94 -> 96 (+2) | 341167 -> 356592 (+15425)
+origami groundwest | 91 -> 93 (+2) | 339126 -> 354423 (+15297)
+origami groundside | 85 -> 87 (+2) | 337557 -> 352854 (+15297)
+glow reign | 104 -> 106 (+2) | 333955 -> 349124 (+15169)
+glow reignnear | 104 -> 106 (+2) | 333871 -> 349040 (+15169)
+glow hollowback | 88 -> 90 (+2) | 325929 -> 341275 (+15346)
+glow hollowfar | 96 -> 99 (+3) | 327014 -> 342362 (+15348)
+glow hollowside | 91 -> 93 (+2) | 328790 -> 344136 (+15346)
+glow hollowfront | 105 -> 107 (+2) | 333232 -> 348578 (+15346)
+glow smalls | 99 -> 101 (+2) | 333919 -> 349088 (+15169)
+glow ground | 100 -> 102 (+2) | 333079 -> 348248 (+15169)
+glow groundwest | 97 -> 99 (+2) | 331766 -> 346935 (+15169)
+glow groundside | 91 -> 93 (+2) | 330413 -> 345582 (+15169)
+knight ground | 103 -> 104 (+1) | 341973 -> 356796 (+14823)
+rain ground | 101 -> 102 (+1) | 341973 -> 356796 (+14823)
+memory ground | 98 -> 99 (+1) | 341967 -> 356790 (+14823)
