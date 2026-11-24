@@ -516,7 +516,8 @@ const PAPER = R.PAPER = { // h: height in metres. hem: where the legs start (0 t
       5: { p: [0.508, 0.769], poly: [0.363,0.769,0.402,0.744,0.422,0.719,0.43,0.694,0.422,0.669,0.426,0.644,0.438,0.619,0.434,0.594,0.453,0.569,0.449,0.544,0.484,0.519,0.453,0.494,0.438,0.469,0.473,0.444,0.48,0.431,0.5,0.414,0.52,0.431,0.539,0.444,0.574,0.469,0.555,0.494,0.543,0.519,0.551,0.544,0.562,0.569,0.559,0.594,0.578,0.619,0.574,0.644,0.578,0.669,0.582,0.694,0.578,0.719,0.602,0.744,0.652,0.769] },
       6: { p: [0.83, 0.775], poly: [0.723,0.775,0.754,0.75,0.781,0.725,0.812,0.7,0.82,0.675,0.832,0.65,0.836,0.625,0.848,0.6,0.82,0.575,0.828,0.55,0.852,0.525,0.832,0.5,0.844,0.475,0.871,0.45,0.895,0.434,0.918,0.45,0.941,0.475,0.918,0.5,0.906,0.525,0.918,0.55,0.934,0.575,0.93,0.6,0.93,0.625,0.934,0.65,0.922,0.675,0.934,0.7,0.914,0.725,0.918,0.75,0.938,0.775] } } } },
   myra: { src: 'art/heroes/myra.png', h: 1.95, hem: 0.22, legs: 0.168, motion: 'art/heroes/myra-motion.png', arms: { y: 0.6, x: 0.19, len: 0.356 } },
-  skein: { src: 'art/heroes/skein.png', h: 2.2, hem: 0.27, motion: 'art/heroes/skein-motion.png', arms: { y: 0.66, x: 0.13, len: 0.352 } }
+  skein: { src: 'art/heroes/skein.png', h: 2.2, hem: 0.27, motion: 'art/heroes/skein-motion.png', arms: { y: 0.66, x: 0.13, len: 0.352 } },
+  rook: { src: 'art/heroes/wick-aviator.svg', h: 2.42, hem: 0.28 } // 0.25 rook: his turnaround from the Lantern Ford study (work/lantern-ford-wick-aviator); no motion sheet yet, so no separate arms
 };
 const paperTex = {}, PAPER_FLIP = -1;
 /* HERO PAPER SHADER (0.20). The cutouts are unlit, so on their own they sit on the valley like stickers. Two cheap things
@@ -772,6 +773,13 @@ function heroModel(h) {
     mesh(new T.SphereGeometry(0.24, 8, 6), skin, 0, 1.72, 0, body);
     mesh(new T.SphereGeometry(0.12, 6, 5), hm(0xe9b44c, 0.4), 0, 2.0, 0, body);
     gun = mesh(cyl(0.16, 0.1, 0.6, 7), hm(0xe9b44c, 0.25), 0, 0, 0.4, arm); gun.rotation.x = Math.PI / 2;
+  } else if (d.id === 'rook') { // 0.25 rook: the built shapes under his paper, from the Lantern Ford study
+    mesh(cyl(0.27, 0.49, 0.96, 7), hm(0x3d5a7f), 0, 1.03, 0, body);
+    mesh(new T.SphereGeometry(0.3, 9, 7), hm(0xd5d5b7), 0, 1.74, 0, body);
+    mesh(box(0.47, 0.14, 0.09), hm(0x86e6c9, 0.45), 0, 1.76, 0.26, body);
+    mesh(box(0.52, 0.53, 0.25), hm(0xa77353), 0, 1.25, -0.31, body);
+    mesh(new T.OctahedronGeometry(0.22), hm(0x98f2ce, 0.5), 0, 1.28, -0.46, body);
+    gun = mesh(box(0.12, 0.12, 0.48), hm(0xe3ba83), 0, 0, 0.3, arm);
   } else {
     mesh(cyl(0.16, 0.3, 0.95, 5), hm(0x8fd8c0), 0, 0.98, 0, body);
     mesh(flat(new T.IcosahedronGeometry(0.32, 0)), hm(0xe8c4a0), 0, 1.68, 0, body);
@@ -1070,6 +1078,12 @@ R.fx = function (e) {
     case 'respawn': ring(e.u.x, 0, e.u.z, 3, 0.4, SRC_TEAM[e.u.team], 0.6); emit(e.u.x, 1, e.u.z, 30, 0xf4e8d6, 4, 0.9, 5, 0); break;
     case 'jump': if (e.dbl) emit(e.u.x, e.u.y, e.u.z, 8, 0xf4e8d6, 3, 0.35, -1, 0); break;
     case 'dash': emit(e.u.x, e.u.y + 0.8, e.u.z, 10, 0xf4e8d6, 3, 0.35, 0, 0); break;
+    /* 0.25 rook: Lantern Lift. Sparks and a ring where he leaves the ground, a brighter knot of them where a thread catches
+       him, a breath of them when the glide begins, dust and a small ring where he lands. */
+    case 'lift': if (!R.reduced) { emit(e.x, e.y + 0.4, e.z, 16, e.col, 5, 0.52, 1.8); for (let k = 0; k < 8; k++) { const q = k / 8 * 6.283; puff(e.x + Math.cos(q) * 0.3, 0.12, e.z + Math.sin(q) * 0.3, Math.cos(q) * 2.6, 0.3, Math.sin(q) * 2.6, 0.26, 0.9, 0.55, 0.4); } } ring(e.x, 0, e.z, 0.4, 2.4, e.col, 0.35); if (e.u === W.player && !R.reduced) kick = Math.min(1.6, kick + 0.5); break;
+    case 'liftthread': ring(e.x, e.y + 0.6, e.z, 0.3, 2.2, 0xffe2a0, 0.4); if (!R.reduced) emit(e.x, e.y + 1, e.z, 14, 0xffe2a0, 4, 0.6, 2.5, 0); break;
+    case 'glide': if (!R.reduced) emit(e.x, e.y + 1.2, e.z, 8, e.col, 2.5, 0.6, 0.5, 0); break;
+    case 'liftland': ring(e.x, 0, e.z, 0.3, 1.7, e.col, 0.28); if (!R.reduced) for (let k = 0; k < 8; k++) { const q = k / 8 * 6.283 + Math.random() * 0.3; puff(e.x + Math.cos(q) * 0.25, 0.12, e.z + Math.sin(q) * 0.25, Math.cos(q) * 2.2, 0.35, Math.sin(q) * 2.2, 0.24, 0.8, 0.5, 0.4); } break;
     case 'level': ring(e.u.x, e.u.y, e.u.z, 0.4, 3, 0xffe9a8, 0.5); break;
     case 'fruit': { const fc = C.FRUIT_INFO[e.kind].col, big = !!C.FRUIT_INFO[e.kind].big; emit(e.x, big ? 3 : 1.8, e.z, big ? 90 : 26, fc, big ? 11 : 6, 0.9, 4, 3); ring(e.x, 0.05, e.z, 0.4, big ? 12 : 3.5, fc, big ? 0.8 : 0.45); break; }
     case 'moodsolved': if (W.player) { ring(W.player.x, 0.05, W.player.z, 1, 30, 0xffe9a8, 1.2); emit(W.player.x, 2, W.player.z, 60, 0xffe9a8, 9, 1.2, 5, 2); } break;
@@ -1253,7 +1267,7 @@ function attractCam(dt) {
    - Kill: a Reign trooper crumples into a burst of paper that lands and lies a moment; a Hush small one tears into
      tissue that rises; a hollow comes apart in a big tissue cloud with a ring. Your kills tick the crosshair.
    Bits are one instanced mesh (fade by shrinking); flashes are a small sprite pool. Reduced motion: fewer bits, no kick. */
-const KICK = { anna: 1.25, dora: 0.7, myra: 1.0, skein: 0.45 }, BIT_N = 240, BIT_PAPER = 0, BIT_TISSUE = 1, BIT_DUST = 2;
+const KICK = { anna: 1.25, dora: 0.7, myra: 1.0, skein: 0.45, rook: 0.85 /* 0.25 rook: a spark with some weight, between Dora and Myra */ }, BIT_N = 240, BIT_PAPER = 0, BIT_TISSUE = 1, BIT_DUST = 2;
 let kick = 0, kickSide = 1, bitM = null, bitL = [], bitK = 0, flashes = [], flashK = 0;
 function buildFeel() {
   bitL = []; bitK = 0; flashes = []; flashK = 0;
@@ -1346,6 +1360,7 @@ R.frame = function (dt, view) {
     m.legL.rotation.x = sw; m.legR.rotation.x = h.zip ? -0.35 : -sw;
     m.body.rotation.x = h.dashT > 0 || h.zip ? 0.45 : Math.min(0.22, sp * 0.02);
     if (h.zip && Math.random() < dt * 40) emit(h.x, 0.25, h.z, 1, 0xffe2a0, 1.5, 0.6, 1.2, 0);
+    if ((h.liftT > 0 || h.glide) && !R.reduced && Math.random() < dt * (h.liftT > 0 ? 34 : 9)) emit(h.x - Math.sin(h.yaw) * 0.45, h.y + 1.15, h.z - Math.cos(h.yaw) * 0.45, 1, h.def.col, 1.2, 0.55, -0.6, 0); // 0.25 rook: the lantern sheds sparks while it lifts him
     m.body.position.y = h.onGround ? st.body : 0;
     if (m.recoil > 0) m.recoil = Math.max(0, m.recoil - dt * 9);
     m.arm.rotation.x = -h.pitch - m.body.rotation.x - m.recoil * 0.25;

@@ -225,6 +225,9 @@ function atlas() {
     g.strokeStyle = 'rgba(120,80,35,0.42)'; g.lineWidth = 1.4; for (let x = 0; x <= 128; x += 8) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 128); g.stroke(); }
     g.strokeStyle = 'rgba(120,80,35,0.24)'; g.lineWidth = 1.1; for (let y = 6; y < 128; y += 13) { g.beginPath(); g.moveTo(0, y); g.lineTo(128, y); g.stroke(); }
     g.fillStyle = 'rgba(90,50,20,0.7)'; g.fillRect(0, 118, 128, 10); });
+  // 14 Rook Vale's face (0.25 rook): grey-teal eyes, level brows, a small sideways smile, wind in the cheeks
+  at(14, function (g) { eye(g, 36, 64, 12, 14, '#3a6a70', '#1c2634'); eye(g, 92, 64, 12, 14, '#3a6a70', '#1c2634'); g.strokeStyle = '#2a3446'; g.lineWidth = 3.4; g.lineCap = 'round'; g.beginPath(); g.moveTo(23, 43); g.lineTo(48, 41); g.moveTo(80, 41); g.lineTo(105, 43); g.stroke();
+    blush(g, 20, 86, 13, 'rgba(240,120,100,0.5)'); blush(g, 108, 86, 13, 'rgba(240,120,100,0.5)'); g.strokeStyle = '#7a3a2c'; g.lineWidth = 3; g.beginPath(); g.moveTo(54, 100); g.quadraticCurveTo(66, 106, 78, 97); g.stroke(); });
   ATLAS = new T.CanvasTexture(cv); ATLAS.anisotropy = 4;
   return ATLAS;
 }
@@ -268,6 +271,7 @@ function heroMat(lp) {
         'outgoingLight += diffuseColor.rgb * vEm * uEmK;'].join('\n'));
   };
   m.customProgramCacheKey = function () { return 'hero3d1'; };
+  m.userData.U = U; // 0.25 rook: a figure may turn its own glow up (Rook's lantern in a lift)
   m.userData.lk = m.userData.bl = m.userData.solid = true;
   return m;
 }
@@ -578,6 +582,133 @@ HERO.skein = {
   }
 };
 
+/* ROOK VALE, the Wick Aviator (0.25 rook). The fifth hero. He comes from the Lantern Ford study branch
+   (work/lantern-ford-wick-aviator: WICK-AVIATOR.md and the turnaround art/heroes/wick-aviator.svg); this figure is built after
+   that turnaround. A loch courier: a cobalt wool coat to the knee with pale stitching, tan straps, a pale ceramic hood with a
+   mint visor pushed up on the brow, a mint kite scarf whose tail is a kite's tail (bows down its length, a verlet chain), and
+   on his back the lantern-kite: a wood frame, two swept kite fins hinged at its sides, and a faceted wick lantern held
+   between them. Original design: no film likeness, no logo, no finned helmet.
+   The back is the silhouette, because the play camera sits behind him: frame, fins above the shoulders, the lantern glowing
+   in the middle, the scarf tail down one side of it. His gun (Wick sparks) is a brass wick-striker in the right hand.
+   pose() is his own layer over the shared pose (one hook in H3.pose): on the ground the fins fold back and tick with the
+   stride; in a Lantern Lift (the unit's liftT and glide, read only) the body tips into the flight and banks with a turn, the
+   legs trail, the free arm goes out, the fins spread and the lantern burns brighter while he is rising. */
+HERO.rook = {
+  P: { H: 2.42, ankle: 0.1, knee: 0.53, hip: 0.98, hipW: 0.105, pelv: 1.02, spine: 1.15, chest: 1.33, neck: 1.54, head: 1.62, headC: 1.85, headR: 0.24,
+    shY: 1.46, shX: 0.225, upper: 0.27, fore: 0.24, foot: 0.145 },
+  two: false, item: 'striker',
+  coat: { name: 'ct', parent: 'hips', pivot: 1.2, mid: null, hem: 0.72, top: 1.22, firm: 0.35,
+    rows: [[1.26, 0.21, 0.16], [1.18, 0.225, 0.175], [1.05, 0.25, 0.195], [0.92, 0.275, 0.215], [0.8, 0.295, 0.235], [0.72, 0.31, 0.245]],
+    groups: [{ lo: 0, hi: Math.PI, az: [0.45, Math.PI / 2, Math.PI - 0.45] }, { lo: Math.PI, hi: TAU, az: [Math.PI + 0.45, 1.5 * Math.PI, TAU - 0.45] }] },
+  /* the scarf's tail: from the nape, over the top of the pack on his left, down beside the lantern. back: the surface it must
+     stay behind (the neck, then the pack's frame), as a shell profile. */
+  chains: [{ pre: 'kt', n: 5, seg: 0.145, back: [[1.7, 0.14, 0.14], [1.58, 0.2, 0.2, -0.01], [1.53, 0.3, 0.36, -0.02], [0.92, 0.3, 0.36, -0.02], [0.88, 0.22, 0.18], [0.6, 0.3, 0.25]] }],
+  KT: { x: 0.165, y: 1.57, z: -0.2 }, PK: { y: 1.23, z: -0.27, w: 0.26, h: 0.31, fin: 0.72 },
+  rig: function (r, P) {
+    const K = this.KT, PK = this.PK;
+    let par = 'chest'; for (let i = 0; i < 5; i++) { r.b('kt' + i, par, K.x + i * 0.006, K.y - i * 0.145, K.z - i * 0.012); par = 'kt' + i; }
+    r.b('pack', 'chest', 0, PK.y, -0.16);
+    r.b('finL', 'pack', PK.w, PK.y, PK.z - 0.04).b('finR', 'pack', -PK.w, PK.y, PK.z - 0.04);
+    r.b('wick', 'pack', 0, PK.y, PK.z - 0.17);
+    addPanels(r, P, this.coat);
+  },
+  body: function (B, P) {
+    const wool = 0x3f5f96, woolD = 0x2c4470, woolL = 0x5674a8, stitch = 0xc6d2e2, tan = 0xb8875c, tanD = 0x8a6244, wood = 0xc08a54, woodL = 0xe2c48c, kite = 0xead6a4, cer = 0xdcdfca, cerD = 0xb9bfa8,
+      mint = 0x95eed4, teal = 0x469989, gold = 0xffe1a1, skin = 0xe6b592, glove = 0x7a5a4c, boot = 0x4a3f4c, brass = 0xe3ba83, dark = 0x26344d;
+    const K = this.KT, PK = this.PK;
+    legs(B, P, { thighR: 0.09, kneeR: 0.078, ankleR: 0.062, thigh: woolD, shin: woolD, boot: boot, bootTop: 0.4, bootR: 0.086, cuff: 0.05, bootCuff: 0xa79581, laceBack: 0xa79581, footW: 0.08, footH: 0.064, sole: 0x241c24 });
+    const tw = torsoW(P), ct = this.coat, pw = panelW(ct, 'hips');
+    // the coat above the belt: cobalt wool, a pale dashed seam down the front
+    B.add(shellG([[P.neck + 0.02, 0.075, 0.075], [P.shY + 0.04, 0.17, 0.13], [P.chest, 0.2, 0.152], [1.26, 0.21, 0.16], [P.pelv - 0.04, 0.2, 0.158], [P.hip - 0.02, 0.2, 0.158]], 18, 0, TAU), null,
+      function (lx, ly, lz, wx, wy, wz) { return Math.abs(wx - 0.03) < 0.012 && wz > 0 && wy < P.shY && frac(wy * 16) < 0.55 ? stitch : wool; }, tw);
+    // the skirt of the coat: split front and back so the stride shows, darker toward the hem, a line of pale stitches above it
+    [[0.05, Math.PI - 0.07], [Math.PI + 0.07, TAU - 0.05]].forEach(function (hf) {
+      B.add(shellG(ct.rows, 12, hf[0], hf[1]), null, function (lx, ly, lz, wx, wy, wz) { const a = Math.atan2(wx, wz), e = Math.min(Math.abs(a), Math.PI - Math.abs(a)); if (e < 0.085 && wy < 1.05) return woolL; return wy < 0.78 ? woolD : wool; }, pw);
+      B.add(shellG(shellOut(ct.rows, 0.006, 0.83, 0.79, 1), 12, hf[0] + 0.04, hf[1] - 0.04, { tile: 2 }), null, 0xffffff, pw, { uv: cellUV(9) });
+    });
+    // the belt, its pouch, and the pack's straps: over each shoulder to the belt, one across the chest
+    B.add(shellG([[1.27, 0.22, 0.172], [1.21, 0.22, 0.172]], 18, 0, TAU), null, tan, [['hips', 0.5], ['spine', 0.5]]);
+    B.add(new T.BoxGeometry(0.06, 0.055, 0.02), M(0, 1.24, 0.175), brass, [['hips', 0.5], ['spine', 0.5]]);
+    B.add(new T.BoxGeometry(0.1, 0.11, 0.06), M(0.19, 1.15, 0.1, 0, 0.9, 0), tanD, 'hips');
+    [1, -1].forEach(function (k) {
+      B.add(capG([k * 0.13, 1.53, 0.075], [k * 0.105, 1.27, 0.165], 0.03, 0.03, 5, 1), M(0, 0, 0.015, 0, 0, 0, 1, 1, 0.55), tan, tw);
+      B.add(capG([k * 0.13, 1.54, 0.06], [k * 0.15, 1.5, -0.14], 0.03, 0.03, 5, 1), null, tan, 'chest');
+    });
+    B.add(new T.BoxGeometry(0.23, 0.035, 0.02), M(0, 1.39, 0.158), tan, 'chest'); B.add(sph(6, 5), M(0, 1.39, 0.17, 0, 0, 0, 0.022, 0.022, 0.012), brass, 'chest');
+    arms(B, P, { upperR: 0.074, upper: wool, elbowR: 0.068, wristR: 0.06, fore: wool, cuff: glove, cuffH: 0.075, foreTop: woolL, foreTopH: 0.03, hand: glove, handR: 0.058 });
+    [1, -1].forEach(function (k) { B.add(sph(8, 6), M(k * (P.shX + 0.005), P.shY + 0.005, 0, 0, 0, 0, 0.088, 0.07, 0.09), woolL, [['arm' + (k > 0 ? 'L' : 'R'), 0.6], ['chest', 0.4]]); }); // shoulder caps
+    headBall(B, P, { skin: skin, face: 14, neckR: 0.062 });
+    // the hood: pale glazed ceramic, open at the face, three cream strokes over the crown, a guard down the back of the neck
+    const R = P.headR, C = P.headC;
+    const hcol = function (lx, ly, lz) { const a = Math.atan2(lx, lz); if (ly > 0.35 && lz < 0.75 && Math.min(Math.abs(a), Math.abs(Math.abs(a) - 0.5)) < 0.085 && Math.abs(a) < 0.62) return 0xf7e4ac; if (lz < -0.2 && Math.abs(lx) < 0.1 && ly < 0.8) return cerD; return ly < -0.45 ? cerD : cer; }; // and a seam down the back
+    B.add(new T.SphereGeometry(1, 16, 10, Math.PI / 2 + 0.78, TAU - 1.56, 0, 2.1), M(0, C + 0.015, -0.012, 0, 0, 0, R * 1.14, R * 1.1, R * 1.14), hcol, 'head');
+    B.add(new T.SphereGeometry(1, 14, 5, 0, TAU, 0, 1.02), M(0, C + 0.03, 0.006, 0.16, 0, 0, R * 1.13, R * 1.08, R * 1.14), hcol, 'head');
+    B.add(shellG([[C - 0.1, R * 1.1, R * 1.08, -0.012], [C - 0.2, R * 0.98, R * 0.98, -0.02], [C - 0.27, R * 0.9, R * 0.95, -0.03]], 10, Math.PI - 1.35, Math.PI + 1.35), null, function (lx, ly, lz, wx, wy) { return wy < C - 0.245 ? cerD : cer; }, [['head', 0.75], ['neck', 0.25]]);
+    B.add(new T.TorusGeometry(R * 1.15, 0.016, 4, 16), M(0, C + 0.085, -0.008, Math.PI / 2 + 0.2, 0, 0), tanD, 'head'); // the visor's strap
+    B.add(shellG([[C + 0.2, R * 1.1, R * 1.12, 0.0], [C + 0.155, R * 1.19, R * 1.22, 0.004], [C + 0.105, R * 1.16, R * 1.2, 0.004]], 8, -0.82, 0.82), null, function (lx, ly, lz, wx, wy) { return Math.abs(wx) < 0.022 ? tanD : (wy > C + 0.18 ? 0xd8fff0 : mint); }, 'head', { em: 0.22 }); // the visor, pushed up
+    // the kite scarf: a mint roll round the neck (teal in the folds), the knot on his left, and the tail
+    B.add(shellG([[1.685, 0.105, 0.1, 0.0], [1.645, 0.165, 0.158, -0.004], [1.59, 0.2, 0.185, -0.01], [1.535, 0.2, 0.185, -0.016], [1.5, 0.15, 0.135, -0.016]], 16, 0, TAU), null,
+      function (lx, ly, lz, wx, wy, wz) { return frac(Math.atan2(wx, wz) * 1.6 + wy * 9) < 0.2 ? teal : mint; }, [['chest', 0.7], ['neck', 0.3]]);
+    B.add(sph(8, 6), M(K.x, K.y + 0.005, K.z + 0.02, 0, 0, 0, 0.07, 0.06, 0.055), teal, 'chest');
+    for (let i = 0; i < 5; i++) { const y0 = K.y - i * 0.145, x0 = K.x + i * 0.006, z0 = K.z - i * 0.012 - 0.012, w = 0.125 * (1 - i * 0.11);
+      B.add(new T.PlaneGeometry(w, 0.15, 1, 1), M(x0, y0 - 0.0725, z0, 0.08, 0, 0), function (lx, ly) { return i === 4 && ly < -0.01 ? gold : (i === 3 || (i === 4) ? 0x5cc2b0 : mint); }, 'kt' + i, { em: i === 4 ? 0.12 : 0 });
+      if (i === 1 || i === 3) [1, -1].forEach(function (k) { B.add(new T.ConeGeometry(0.05, 0.11, 3), M(x0 + k * 0.075, y0 - 0.075, z0 - 0.004, 0, 0, k * Math.PI / 2, 1, 1, 0.3), i === 1 ? gold : teal, 'kt' + i); }); } // a kite tail's bows
+    // THE LANTERN-KITE. The frame: an eight-sided wooden board on the back, a dark slate panel set in it.
+    B.add(new T.CylinderGeometry(1, 1, 1, 8, 1, false, Math.PI / 8), M(0, PK.y, PK.z, Math.PI / 2, 0, 0, PK.w, 0.11, PK.h), function (lx, ly, lz) { return ly < -0.45 ? wood : (lz < -0.3 ? woodL : wood); }, 'pack');
+    B.add(new T.CylinderGeometry(1, 1, 1, 8, 1, false, Math.PI / 8), M(0, PK.y, PK.z - 0.058, Math.PI / 2, 0, 0, PK.w * 0.78, 0.016, PK.h * 0.8), dark, 'pack');
+    [1, -1].forEach(function (k) { B.add(new T.ConeGeometry(0.07, 0.15, 3), M(k * 0.2, PK.y - PK.h - 0.03, PK.z - 0.03, Math.PI, 0, k * 0.5, 1, 1, 0.3), 0xc3d6bb, 'pack'); }); // two pale tabs at the foot of the frame
+    // the two wooden arms that carry the lantern between the fins, with brass pins at the hinges
+    [0.2, -0.2].forEach(function (dy) { B.add(new T.BoxGeometry(PK.w * 2 + 0.03, 0.028, 0.034), M(0, PK.y + dy, PK.z - 0.1), woodL, 'pack');
+      [1, -1].forEach(function (k) { B.add(capG([k * PK.w, PK.y + dy, PK.z - 0.02], [k * PK.w, PK.y + dy, PK.z - 0.12], 0.02, 0.02, 5, 1), null, wood, 'pack'); B.add(sph(5, 4), M(k * PK.w, PK.y + dy, PK.z - 0.125, 0, 0, 0, 0.026, 0.026, 0.02), brass, 'pack'); }); });
+    // the wick lantern: a faceted mint glass, brass caps top and bottom, a bright core
+    const ly0 = PK.y, lz0 = PK.z - 0.17;
+    B.add(new T.OctahedronGeometry(1, 0), M(0, ly0, lz0, 0, Math.PI / 4, 0, 0.125, 0.185, 0.115), function (lx, ly) { return Math.abs(ly) < 0.3 ? 0xa6f7dc : 0x58d6b2; }, 'wick', { em: function (lx, ly) { return Math.abs(ly) < 0.3 ? 0.62 : 0.4; } });
+    B.add(new T.ConeGeometry(0.05, 0.07, 6), M(0, ly0 + 0.19, lz0), brass, 'wick'); B.add(new T.ConeGeometry(0.045, 0.06, 6), M(0, ly0 - 0.185, lz0, Math.PI), brass, 'wick');
+    B.add(new T.TorusGeometry(0.03, 0.007, 4, 8), M(0, ly0 + 0.235, lz0, 0, Math.PI / 2, 0), brass, 'wick');
+    // the fins: swept kite vanes, cream cloth on a wooden spar, hinged at the frame's sides, folded back by this.PK.fin at rest
+    const fin = new T.Shape(); [[0, 0.27], [0.15, 0.5], [0.21, 0.36], [0.2, -0.06], [0.07, -0.25], [0, -0.1]].forEach(function (q, i) { if (i) fin.lineTo(q[0], q[1]); else fin.moveTo(q[0], q[1]); });
+    [1, -1].forEach(function (k) { const n = k > 0 ? 'finL' : 'finR', m = M(k * PK.w, PK.y, PK.z - 0.04, 0, k * PK.fin, 0, k, 1, 1);
+      B.add(new T.ExtrudeGeometry(fin, { depth: 0.014, bevelEnabled: false }), m, function (lx, ly) { const d = Math.abs((lx - 0.0) * 0.23 - (ly - 0.27) * 0.15) / 0.2746; if (lx > 0.004 && frac((ly + 1) * 9) < 0.45 && Math.abs(lx - 0.1) < 0.012) return stitch; return ly > 0.4 || lx > 0.185 ? woodL : kite; }, n);
+      B.add(capG([0, 0.27, 0.007], [0.15, 0.5, 0.007], 0.017, 0.012, 5, 1), m, wood, n); B.add(capG([0, 0.29, 0.007], [0, -0.12, 0.007], 0.019, 0.016, 5, 1), m, wood, n); B.add(capG([0.15, 0.5, 0.007], [0.2, -0.06, 0.007], 0.011, 0.009, 4, 1), m, wood, n); });
+    // the wick-striker he fires with: a brass tube from the right fist, a guard ring, a lit tip
+    const hx = -P.shX, hy = P.shY - P.upper - P.fore - 0.05;
+    B.add(capG([hx, hy + 0.04, 0.02], [hx, hy - 0.25, 0.02], 0.027, 0.022, 6, 1), null, function (lx, ly, lz, wx, wy) { return wy > hy - 0.04 ? tanD : brass; }, 'handR');
+    B.add(new T.TorusGeometry(0.034, 0.009, 4, 8), M(hx, hy - 0.06, 0.02, Math.PI / 2, 0, 0), brass, 'handR');
+    B.add(sph(6, 5), M(hx, hy - 0.275, 0.02, 0, 0, 0, 0.03, 0.036, 0.03), 0xd8fff0, 'handR', { em: 0.9 });
+  },
+  glow: { bone: 'wick', y: 0, z: -0.06, col: 0x91e5c6, size: 1.15 },
+  pose: function (fig, st, h, c) {
+    const b = fig.b, S = fig.S, dt = c.dt, red = c.red, PK = this.PK;
+    const aloft = (h.liftT > 0 || h.glide) && h.alive !== false, rising = h.liftT > 0;
+    S.lift = (S.lift || 0) + ((aloft ? 1 : 0) - (S.lift || 0)) * ease(aloft ? 9 : 12, dt); S.rise = (S.rise || 0) + ((rising ? 1 : 0) - (S.rise || 0)) * ease(rising ? 12 : 4, dt);
+    const L = red ? (aloft ? 1 : 0) : S.lift, rs = red ? (rising ? 1 : 0) : S.rise, t = c.t, wob = red ? 0 : 1;
+    // the fins: folded back on the ground (further at a run, ticking with the stride), spread wide in a lift, and they shiver in the air
+    const fold = (0.1 + 0.22 * c.mix) * (1 - L) - L * 1.0 + wob * (0.04 * c.mix * Math.sin(c.ph * 2) * (1 - L) + L * 0.05 * Math.sin(t * 17));
+    const dihedral = L * (0.2 + 0.1 * rs) + wob * L * 0.04 * Math.sin(t * 13 + 1);
+    b.finL.rotation.set(0, PK.fin * fold, dihedral); b.finR.rotation.set(0, -PK.fin * fold, -dihedral);
+    b.pack.rotation.set(wob * 0.025 * c.mix * Math.sin(c.ph * 2 + 0.6) * (1 - L), 0, wob * 0.03 * c.mix * Math.sin(c.ph) * (1 - L));
+    // the lantern: steady on the ground, brighter in the glide, brightest while it is lifting him (with a flicker)
+    const burn = 1 + L * 0.2 + rs * (0.55 + wob * 0.1 * Math.sin(t * 31));
+    if (fig.mat.userData.U) fig.mat.userData.U.uEmK.value = (fig.emK0 || (fig.emK0 = fig.mat.userData.U.uEmK.value)) * burn;
+    if (fig.glow) { const g0 = this.glow.size * (1 + 0.7 * (burn - 1)); fig.glow.scale.set(g0, g0, 1); fig.glow.material.opacity = clamp(0.45 + 0.4 * (burn - 1), 0, 0.8); }
+    if (L < 0.002) return;
+    // the body tips into the flight and banks with a turn; upright while it climbs, flatter in the glide
+    const fwd = clamp(S.vz / 9, -0.5, 1), sideV = clamp(S.vx / 9, -1, 1);
+    const tip = L * ((0.2 + 0.5 * (1 - rs)) * Math.max(0, fwd) + 0.12 * (1 - rs) + Math.min(0, fwd) * 0.3), bank = -L * sideV * 0.42;
+    b.hips.rotation.x += tip; b.hips.rotation.z += bank; b.hips.rotation.y *= 1 - L;
+    b.spine.rotation.x -= tip * 0.2; b.chest.rotation.x -= tip * 0.25; b.head.rotation.x -= tip * 0.5; b.head.rotation.z -= bank * 0.5;
+    // legs trail: one almost straight, one knee a little bent, toes pointed, a slow scissor
+    const sc = wob * 0.07 * Math.sin(t * 3.1);
+    for (let k = 0; k < 2; k++) { const n = k ? 'R' : 'L', side = k ? -1 : 1, th = b['thigh' + n], sh = b['shin' + n], ft = b['foot' + n];
+      const tq = Q('rkt').setFromEuler(_e.set((k ? 0.5 : 0.16) + 0.3 * (1 - rs) + (k ? sc : -sc) - Math.min(0, fwd) * 0.5, 0, side * 0.07 - bank * 0.3)); th.quaternion.slerp(tq, L);
+      const bend = (k ? 0.22 : 0.62) + 0.15 * rs; sh.quaternion.slerp(Q('rks').setFromAxisAngle(X_AX, bend), L); ft.quaternion.slerp(Q('rkf').setFromAxisAngle(X_AX, 0.75), L); }
+    // arms: the free one out and a little back for balance, the gun arm the same until the aim takes it (the aim IK runs next)
+    for (let k = 0; k < 2; k++) { const n = k ? 'R' : 'L', side = k ? -1 : 1, A = b['arm' + n], F = b['fore' + n];
+      const p = 0.35 + 0.25 * (1 - rs) + (k ? -sc : sc), ab = side * (0.95 + 0.15 * rs) - bank * 0.6, el = 0.3;
+      A.rotation.set(A.rotation.x + (p - A.rotation.x) * L, 0, A.rotation.z + (ab - A.rotation.z) * L); F.rotation.x += (-el - F.rotation.x) * L; }
+  }
+};
+
 /* ---------- build ---------- */
 /* h: the unit; ctx: { LK (the look), glow (gfx's glowSprite), team }. Returns a figure, or null for an unknown hero. */
 H3.build = function (t, h, ctx) {
@@ -756,6 +887,7 @@ H3.pose = function (fig, st, h, o) {
     if (stomp > 0.001) { p += (-0.3 - p) * stomp; ab += (side * 1.25 - ab) * stomp; el += (0.7 - el) * stomp; }
     A.rotation.set(p, 0, ab); F.rotation.set(-el, 0, 0); Hd.rotation.set(0, 0, 0);
   }
+  if (D.pose) D.pose(fig, st, h, { dt: dt, t: t, red: red, mix: mix, runK: runK, air: air, ph: ph }); // 0.25 rook: a hero's own pose over the shared one, before the aim (Rook's lift, fins and lantern)
   // the aim: inverse kinematics toward a point ahead of the right shoulder along the aim, in the chest's frame
   const thr = D.throws ? tw : 0, aimW = clamp(Math.max(aim, Math.abs(thr) * 1.4), 0, 1) * (1 - zk) * (1 - dash * 0.7);
   if (aimW > 0.002) {

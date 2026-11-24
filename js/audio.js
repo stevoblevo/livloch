@@ -148,6 +148,7 @@ A.frame = function (dt, W) {
   shotBudget = Math.min(6, shotBudget + dt * 14);
   if (drone && W && W.player) { const hot = W.t - W.player.lastHurt < 4 ? 1 : 0; drone.fl.frequency.setTargetAtTime(200 + hot * 420, ctx.currentTime, 0.6); }
 };
+const ROOK_COL = (LL.HEROES.find(function (d) { return d.id === 'rook'; }) || {}).col; // 0.25 rook: his zone's toll carries his colour
 A.fx = function (e, W, cam) {
   if (!A.on) return;
   const pl = W.player;
@@ -160,6 +161,7 @@ A.fx = function (e, W, cam) {
       if (id === 'anna') { noise(0.16, g * 1.5, 900, 0.8, 'lowpass', 0, 200); tone(edo(18), 0.14, 'square', g * 0.7, edo(0)); }
       else if (id === 'myra') { noise(0.2, g * 1.6, 1400, 0.6, 'lowpass', 0, 300); tone(edo(31 + 9), 0.3, 'sine', g * 0.6); }
       else if (id === 'skein') { noise(0.04, g, 4200, 3); tone(edo(93), 0.04, 'triangle', g * 0.5, edo(80)); }
+      else if (id === 'rook') { noise(0.05, g * 1.1, 3200, 2); tone(edo(75), 0.07, 'triangle', g * 0.7, edo(88)); tone(edo(106), 0.05, 'sine', g * 0.3, 0, 0.03); } // 0.25 rook: a wick struck, a spark that climbs
       else { noise(0.06, g, 2400, 1.5); tone(edo(62), 0.08, 'triangle', g * 0.8, edo(49)); }
       break;
     }
@@ -185,8 +187,16 @@ A.fx = function (e, W, cam) {
     case 'structdown': if (near(e.u.x, e.u.z, 60) > 0.3) heat = Math.max(heat, 0.8); noise(1.4, 0.4, 700, 0.6, 'lowpass', 0, 60); bell(e.u.team === 0 ? 9 : 18, 0.22, 3); bell(e.u.team === 0 ? 0 : 31, 0.16, 3.5); break;
     case 'explode': noise(0.35, 0.3 * near(e.x, e.z, 60), 900, 0.7, 'lowpass', 0, 120); break;
     case 'nova': noise(0.3, 0.25 * near(e.x, e.z, 60), 1500, 1, 'bandpass', 0, 300); tone(edo(31), 0.3, 'sine', 0.12 * near(e.x, e.z, 60), edo(13)); break;
-    case 'toll': bell(0, 0.4 * near(e.x, e.z, 90), 3.5); noise(0.7, 0.3 * near(e.x, e.z, 90), 500, 0.6, 'lowpass', 0, 80); break;
-    case 'cast': if (e.u === pl) { noise(0.25, 0.12, 600, 1.2, 'bandpass', 0, 3200); tone(edo(e.i === 2 ? 49 : 62 + e.i * 5), 0.25, 'triangle', 0.1, edo(e.i === 2 ? 80 : 72)); } break;
+    /* 0.25 rook: Lantern Lift (the wick catches and climbs; a held breath of air for the glide; a plucked thread when one catches
+       him; boots down) and the Landing Bell (a small hand bell when he rings it; a brighter bell over the toll when it lands). */
+    case 'lift': { const g = e.u === pl ? 1 : 0.5 * near(e.x, e.z, 50); if (g <= 0) break; noise(0.5, 0.13 * g, 500, 1.2, 'bandpass', 0, 2800); tone(edo(31), 0.45, 'triangle', 0.1 * g, edo(62)); tone(edo(80), 0.3, 'sine', 0.05 * g, 0, 0.3); break; }
+    case 'glide': { const g = e.u === pl ? 1 : 0.4 * near(e.x, e.z, 50); if (g <= 0) break; noise(1.0, 0.055 * g, 1900, 0.7, 'bandpass', 0, 800); tone(edo(62), 0.7, 'sine', 0.045 * g, edo(57)); break; }
+    case 'liftthread': if (e.u === pl) { tone(edo(49), 0.18, 'triangle', 0.12); tone(edo(67), 0.32, 'sine', 0.1, 0, 0.06); tone(edo(80), 0.4, 'sine', 0.06, 0, 0.12); } break;
+    case 'liftland': if (e.u === pl) { noise(0.1, 0.1, 380, 1, 'lowpass'); tone(edo(62), 0.06, 'triangle', 0.04); } break;
+    case 'toll': if (e.col === ROOK_COL) { bell(49, 0.2 * near(e.x, e.z, 90), 1.8); bell(80, 0.1 * near(e.x, e.z, 90), 1.2); }
+      bell(0, 0.4 * near(e.x, e.z, 90), 3.5); noise(0.7, 0.3 * near(e.x, e.z, 90), 500, 0.6, 'lowpass', 0, 80); break;
+    case 'cast': if (e.u === pl && e.i === 2 && e.u.def.id === 'rook') { bell(80, 0.12, 0.7); bell(80, 0.09, 0.6); tone(edo(111), 0.25, 'sine', 0.05, 0, 0.18); break; } // 0.25 rook: the hand bell, rung
+      if (e.u === pl) { noise(0.25, 0.12, 600, 1.2, 'bandpass', 0, 3200); tone(edo(e.i === 2 ? 49 : 62 + e.i * 5), 0.25, 'triangle', 0.1, edo(e.i === 2 ? 80 : 72)); } break;
     case 'blink': noise(0.2, 0.15 * near(e.x, e.z, 50), 3000, 3, 'bandpass', 0, 400); break;
     case 'zip': if (e.u === pl) tone(edo(31), 0.5, 'sawtooth', 0.06, edo(62)); break;
     case 'jump': if (e.u === pl) noise(0.07, 0.05, e.dbl ? 2400 : 1200, 1); break;

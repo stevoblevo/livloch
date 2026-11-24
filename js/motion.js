@@ -20,7 +20,8 @@ const ss = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t
 /* cycle: metres walked per full stride (two steps). hem: where the legs start, as a fraction of height. */
 const RIGS = {
   dora: { cycle: 3.75, hem: 0.20 }, anna: { cycle: 3.4, hem: 0.30 }, myra: { cycle: 2.95, hem: 0.22 }, skein: { cycle: 3.6, hem: 0.27 },
-  fox: { cycle: 1.6, hem: 0.3 }
+  fox: { cycle: 1.6, hem: 0.3 },
+  rook: { cycle: 3.55, hem: 0.28 } // 0.25 rook
 };
 /* GAITS (0.21): how each hero carries themself, as multipliers on the 0.20 rig. 1 (or 0 for the additions) is the 0.20
    motion, so a hero without a line here moves as before apart from the idle.
@@ -41,6 +42,8 @@ const GAITS = {
      lean into the run, a heavy coat that is slow to settle, a long braid, and a rock hammer that is thrown. */
   anna: { bob: 0.62, shift: 1.45, roll: 1.35, swing: 1.12, arm: 1.35, knee: 1.15, lean: 0.03, stiff: 0.72, cloak: 0.5, plant: 1, idle: 1, flap: 1, braid: { len: 0.46, drag: 0.05 }, throw: 1, far: 1 }
 };
+/* 0.25 rook: a courier's run, light and level under the pack: less bounce, a little forward lean, arms that work. */
+GAITS.rook = { bob: 0.85, roll: 0.85, arm: 1.15, lean: 0.02, stiff: 0.9 };
 const gaitCache = {};
 function gaitOf(id) { return gaitCache[id] || (gaitCache[id] = Object.assign({}, GAIT0, GAITS[id] || {})); }
 function create() { return { x: null, z: null, yaw: null, phase: 0, mix: 0, aim: 0, ground: true, land: 0, turn: 0, air: 0, ci: null, cue: null, hold: 0, gl: null, wind: 0, kick: 0,

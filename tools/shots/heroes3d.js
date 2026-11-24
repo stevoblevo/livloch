@@ -2,7 +2,7 @@
    comparing them with the painted cards. Segments: idle, run away, strafe right and left while firing, back-pedal, stop,
    a running jump, a dash, a side-on run, a run toward the camera, standing facing it, a fall. Writes OUT/f###.png and
    OUT/seg.json (which frames are which segment).
-   Env: LL_ROOT, HERO (0 Dora, 1 Anna, 2 Myra, 3 Skein), OUT, W/H, PORT (use 8850-8859), ZOOM (0..1, default 0.75),
+   Env: LL_ROOT, HERO (0 Dora, 1 Anna, 2 Myra, 3 Skein, 4 Rook; 0.25 rook adds the segments lift, liftAim and liftBank for him), OUT, W/H, PORT (use 8850-8859), ZOOM (0..1, default 0.75),
    LOOK (a view id), PAPER=1 (the painted cards), SEGS (comma list of segment names to run, default all), STEP (frames
    between screenshots, default 1), LOOKS (comma list of view ids: instead of the segments, the three heroes on the field side by
    side in each view, from behind and from the front), TURN=1 (a turntable of all four, idle then running; N frames per lap). */
@@ -16,7 +16,9 @@ const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split
 const SEGS = [
   ['idle', 24, [0, 0], 0], ['run', 36, [0, 1], 0], ['strafeR', 30, [-1, 0], 0, true], ['strafeL', 30, [1, 0], 0, true], ['back', 26, [0, -0.7], 0, false],
   ['stop', 18, [0, 0], 0], ['aim', 16, [0, 0], 0, true], ['jump', 26, [0, 1], 0, false, 'jump'], ['dash', 14, [0, 1], 0, false, 'dash'], ['side', 34, [0, 1], Math.PI / 2],
-  ['front', 34, [0, 1], Math.PI], ['frontIdle', 16, [0, 0], Math.PI], ['frontAim', 14, [0, 0], Math.PI, true], ['echo', 30, [0, 0], 0, false, 'echo'], ['fall', 24, [0, 0], 0, false, 'die']
+  ['front', 34, [0, 1], Math.PI], ['frontIdle', 16, [0, 0], Math.PI], ['frontAim', 14, [0, 0], Math.PI, true], ['echo', 30, [0, 0], 0, false, 'echo'], ['fall', 24, [0, 0], 0, false, 'die'],
+  // 0.25 rook: Lantern Lift, scripted like the rest (1 s of rise to 4.2 m, then the glide down): straight, firing, and banking across the camera
+  ['lift', 78, [0, 1], 0, false, 'lift'], ['liftAim', 78, [0, 0.6], 0, true, 'lift'], ['liftBank', 78, [-0.8, 0.6], 0, false, 'lift'], ['liftSide', 78, [0, 1], Math.PI / 2, false, 'lift']
 ];
 (async () => {
   const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -34,17 +36,17 @@ const SEGS = [
     LL.dbg.view.yaw = Math.PI; LL.dbg.view.pitch = -0.1; LL.dbg.view.zoom = z; for (let k = 0; k < 6; k++) LL.gfx.frame(0.033, LL.dbg.view); }, +(process.env.ZOOM || 0.75));
   await pg.waitForTimeout(1200);
   if (process.env.TURN) { // a turntable: all four heroes in a row (a fourth is added for the picture), idle while the camera circles, then each running a small circle
-    await pg.evaluate(() => { const W = LL.sim.W, p = W.player; if (W.heroes.length < 4) { const h = Object.assign({}, W.heroes.find(x => x !== p)); h.id = 9999; W.heroes.push(h); }
-      const have = W.heroes.map(h => h.def.id), want = ['dora', 'anna', 'myra', 'skein']; W.heroes.forEach((h, i) => { h.def = LL.HEROES.find(d => d.id === want[i]); h.alive = true; h.hp = h.maxHp; h.useAI = false; });
+    await pg.evaluate(() => { const W = LL.sim.W, p = W.player; while (W.heroes.length < LL.HEROES.length) { const h = Object.assign({}, W.heroes.find(x => x !== p)); h.id = 9990 + W.heroes.length; W.heroes.push(h); } // 0.25 rook: all five
+      const have = W.heroes.map(h => h.def.id), want = LL.HEROES.map(d => d.id); W.heroes.forEach((h, i) => { h.def = LL.HEROES.find(d => d.id === want[i]); h.alive = true; h.hp = h.maxHp; h.useAI = false; });
       W.player = W.heroes[1]; W.heroes.forEach(h => { h.isPlayer = h === W.player; }); const pl = W.player, g = W.structs.find(s => s.team === 0 && s.kind === 'guardian' && s.lane === 1); pl.x = g.x + 6; pl.z = g.z + 30;
-      W.heroes.forEach((h, i) => { h.x0 = pl.x + (i - 1.5) * 1.6; h.z0 = pl.z; h.x = h.x0; h.z = h.z0; h.y = 0; h.onGround = true; h.yaw = 0; });
+      W.heroes.forEach((h, i) => { h.x0 = pl.x + (i - (W.heroes.length - 1) / 2) * 1.6; h.z0 = pl.z; h.x = h.x0; h.z = h.z0; h.y = 0; h.onGround = true; h.yaw = 0; });
       LL.gfx.setLook(LL.cfg.look || 'snow'); LL.dbg.view.zoom = 0.2; LL.dbg.view.pitch = -0.18; });
     const N = +(process.env.N || 120);
     for (let f = 0; f < N * 2; f++) {
       await pg.evaluate((o) => { const W = LL.sim.W, v = LL.dbg.view, dt = 1 / 30; W.t += dt; v.yaw += Math.PI * 2 / o.N; const run = o.f >= o.N;
         W.heroes.forEach((h, i) => { if (run) { const a = (o.f - o.N) * dt * 2.6 + i * 1.57, r = 1.1, nx = h.x0 + Math.cos(a) * r - r, nz = h.z0 + Math.sin(a) * r; h.vx = (nx - h.x) / dt; h.vz = (nz - h.z) / dt; h.x = nx; h.z = nz; h.yaw = Math.atan2(h.vx, h.vz); }
           else { h.vx = h.vz = 0; h.yaw = 0; } h.y = 0; h.onGround = true; h.pitch = 0; });
-        v.target = { x: W.heroes.reduce((a, h) => a + h.x0, 0) / 4 - 0.4, y: 0, z: W.heroes[0].z0 + 0.4, dashT: 0, zip: null }; LL.gfx.frame(dt, v); }, { f: f, N: N });
+        v.target = { x: W.heroes.reduce((a, h) => a + h.x0, 0) / W.heroes.length - 0.4, y: 0, z: W.heroes[0].z0 + 0.4, dashT: 0, zip: null }; LL.gfx.frame(dt, v); }, { f: f, N: N });
       await pg.screenshot({ path: out + '/t' + String(f).padStart(3, '0') + '.png' });
     }
     console.log(errs.length ? errs.join('\n') : 'no page errors'); await b.close(); srv.close(); return;
@@ -75,6 +77,11 @@ const SEGS = [
         mx = hx * m[1] + lx * m[0]; mz = hz * m[1] + lz * m[0];
         if (o.k === 0 && o.extra === 'jump') { p.onGround = false; p.vy = 9.5; }
         if (o.extra === 'dash' && o.k === 2) p.dashT = 0.2;
+        if (o.extra === 'lift') { const A = p.def.ab.find(a => a.kind === 'lift') || { rise: 1, cap: 4.2, sink: 3.4, glide: 0.3 }; // 0.25 rook: the lift's two phases, as sim.js liftStep runs them
+          if (o.k === 4) { p.liftT = A.rise; p.glide = false; p.onGround = false; p.vy = 6.5; }
+          if (o.k > 4 && (p.liftT > 0 || p.glide)) { if (p.liftT > 0) { p.liftT -= dt; const want = Math.max(0, Math.min(7.5, (A.cap - p.y) * 3.2)); p.vy += (want - p.vy) * (1 - Math.exp(-10 * dt)); if (p.liftT <= 0) { p.liftT = 0; p.glide = true; } } else p.vy = Math.max(p.vy - 26 * A.glide * dt, -A.sink);
+            p.y = Math.min(A.cap, p.y + p.vy * dt); if (p.y <= 0) { p.y = 0; p.vy = 0; p.glide = false; p.onGround = true; } else p.vy += 26 * dt; /* cancels the gravity below */ }
+          if (!p.onGround) { mx *= 1.25; mz *= 1.25; } }
         if (o.extra === 'echo') { // the Echo, running a slow circle beside the hero (positions in 10 Hz steps, as the model gives them)
           if (o.k === 0) W.echo = { f: [], i: 0, at: 0, t0: W.t, x: p.x, z: p.z, yaw: p.yaw, shots: 0, a: 0 };
           const e = W.echo; e.a += 1 / 30; if (o.k % 3 === 0) { const a = e.a * 1.6; e.x = p.x + Math.cos(a) * 2.4 - 2.4 * 0 + Math.sin(v.yaw) * 2.5; e.z = p.z + Math.sin(a) * 2.4 + Math.cos(v.yaw) * 2.5; e.yaw = a + Math.PI; }
@@ -83,7 +90,7 @@ const SEGS = [
         else { p.alive = true; }
         if (p.dashT > 0) { mx *= 3.2; mz *= 3.2; p.dashT -= dt; }
         p.vx = mx * sp; p.vz = mz * sp; p.x += p.vx * dt; p.z += p.vz * dt;
-        if (!p.onGround) { p.vy -= 26 * dt; p.y += p.vy * dt; if (p.y <= 0) { p.y = 0; p.vy = 0; p.onGround = true; p.vyLand = 9; } } else { p.y = 0; p.vy = 0; }
+        if (!p.onGround && (p.liftT > 0 || p.glide)) { p.vy -= 26 * dt; } else if (!p.onGround) { p.vy -= 26 * dt; p.y += p.vy * dt; if (p.y <= 0) { p.y = 0; p.vy = 0; p.onGround = true; p.vyLand = 9; } } else { p.y = 0; p.vy = 0; }
         p.ctl.fire = !!o.fire; if (o.fire) { p.fireT = (p.fireT || 0) - dt; if (p.fireT <= 0) { p.lastShotT = W.t; p.fireT = 1 / (p.def.gun.rate || 4); } } else p.fireT = 0;
         p.ammo = 5; p.reloadT = 0; p.pitch = o.fire ? 0.05 : 0;
         if (o.face === Math.PI / 2) v.yaw += 0; // side: the camera keeps its yaw, the hero runs across it
@@ -93,7 +100,7 @@ const SEGS = [
     }
     seg.push({ name: S[0], from: first, to: shot - 1 });
     // put the hero back in front of the camera for the next segment
-    await pg.evaluate(() => { const W = LL.sim.W, p = W.player, g = W.structs.find(s => s.team === 0 && s.kind === 'guardian' && s.lane === 1); p.x = g.x + 6; p.z = g.z + 30; p.alive = true; p.dashT = 0; p.onGround = true; p.y = 0; });
+    await pg.evaluate(() => { const W = LL.sim.W, p = W.player, g = W.structs.find(s => s.team === 0 && s.kind === 'guardian' && s.lane === 1); p.x = g.x + 6; p.z = g.z + 30; p.alive = true; p.dashT = 0; p.onGround = true; p.y = 0; p.liftT = 0; p.glide = false; });
   }
   fs.writeFileSync(out + '/seg.json', JSON.stringify(seg));
   const info = await pg.evaluate(() => { const m = LL.gfx._heroes()[LL.sim.W.heroes.indexOf(LL.sim.W.player)]; return m && m.fig ? LL.heroes3d._dbg(m.fig) : 'paper'; });

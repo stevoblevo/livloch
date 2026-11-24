@@ -311,6 +311,80 @@ test('wardrobe: the ladder gives something every match or two for the first ten,
   WD.count(win, { k: 'over', winner: 0 }, { diff: 0, lean: true }); assert.deepStrictEqual(win.winsBy, [0, 0, 1], 'leaning back wins nothing, as with the record');
   const ef = boot(null); for (let i = 0; i < 5; i++) WD.count(ef, { k: 'relit', recovered: true }); WD.count(ef, { k: 'relit' }); assert.strictEqual(ef.lightsTotal, 5); assert.ok(WD.has(ef, 'splat'));
 });
+/* 0.25 rook: Rook Vale, the fifth hero, and Lantern Lift (from the Lantern Ford study, work/lantern-ford-wick-aviator). */
+const ROOK = LL.HEROES.findIndex(d => d.id === 'rook');
+// Rook alone in the open: no AI, nothing near, standing at (x, z) and looking down +z.
+function rookAt(x, z) { const W = world({ heroPick: ROOK, auto: false }), h = W.player; h.useAI = false; h.x = x; h.z = z; h.y = 0; h.vx = h.vz = h.vy = 0; h.onGround = true; h.ctl.ax = x; h.ctl.az = z + 30; h.ctl.ay = 1.5; return { W, h, a: h.def.ab[1] }; }
+// fly one lift with a fixed stick; returns what happened. Stops when he lands (or after `secs`).
+function fly(W, h, mx, mz, secs, each) { const r = { top: 0, air: 0, ev: [], landed: false, rose: 0, sinkMax: 0 }; h.ctl.ab[1] = true;
+  for (let i = 0; i < secs * 60; i++) { keepAlive(W); h.ctl.mx = mx; h.ctl.mz = mz; if (each) each(i); const y0 = h.y; S.step(1 / 60);
+    for (const e of W.fx) if (e.u === h && /^(lift|liftthread|glide|liftland)$/.test(e.k)) r.ev.push(e.k); W.fx.length = 0;
+    r.top = Math.max(r.top, h.y); if (!h.onGround) r.air += 1 / 60; if (h.glide) r.sinkMax = Math.max(r.sinkMax, (y0 - h.y) * 60); if (h.liftT > 0) r.rose += 1 / 60;
+    if (r.ev.indexOf('lift') >= 0 && h.onGround && !h.liftT && !h.glide && i > 5) { r.landed = true; break; } }
+  return r; }
+test('Rook Vale is the fifth hero and the first four keep their indices', () => {
+  assert.deepStrictEqual(LL.HEROES.map(d => d.id), ['dora', 'anna', 'myra', 'skein', 'rook'], 'saves store the hero as an index');
+  const d = LL.HEROES[4]; assert.strictEqual(d.name, 'Rook Vale'); assert.strictEqual(d.title, 'The Wick Aviator'); assert.deepStrictEqual(d.ab.map(a => a.kind), ['line', 'lift', 'zone']); assert.deepStrictEqual(d.ab.map(a => a.key), ['Q', 'E', 'F']);
+  assert.strictEqual(d.air.jumps, 1); assert.ok(d.ab[2].ult && !d.ab[0].ult && !d.ab[1].ult);
+  assert.strictEqual(d.build.length, C.MAX_ITEMS); assert.deepStrictEqual(d.build.slice().sort((a, b) => a - b), LL.ITEMS.map((_, i) => i), 'the bot build names every item once');
+  const hs = LL.HEROES.slice(0, 4), lo = (k) => Math.min.apply(null, hs.map(k)), hi = (k) => Math.max.apply(null, hs.map(k)), dps = (x) => x.gun.dmg * x.gun.rate * x.gun.pellets;
+  assert.ok(d.hp >= lo(x => x.hp) && d.hp <= hi(x => x.hp), 'health within the others'); assert.ok(d.speed >= lo(x => x.speed) && d.speed <= hi(x => x.speed), 'speed within the others');
+  assert.ok(dps(d) >= lo(dps) * 0.95 && dps(d) <= hi(dps) * 1.05, 'gun damage per second within the others: ' + dps(d));
+  for (let i = 0; i < 5; i++) { const W = world({ heroPick: i }); assert.strictEqual(W.player.def.id, LL.HEROES[i].id); assert.strictEqual(W.player.defIdx, i); assert.strictEqual(new Set(W.heroes.map(h => h.def.id)).size, 3, 'three different heroes'); }
+});
+test('Lantern Lift: about a second of rise, never above the cap, then a glide down slower than a fall', () => {
+  const { W, h, a } = rookAt(-24, 20); assert.ok(LL.laneNearest(1, h.x, h.z, { s: 0, d: 0 }).d > 20, 'well off every thread');
+  const r = fly(W, h, 0, 1, 8);
+  assert.deepStrictEqual(r.ev, ['lift', 'glide', 'liftland'], 'events in order, no thread: ' + r.ev);
+  assert.ok(Math.abs(r.rose - a.rise) < 0.06, 'rise lasted ' + r.rose.toFixed(2) + ' s');
+  assert.ok(r.top > a.cap - 0.6 && r.top <= a.cap + 1e-6, 'top ' + r.top.toFixed(2) + ' m, cap ' + a.cap);
+  assert.ok(r.sinkMax <= a.sink + 0.05, 'never sinks faster than ' + a.sink + ' m/s while gliding: ' + r.sinkMax.toFixed(2));
+  const drop = Math.sqrt(2 * a.cap / C.GRAV); assert.ok(r.air - a.rise > drop * 1.8, 'the way down (' + (r.air - a.rise).toFixed(2) + ' s) is a glide, not a fall (' + drop.toFixed(2) + ' s)');
+  assert.ok(r.landed && h.onGround && h.y === 0 && !h.glide && h.liftT === 0, 'and he lands');
+  assert.ok(h.z - 20 > 14, 'steered forward ' + (h.z - 20).toFixed(1) + ' m');
+});
+test('Lantern Lift: steerable, he can fire aloft, and the jump cannot add height', () => {
+  const { W, h, a } = rookAt(-24, 20); let shots = 0, top = 0, x1 = 0;
+  h.ctl.ab[1] = true;
+  for (let i = 0; i < 150; i++) { keepAlive(W); h.ctl.mx = i < 40 ? 0 : 1; h.ctl.mz = i < 40 ? 1 : 0; h.ctl.fire = true; h.ctl.jump = i % 10 === 0; h.ctl.ax = h.x; h.ctl.az = h.z + 30; S.step(1 / 60);
+    shots += W.fx.filter(e => e.k === 'shot' && e.u === h && !h.onGround).length; W.fx.length = 0; top = Math.max(top, h.y); if (i === 40) x1 = h.x; if (h.onGround && i > 10) break; }
+  assert.ok(shots >= 3, 'fired ' + shots + ' shots in the air'); assert.ok(top <= a.cap + 1e-6, 'jumping while aloft did not pass the cap: ' + top.toFixed(2)); assert.ok(h.x - x1 > 4, 'turned in the air: ' + (h.x - x1).toFixed(1) + ' m sideways');
+});
+test('Lantern Lift respects its cooldown: no continuous flight', () => {
+  const { W, h, a } = rookAt(-24, 20); const r = fly(W, h, 0, 0, 8); assert.ok(r.landed);
+  assert.ok(h.cds[1] > a.cd - r.air - 0.2 && h.cds[1] > 4, 'still cooling when he lands: ' + h.cds[1].toFixed(1) + ' s'); assert.ok(r.air < a.cd * 0.5, 'aloft ' + r.air.toFixed(2) + ' s of a ' + a.cd + ' s cooldown');
+  let lifts = 0, air = 0; for (let i = 0; i < 30 * 60; i++) { keepAlive(W); h.ctl.ab[1] = true; h.ctl.mx = 0; h.ctl.mz = 0; S.step(1 / 60); lifts += W.fx.filter(e => e.k === 'lift').length; W.fx.length = 0; if (!h.onGround) air++; }
+  assert.ok(lifts >= 3 && lifts <= 4, lifts + ' lifts in 30 s with the key held'); assert.ok(air / 60 < 12, 'on the ground most of the time: ' + (air / 60).toFixed(1) + ' s of 30 in the air');
+});
+test('Lantern Lift: a thread catches him once per lift, only when he flies along it', () => {
+  const off = fly.apply(null, (() => { const q = rookAt(-24, 20); return [q.W, q.h, 0, 1, 8]; })());
+  // on the Middle thread, flying along it
+  const A = rookAt(0, -20), along = fly(A.W, A.h, 0, 1, 8);
+  assert.strictEqual(along.ev.filter(k => k === 'liftthread').length, 1, 'caught exactly once: ' + along.ev); assert.ok(A.h.liftCaught);
+  assert.ok(Math.abs((along.rose - off.rose) - A.a.thread) < 0.08, 'the catch added ' + (along.rose - off.rose).toFixed(2) + ' s of rise'); assert.ok(along.top <= A.a.cap + 1e-6);
+  // across the thread: no catch
+  const X = rookAt(-10, -20), across = fly(X.W, X.h, 1, 0, 8); assert.strictEqual(across.ev.filter(k => k === 'liftthread').length, 0, 'crossing a thread is not following it');
+  // gliding onto a thread and turning along it: caught then, lifted again for a moment, still once
+  const G = rookAt(-11, -20); let turned = false; const late = fly(G.W, G.h, 1, 0, 8, () => { if (G.h.glide && Math.abs(G.h.x) < 1.6) turned = true; if (turned) { G.h.ctl.mx = 0; G.h.ctl.mz = 1; } });
+  assert.strictEqual(late.ev.filter(k => k === 'liftthread').length, 1, 'caught from the glide: ' + late.ev); assert.ok(late.ev.indexOf('liftthread') > late.ev.indexOf('glide')); assert.strictEqual(late.ev.filter(k => k === 'glide').length, 2, 'and glides again after');
+  // standing still over a thread: nothing to follow
+  const St = rookAt(0, -20), still = fly(St.W, St.h, 0, 0, 8); assert.strictEqual(still.ev.filter(k => k === 'liftthread').length, 0);
+});
+test('Landing Bell tolls where he is when it rings, and waits for level three', () => {
+  const { W, h } = rookAt(-24, 20); h.level = 1; h.ctl.ab[2] = true; S.step(1 / 30); assert.strictEqual(W.zones.length, 0, 'no bell before the ult level');
+  h.level = C.ULT_LEVEL; h.ctl.ab[1] = true; S.step(1 / 30); h.ctl.ab[2] = true; h.ctl.mz = 1; let toll = null;
+  for (let i = 0; i < 90 && !toll; i++) { keepAlive(W); h.ctl.mz = 1; S.step(1 / 30); toll = W.fx.find(e => e.k === 'toll'); W.fx.length = 0; }
+  assert.ok(toll, 'it tolled'); assert.ok(Math.hypot(toll.x - h.x, toll.z - h.z) < 1, 'on him, not where he rang it'); assert.ok(toll.z - 20 > 4, 'he had moved ' + (toll.z - 20).toFixed(1) + ' m');
+});
+test('bots with Rook play whole matches, use the lift, and nothing breaks', () => {
+  for (const mode of ['short', 'match', 'fallen']) { const W = world({ heroPick: ROOK, mode: mode, seed: 11 }), h = W.player; assert.strictEqual(h.def.id, 'rook'); let lifts = 0, top = 0, bad = 0;
+    for (let i = 0; i < 150 * 30 && !W.over; i++) { S.step(1 / 30); lifts += W.fx.filter(e => e.k === 'lift' && e.u === h).length; W.fx.length = 0; top = Math.max(top, h.y); if (!W.heroes.every(u => [u.x, u.y, u.z, u.vx, u.vy, u.vz, u.hp].every(Number.isFinite))) bad++; }
+    assert.strictEqual(bad, 0, mode + ': every hero number stays finite'); assert.ok(top <= h.def.ab[1].cap + 1e-6, mode + ': never above the cap (' + top.toFixed(2) + ')'); assert.ok(lifts >= 1, mode + ': the bot lifted ' + lifts + ' times in 150 s'); }
+  // as an ally of each of the other four, and dying mid-lift does not leave him flying
+  let allied = 0; for (let seed = 1; seed < 40 && allied < 4; seed++) { const W = world({ heroPick: seed % 4, seed: seed }); if (W.heroes.some(u => u.def.id === 'rook' && !u.isPlayer)) { allied++; run(W, 40); } } assert.ok(allied >= 3, 'Rook rolled as a bot ally ' + allied + ' times');
+  const { W, h } = rookAt(-24, 20); h.ctl.ab[1] = true; for (let i = 0; i < 20; i++) S.step(1 / 60); assert.ok(h.liftT > 0 && h.y > 1); S._t.kill ? S._t.damage(h, 1e6, null, 'unit') : 0; assert.ok(!h.alive); W.fx.length = 0;
+  const ev = run(W, 40, w => { w.patron.forEach(p => { p.hp = p.maxHp; }); }); assert.ok(h.alive, 'respawned'); assert.ok(!ev.some(e => e.k === 'liftland' || e.k === 'glide'), 'no lift events from a dead pilot'); assert.ok(!h.glide && h.liftT === 0);
+});
 test('the model never reads the look: sim and core have no presentation references', () => {
   for (const f of ['core.js', 'sim.js']) { const src = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8').replace(/typeof window !== 'undefined' \? window : globalThis/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/.*$/gm, '$1'); // comments may talk about the rule; code may not break it
     for (const bad of [/\bLL\.gfx\b/, /\bLL\.ui\b/, /\bdocument\b/, /\bwindow\b/, /\blook\b/i, /\bLK\b/, /localStorage/]) assert.ok(!bad.test(src), f + ' mentions ' + bad); }
