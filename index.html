@@ -29,6 +29,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Spectral:ital,wght@0,400;0,600;1,400&family=Zen+Maru+Gothic:wght@400;700&family=Newsreader:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&display=swap">
+<link rel="stylesheet" href="css/wardrobe.css"><!-- 0.23 wardrobe: its screen and its box on the end screen -->
 <style>
 /* Layout: a full-bleed WebGL valley. HUD pins to the corners and bottom centre. Menus are dark parchment panels over the live match. */
 :root {
@@ -381,6 +382,7 @@ body[data-look="glow"] #app::after { content: ""; position: absolute; inset: 0; 
         <button class="btn" id="bWatch">Watch it run</button>
         <button class="btn" id="bFull">Full screen</button>
         <button class="btn" id="bCab">Cabinet</button>
+        <button class="btn" id="bWard">Wardrobe</button><!-- 0.23 wardrobe: js/wardrobe.js opens it -->
       </div>
       <p id="err" hidden></p>
       <div id="how">
@@ -454,6 +456,16 @@ body[data-look="glow"] #app::after { content: ""; position: absolute; inset: 0; 
     </div>
   </section>
 
+  <!-- 0.23 wardrobe: things worn or carried, earned by playing. Filled by js/wardrobe.js -->
+  <section id="ward" class="screen" hidden>
+    <div class="panel">
+      <div class="wHead"><h2>The wardrobe</h2><div class="row"><button class="btn" id="bWardClose">Done</button></div></div>
+      <p class="sub" id="wardSub"></p>
+      <div class="wTop"><canvas id="wardPrev" width="360" height="240" aria-hidden="true"></canvas><div id="wardInfo" aria-live="polite"></div></div>
+      <div id="wardSlots"></div>
+    </div>
+  </section>
+
   <section id="over" class="screen" hidden>
     <div class="panel">
       <h2 id="overH"></h2>
@@ -472,6 +484,7 @@ body[data-look="glow"] #app::after { content: ""; position: absolute; inset: 0; 
 <script src="js/motion.js"></script>
 <script src="js/props.js"></script>
 <script src="js/scenery.js"></script>
+<script src="js/wardrobe.js"></script><!-- 0.23 wardrobe: before gfx.js, which calls it -->
 <script src="js/gfx.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/input.js"></script>
