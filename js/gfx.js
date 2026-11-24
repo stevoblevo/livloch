@@ -16,6 +16,7 @@
 'use strict';
 const LL = window.LL, C = LL.C, S = LL.sim, U = LL.U;
 const R = LL.gfx = { ok: false, low: false };
+const SH = LL.shots || null; // 0.26 shots: js/shots.js, a look per gun (null: the old white tracer for every shot)
 const SCN = LL.scenery || null; // js/scenery.js: trees, the loch, pools of light, plants, moon, mist, fireflies, petals (null: the old cone trees and flat loch)
 let T, renderer, scene, camera, W = null, glowTex, time = 0;
 let dummy, tmpC, v1, v2, v3;
@@ -372,6 +373,7 @@ function buildInstanced() {
   projMesh.userData.rt = true; projMesh.frustumCulled = false; initColor(projMesh, 340); projMesh.count = 0; dyn.add(projMesh);
   orbMesh = new T.InstancedMesh(new T.IcosahedronGeometry(1, 1), new T.MeshBasicMaterial({ color: 0xffffff, blending: T.AdditiveBlending, transparent: true, opacity: 0.9, depthWrite: false, fog: false }), 90);
   orbMesh.userData.rt = true; orbMesh.frustumCulled = false; initColor(orbMesh, 90); orbMesh.count = 0; dyn.add(orbMesh);
+  if (SH) SH.build({ T: T, dyn: dyn, tc: tc, initColor: initColor, glowTex: glowTex, emit: emit, puff: puff, camera: function () { return camera; }, low: function () { return R.low; }, reduced: function () { return R.reduced; }, dist: dist2cam }); // 0.26 shots
 }
 function buildParticles() {
   pPos = new Float32Array(PN_MAX * 3); pCol = new Float32Array(PN_MAX * 3); pBase = new Float32Array(PN_MAX * 3); pVel = new Float32Array(PN_MAX * 4);
@@ -1046,9 +1048,10 @@ R.fx = function (e) {
       break;
     }
     case 'shot': {
-      emit(e.x, e.y, e.z, 2, e.u.def.col, 2.5, 0.12, 0, 0);
+      const shd = SH && SH.muzzle(e, e.u === W.player); // 0.26 shots: this gun's own muzzle (true) or the generic flash
+      if (!shd) emit(e.x, e.y, e.z, 2, e.u.def.col, 2.5, 0.12, 0, 0); // 0.26 shots
       const m = heroM[W.heroes.indexOf(e.u)]; if (m) m.recoil = 1;
-      flash(e, e.u === W.player); if (e.u === W.player && !R.reduced) kick = Math.min(1.6, kick + (KICK[e.u.def.id] || 0.8)); // 0.23 feel
+      if (!shd) flash(e, e.u === W.player); else if (e.u === W.player) kickSide = Math.random() < 0.5 ? -1 : 1; // 0.26 shots if (e.u === W.player && !R.reduced) kick = Math.min(1.6, kick + (KICK[e.u.def.id] || 0.8)); // 0.23 feel
       break;
     }
     case 'impact': emit(e.x, e.y, e.z, 2, 0xd0c0b0, 3, 0.25, 1.5); bits(e.x, e.y, e.z, 2, 0, 1.4, BIT_DUST); break;
@@ -1351,6 +1354,7 @@ function killBits(e) {
   else { bits(e.x, 1, e.z, mine ? 16 : 11, PAPER_REIGN, 3, BIT_PAPER); puff(e.x, 0.2, e.z, 0, 0.3, 0, 0.3, 1, 0.5, 0.3); }
 }
 function stepFeel(dt) {
+  if (SH) SH.step(dt); // 0.26 shots
   for (let i = 0; i < flashes.length; i++) { const s = flashes[i]; if (!s.visible) continue; s.life -= dt; if (s.life <= 0) { s.visible = false; continue; } const f = s.life / s.max; s.material.opacity = f; s.scale.setScalar(s.base * (0.7 + 0.5 * f)); }
   if (!bitM) return; let n = 0;
   for (let i = 0; i < BIT_N; i++) {
@@ -1652,6 +1656,7 @@ R.frame = function (dt, view) {
   // projectiles
   let np = 0, no = 0, nf = 0;
   const ps = W.projs;
+  if (SH) SH.begin(dt, time, camera); // 0.26 shots
   for (i = 0; i < ps.length; i++) {
     const p = ps[i];
     if (p.vis === 'fawn') {
@@ -1667,6 +1672,7 @@ R.frame = function (dt, view) {
       if (Math.random() < dt * 50) emit(p.x, p.y, p.z, 1, p.col || 0xffffff, 1, 0.35, 0, 0);
       continue;
     }
+    if (SH && SH.put(p)) continue; // 0.26 shots: gun and trooper shots are drawn there
     if (np >= 340) continue;
     const sp = Math.hypot(p.vx, p.vy, p.vz) || 1, len = p.kind === 'line' ? 5 : Math.min(3.2, sp * 0.028), w = p.kind === 'line' ? p.size : p.size * 0.8;
     dummy.position.set(p.x - p.vx / sp * len * 0.5, p.y - p.vy / sp * len * 0.5, p.z - p.vz / sp * len * 0.5);
@@ -1682,6 +1688,7 @@ R.frame = function (dt, view) {
     dummy.position.set(o.x, o.y, o.z); dummy.rotation.set(0, 0, 0); dummy.scale.set(s, s, s); dummy.updateMatrix();
     orbMesh.setMatrixAt(no, dummy.matrix); orbMesh.setColorAt(no++, tc(o.team === 0 ? 0xffb86a : 0x7dffd8));
   }
+  if (SH) SH.end(); // 0.26 shots
   projMesh.count = np; orbMesh.count = no;
   projMesh.instanceMatrix.needsUpdate = orbMesh.instanceMatrix.needsUpdate = true;
   if (projMesh.instanceColor) projMesh.instanceColor.needsUpdate = true;
