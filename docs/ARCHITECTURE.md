@@ -70,7 +70,11 @@ The end screen mounts `LL.debrief` from the existing `dreamSeen` IDs. It only de
 
 **Test hooks.** `S._t` exposes `give`, `eat`, `damage`, `kill`, `spawnThief`, `spawnHollow`, `thiefStep` for `tools/test.js`. Nothing in the game calls them.
 
-**Not deterministic.** `W.rng` is seeded, but a few timers in `sim.js` still use `Math.random`, so two runs with one seed can differ a little. Treat small differences in bot results as noise.
+**Deterministic per seed (0.27, #27).** What is seeded: every random draw the model makes, through `W.rng` (`LL.rng` in `core.js`, mulberry32, keyed by `newWorld({ seed })`; seed 0 or none means 7). The valley's rocks and trees come from their own fixed `LL.rng(9917)`, the same in every match. So one seed and one sequence of inputs (`hero.ctl` and the actions above, on the same frames, with the same `dt`) give the same match, event for event; `tools/test.js` checks that for a scripted player, Dreamwalk, Ever Fallen and two whole bot matches, with another world run in between.
+
+What is not seeded: the view. `gfx.js`, `props.js`, `scenery.js`, `shots.js`, `heroes3d.js`, `ness.js`, `wardrobe.js`, `ui.js` and `audio.js` use `Math.random` for sparks, dust, shake and sound grain, and none of it can reach `W`. The game's own seed comes from the clock in `main.js`, so two people's matches differ; a replay would store that seed.
+
+The rule for new code in `sim.js` and `core.js`: draw from `W.rng()`, never `Math.random`; keep time as `W.t`, never `Date.now` or `performance.now` (the test fails on either). A new draw, or one moved, shifts every draw after it, so bot win rates move with any such change: post `node tools/soak.js 6` before and after and read the shift as a new sample, not a regression.
 
 ## One frame
 

@@ -41,7 +41,12 @@
    - The sim talks to the outside only through W.fx, a list of plain event objects drained every frame by gfx, audio
      and ui. Nothing outside may write to W except the player's hero controls (hero.ctl).
    - Bots and the human drive heroes through the same hero.ctl, so "Watch it run" is the same code path as play.
-   - Not deterministic: Math.random is used for small timing jitter. Do not build replay on it without fixing that. */
+   - SEEDED (0.27, #27): every random draw the model makes goes through W.rng (LL.rng, mulberry32, keyed by o.seed; the
+     valley's rocks and trees by their own fixed LL.rng(9917)). One seed and one set of inputs give one match, event for
+     event, so replays and exact regression checks can be built on it. The rule for new code here and in core.js: draw
+     from W.rng(), never Math.random, and keep time as W.t, never a clock. tools/test.js fails if either appears. Order
+     matters too: a new draw shifts every draw after it, so bot results move when the code changes, and that is expected.
+     The view (gfx, props, scenery, shots, heroes3d, ness, wardrobe, ui, audio) keeps Math.random for sparks and dust. */
 (function (G) {
 'use strict';
 const LL = G.LL, C = LL.C, U = LL.U, lanes = LL.lanes;

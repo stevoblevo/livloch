@@ -24,7 +24,7 @@ The owner played and did not want to finish a match. Fix that before anything el
 | 0.17 | **First Rain:** a six-minute match that ends when the first rain ends and counts five stars. It is where the title now starts | Done |
 | 0.18 | Feel: what a shot, a hit and a kill look and sound like; camera kick; the hero's shooting pose once the arm sheets arrive | Done: aim pose (0.18), motion (0.19 to 0.22.2), shot, hit and kill feel (0.23, #38), 3D heroes (0.24). Each gun its own shot and ammo picture: 0.26 |
 | 0.19 | Rewards you can see: stars and goals unlock things worn or carried (a scarf colour, a lantern trail), not only numbers | Done: the wardrobe, 17 things (0.23) |
-| 0.20 | Tune against the agreed target: Even winnable with two of the five lessons, Cruel only with four | **Open, and next after 0.26.** It needs a seeded sim first (#27): bot soaks are noisy and two tests have flaked on `Math.random` |
+| 0.20 | Tune against the agreed target: Even winnable with two of the five lessons, Cruel only with four | **Open, and next.** The seeded sim it needed came in 0.27 (#27): a soak now prints the same lines every run, so a tuning change can be measured against the one before it on the same seeds. Still read a handful of seeds as a sample, not the truth |
 
 **Gate:** the owner finishes three First Rains in a row by choice, and says which star was most fun to earn.
 
