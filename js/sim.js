@@ -304,6 +304,7 @@ function mkHero(defIdx, team, slot, isPlayer) {
       ax: sp.x, ay: 1.5, az: sp.z, strafeT: Math.random() * 9, phase: Math.random() * 6, lat: (Math.random() * 2 - 1) * 3,
       jit: team === 1 ? [1.5, 0.9, 0.4][diff] : 0.9, track: team === 1 ? [5, 8, 12][diff] : 8, buildI: 0, standS: 10 }
   });
+  h.liftT = 0; h.liftMax = 0; h.glide = false; h.liftCaught = false; h.liftA = null; // 0.25 rook: Lantern Lift state (liftCast, liftStep)
   recompute(h); h.hp = h.maxHp;
   W.heroes.push(h); if (isPlayer) W.player = h;
   return h;
@@ -603,6 +604,7 @@ function cast(h, i) {
       aoeDamage(h.x, h.y + 1, h.z, a.r, a.dmg * ap, h, a);
       fx({ k: 'nova', x: h.x, y: h.y, z: h.z, r: a.r, col: h.def.col });
       break;
+    case 'lift': liftCast(h, a, mvx, mvz, mm > 0.3); break; // 0.25 rook
     case 'dash':
       h.dashX = mvx * (a.dist / 0.3); h.dashZ = mvz * (a.dist / 0.3); h.dashT = 0.3; h.zip = null;
       h.shield = a.shield * ap; h.shieldT = 4;
@@ -634,6 +636,52 @@ function cast(h, i) {
     }
   }
   fx({ k: 'cast', u: h, i: i, kind: a.kind });
+}
+/* 0.25 rook: LANTERN LIFT (Rook Vale's E, kind 'lift'). From the Lantern Ford study (work/lantern-ford-wick-aviator), without its
+   pack-integrity meter. Two phases, both model state on the hero:
+   - the rise (h.liftT counts down from a.rise): he climbs toward a.cap metres and steers at a.boost times his speed;
+   - the glide (h.glide): gravity at a.glide of normal, sinking no faster than a.sink, until he touches the ground.
+   He never goes above a.cap while either lasts, and the jump is spent, so the cooldown is the only way back up.
+   Once per lift, if he is within a.threadR of a thread and moving along it, the thread catches him: a.thread seconds more
+   rise (from a glide, it lifts him again for that long). liftStep runs before heroStep's own gravity and integration, so it
+   adds C.GRAV * dt back to cancel the gravity that follows and applies its own. Events: lift, liftthread, glide, liftland. */
+function liftCast(h, a, mvx, mvz, moving) {
+  h.zip = null; h.dashT = 0; h.liftT = a.rise; h.liftMax = a.rise; h.glide = false; h.liftCaught = false; h.liftA = a;
+  h.vy = Math.max(h.vy, 6.5); h.onGround = false; h.jumps = 9;
+  if (moving) { const s = h.def.speed * h.st.speed * a.boost; h.vx = mvx * s; h.vz = mvz * s; }
+  fx({ k: 'lift', u: h, x: h.x, y: h.y, z: h.z, col: h.def.col });
+}
+function liftStep(h, dt, sp) {
+  const a = h.liftA, c = h.ctl;
+  if (h.zip) { h.liftT = 0; h.glide = false; return; }
+  if (h.onGround) { h.liftT = 0; h.glide = false; fx({ k: 'liftland', u: h, x: h.x, y: 0, z: h.z, col: h.def.col }); return; }
+  h.jumps = 9;
+  const hs = hyp(h.vx, h.vz);
+  if (!h.liftCaught && h.y > 0.5 && hs > 3) {
+    const lane = LL.nearestLane(h.x, h.z); LL.laneNearest(lane, h.x, h.z, Q);
+    if (Q.d < a.threadR) { LL.lanePoint(lane, Q.s, P);
+      if (Math.abs(h.vx * P.dx + h.vz * P.dz) / hs > 0.7) { h.liftCaught = true; h.glide = false; h.liftT += a.thread; h.liftMax = Math.max(h.liftMax, h.liftT); fx({ k: 'liftthread', u: h, lane: lane, x: h.x, y: h.y, z: h.z, col: h.def.col }); } }
+  }
+  let vy;
+  if (h.liftT > 0) {
+    h.liftT -= dt;
+    const want = U.clamp((a.cap - h.y) * 3.2, 0, 7.5); vy = h.vy + (want - h.vy) * (1 - Math.exp(-10 * dt));
+    if (h.liftT <= 0) { h.liftT = 0; h.glide = true; fx({ k: 'glide', u: h, x: h.x, y: h.y, z: h.z, col: h.def.col }); }
+  } else vy = Math.max(h.vy - C.GRAV * a.glide * dt, Math.min(h.vy, -a.sink));
+  if (h.y + vy * dt > a.cap) vy = Math.max(0, (a.cap - h.y) / dt);
+  h.vy = vy + C.GRAV * dt;
+  if (h.dashT <= 0) { let mx = c.mx, mz = c.mz; const m = hyp(mx, mz); if (m > 1) { mx /= m; mz /= m; }
+    if (m > 0.03) { const k = 1 - Math.exp(-6 * dt), s = sp * a.boost; h.vx += (mx * s - h.vx) * k; h.vz += (mz * s - h.vz) * k; } }
+}
+/* 0.25 rook: when a bot lifts. Away from a hero who is too close while retreating; after one who is nearly down; or along its
+   own thread when the place it wants to stand is far off, which is the lift the thread catches. */
+function botLift(h, tgt, eh, ehD, hpF) {
+  if (!h.onGround || h.zip) return false;
+  const a = h.ai, r = W.rng;
+  if (a.mode === 'retreat') return !!eh && ehD < 18;
+  if (tgt && (tgt.kind === 'hero' || tgt.big) && tgt.hp / tgt.maxHp < 0.3 && ehD > 12 && hpF > 0.5) return r() < 0.5;
+  if (hyp(a.gx - h.x, a.gz - h.z) > 26 && hyp(h.vx, h.vz) > 3) { LL.laneNearest(a.lane, h.x, h.z, Q); return Q.d < 2 && r() < 0.5; }
+  return false;
 }
 function pointFree(x, z, r) {
   const obs = W.obstacles;
@@ -760,6 +808,7 @@ function heroStep(h, dt) {
   if (hyp(h.x, h.z + sgn * C.SPAWN_Z) < C.FOUNT_R) damage(h, 160 * dt, null, 'dot');
   if (!h.alive) return;
   const sp = d.speed * st.speed * (h.slowT > 0 ? 1 - h.slowAmt : 1) * (h.zestT > 0 ? 1.3 : 1);
+  if (h.liftT > 0 || h.glide) liftStep(h, dt, sp); // 0.25 rook: Lantern Lift owns his vertical speed while it lasts
   if (h.zip) {
     const zp = h.zip, L = lanes[zp.lane];
     zp.s += zp.dir * (h.team === 0 ? 1 : -1) * C.ZIP_SPEED * dt;
@@ -801,6 +850,7 @@ function respawn(h) {
   h.alive = true; h.hp = h.maxHp; h.x = sp.x; h.z = sp.z; h.y = 0; h.vx = h.vy = h.vz = 0; h.onGround = true;
   h.ammo = h.magSize; h.reloadT = 0; h.shield = 0; h.slowT = 0; h.dotT = 0; h.stamina = h.st.stam; h.zip = null; h.lastHurt = -99;
   h.ai.mode = 'lane'; h.breath = false; h.zestT = h.furyT = h.hipsT = 0;
+  h.liftT = 0; h.glide = false; // 0.25 rook
   fx({ k: 'respawn', u: h });
 }
 
@@ -918,6 +968,7 @@ function botAbilities(h, tgt, eh, ehD, hpF) {
         else if (heroT && ehD < ab.range && r() < 0.35) c.ab[i] = true;
         else if (tgt && countEnemiesNear(h.team, tgt.x, tgt.z, ab.r, null) >= 5 && r() < 0.2) c.ab[i] = true;
         break;
+      case 'lift': if (botLift(h, tgt, eh, ehD, hpF)) c.ab[i] = true; break; // 0.25 rook
       case 'turret':
         if ((heroT && ehD < 18) || (tgt && tgt.struct)) c.ab[i] = true;
         break;

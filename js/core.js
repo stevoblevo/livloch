@@ -92,7 +92,7 @@ LL.nearestLane = function (x, z) {
   return bi;
 };
 
-/* Heroes. kind: orb | line | nova | dash | blink | zone | turret */
+/* Heroes. kind: orb | line | nova | dash | blink | zone | turret | lift (0.25 rook) */
 LL.HEROES = [
   { id: 'dora', name: 'Dora', title: 'Carries the little light', col: 0xffc46b, css: '#ffc46b',
     blurb: 'Coffee first. Steady bolts, a thrown light, a thread home.',
@@ -129,6 +129,24 @@ LL.HEROES = [
       { key: 'Q', name: 'Stitch', kind: 'orb', cd: 7, dmg: 45, dot: 32, dotT: 4, slow: 0.3, slowT: 3, speed: 62, range: 34, desc: 'Sew one enemy to the spot. They bleed thread and slow down.' },
       { key: 'E', name: 'Unravel', kind: 'blink', cd: 10, dist: 14, desc: 'Come apart here, come together over there.' },
       { key: 'F', name: 'Knot', kind: 'turret', ult: true, cd: 65, dmg: 21, life: 14, desc: 'Tie a knot that shoots at whoever is closest for a while.' }
+    ] },
+  /* 0.25 rook: Rook Vale, the Wick Aviator, the fifth hero. He was designed on the Lantern Ford study branch
+     (work/lantern-ford-wick-aviator, WICK-AVIATOR.md) as a bonus pilot for a separate chase; 0.25 brings him into normal
+     matches. Kept from the study: name, colour, blurb, the three ability names, the lift's shape (a short steerable rise,
+     then down; a thread catches him once). Not ported: the Ford chase, its pickups and shop, and the pack-integrity
+     meter (a second resource with nothing left to refill it; the cooldown and the altitude cap already stop continuous
+     flight). Appended last on purpose: saves store the hero as an index, so the first four keep theirs.
+     Lantern Lift ('lift', sim.js liftCast/liftStep): rise seconds of steerable climb toward cap metres, then a glide at
+     glide times gravity, sinking no faster than sink m/s; boost is the air speed multiplier he steers toward. Moving along a
+     thread within threadR metres of it adds thread seconds, once per lift. */
+  { id: 'rook', name: 'Rook Vale', title: 'The Wick Aviator', col: 0x91e5c6, css: '#91e5c6',
+    blurb: 'A loch courier with a glazed lantern-kite. Take the high line, then land clean.',
+    hp: 610, speed: 7.1, aiRange: 34, build: [0, 5, 3, 7, 1, 6, 10, 2, 8, 11, 4, 9, 12, 13, 14], air: { jumps: 1 },
+    gun: { name: 'Wick sparks', dmg: 15.5, rate: 5, mag: 18, reload: 1.35, speed: 100, spread: 0.011, pellets: 1, range: 44, size: 0.19 },
+    ab: [
+      { key: 'Q', name: 'Wick Skip', kind: 'line', cd: 6.5, dmg: 85, speed: 65, r: 0.72, range: 29, desc: 'Send a slow-burning stitch along your sightline.' },
+      { key: 'E', name: 'Lantern Lift', kind: 'lift', cd: 9, rise: 1.0, cap: 4.2, glide: 0.3, sink: 3.4, boost: 1.35, thread: 0.35, threadR: 2.2, desc: 'Rise and steer for a moment, then glide down. Aim and fire while aloft. A thread under you holds you up a little longer.' },
+      { key: 'F', name: 'Landing Bell', kind: 'zone', ult: true, cd: 60, r: 7.5, burst: 300, delay: 0.9, life: 0.5, fx: 'toll', desc: 'Ring the bell. It tolls where you are a moment later, so ring it on the way down.' }
     ] }
 ];
 
