@@ -17,6 +17,7 @@ const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split
   await pg.route('**/*', rt => { const u = rt.request().url(); if (u.includes('three.min.js')) return rt.fulfill({ path: '/tmp/t/node_modules/three/build/three.min.js', contentType: 'text/javascript' }); if (u.startsWith('http://localhost')) return rt.continue(); return rt.abort(); });
   await pg.goto('http://localhost:' + port + '/'); await pg.waitForTimeout(1800);
   await pg.evaluate((o) => { LL.cfg.mode = 'match'; LL.cfg.look = o.look; LL.cfg.hero = o.hero; if (o.low && LL.gfx.setQuality) { LL.cfg.low = true; LL.gfx.setQuality(true); } }, { look: process.env.LOOK || 'snow', hero: +(process.env.HERO || 0), low: process.env.LOW === '1' });
+  if (touch) await pg.evaluate(() => document.body.classList.add('touch'));
   await pg.click('#bPlay'); await pg.waitForTimeout(2500);
   if (process.env.LOW === '1') await pg.evaluate(() => { LL.gfx.setQuality(true); });
   await pg.evaluate((T) => { window.requestAnimationFrame = () => 0; LL.input.lockFailed = true; const S = LL.sim, W = S.W; W.player.useAI = true;

@@ -184,7 +184,7 @@ function ammoRow(p) {
   if (p.reloadT > 0) { relMax = Math.max(relMax, p.reloadT); have = p.magSize * (1 - p.reloadT / (relMax || 1)); } else relMax = 0;
   const key = Math.round(have * 4) + (p.reloadT > 0 ? 'r' : ''); if (key === ammoKey) return; ammoKey = key;
   for (let i = 0; i < ammoIcons.length; i++) {
-    const f = Math.max(0, Math.min(1, (have - i * ammoPer) / ammoPer)); ammoIcons[i].style.opacity = (0.16 + 0.84 * f).toFixed(2);
+    const f = Math.max(0, Math.min(1, (have - i * ammoPer) / ammoPer)); ammoIcons[i].style.opacity = (0.2 + 0.8 * f).toFixed(2);
     ammoIcons[i].classList.toggle('on', f >= 0.99);
   }
 }
