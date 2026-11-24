@@ -32,6 +32,7 @@
 | 0.22 | no artifact | Pages `v0.22/` (PR 35); saelion.co `release/livloch-0.22-20261123` (`623d59a`), deployment `dpl_JrwbDhvH5qohtmfWLtFepbX9JKSm` | `release/0.22` (`580ee17`) |
 | 0.22.1 | no artifact | the social card only: Pages PR 36; saelion.co `release/livloch-0.22.1-20261123` (`0deb0b7`), deployment `dpl_AFFinaPFWYg6wbgEYKb65BfzHVze` | `release/0.22.1` |
 | 0.22.2 | no artifact | calmer motion in play: Pages PR 37 (`livloch/` only); saelion.co `release/livloch-0.22.2-20261123` (`6e8e62a`), deployment `dpl_A2js8PuMDcwsZXNhbdqAJXTRkKZZ` | `release/0.22.2` (`a64d50d`) |
+| 0.22.3 (links) | no artifact | saelion.co short links and capital-letter variants in `vercel.json` (`/ll`, `/LL`, `/Livloch` → Livloch; `/GG` → Fright Gongles; `/Rf`, `/Reignfawn` → Reignfawn), owner's request: `release/livloch-0.22.3-links-20261123` (`402d27f`), deployment `dpl_7hQtT2Nr1xsyHGAanop8bME1Srb8`. **Branch the next saelion.co release from this line** or the links are lost | game unchanged (`release/0.22.2`) |
 
 ## Versioning
 This session cannot push tags or create releases (the GitHub proxy refuses both), so each version is a branch: `release/0.4`, `release/0.5`, `release/0.6`, `release/0.6.1`, `release/0.7`, `release/0.8`, `release/0.9`. They never move. Turn them into tags from a normal clone with `git tag v0.7 origin/release/0.7 && git push --tags` if tags are wanted.
