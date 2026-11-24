@@ -173,7 +173,7 @@ A.fx = function (e, W, cam) {
       else if (e.kind === 'denied') { if (e.p) { tone(edo(72), 0.1, 'square', 0.08); tone(edo(59), 0.16, 'square', 0.08, 0, 0.07); } else { tone(edo(40), 0.18, 'sawtooth', 0.05, edo(31)); } }
       break;
     case 'death':
-      if (e.kind === 'trooper') noise(0.14, 0.09 * near(e.x, e.z, 50), 1800, 2, 'bandpass', 0, 500);
+      if (e.kind === 'trooper') { noise(0.14, 0.09 * near(e.x, e.z, 50), 1800, 2, 'bandpass', 0, 500); if (e.by && e.by === pl) { noise(0.07, 0.07, 4200, 2.5, 'bandpass', 0, 1500); tone(edo(e.team === 1 ? 72 : 80), 0.07, 'triangle', 0.05); } } // 0.23: your kill tears paper
       else if (e.kind === 'stray') { noise(0.4, 0.2 * near(e.x, e.z), 500, 1, 'lowpass'); }
       break;
     case 'herokill': {
