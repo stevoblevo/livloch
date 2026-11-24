@@ -2,6 +2,12 @@
 
 Every version of Livloch, newest first. Each one from 0.4 on is a `release/X.Y` branch that never moves, and the published ones stay playable at [stevoblevo.github.io/livloch/versions/](https://stevoblevo.github.io/livloch/versions/). The reasons behind each step are in [`docs/PLAN.md`](docs/PLAN.md); where each was published is in [`docs/IMPORT.md`](docs/IMPORT.md).
 
+## 0.23
+**Feel and the wardrobe.** Your shots flash at the muzzle and kick the camera back along its own line of sight (aim never moves); hits throw paper bits that flutter down, Hush tissue drifts up like ash, structures chip, a ward shimmers when a hit can't land yet; Reign troopers crumple into paper, Hush tear into tissue, hollows come apart in a cloud; your kills tick the crosshair. The wardrobe: 17 things you wear or carry (trails, footfalls, rings, a light at your shoulder, dash doubles), earned by stars, First Rains, goals and secrets, with a Wardrobe screen on the title, a line when something opens mid-match and the next one shown at the end of every match.
+
+## 0.22.2
+Calmer motion in play: strafing no longer shears the cloak or flings Anna's braid; raising or lowering the aim is a cut, not a card turning edge-on.
+
 ## 0.22
 
 Anna moves like herself: a heavier gait with more weight transfer and grit at each footfall, her braid cut out of the sheet and swinging on its own pendulum, coat halves that lift with each knee, arms that follow the body and bend at the elbow, a wind-up and release for the hammer, reactions to Core Sample, Tumble and Fawn Charge, a living idle. Every hero gets a gait table and small cast reactions; leg strips are cut below the coat hem. The game points people to GitHub issues instead of a chat, and the footer links the repository.

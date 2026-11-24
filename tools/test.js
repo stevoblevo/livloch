@@ -239,6 +239,78 @@ test('idle and coat (0.21): standing is not a frozen card; the coat halves lift 
   const w = M.create(); let maxL = 0, maxR = 0; for (let i = 0; i < 60; i++) { u.z += 0.2; const p = M.pose(w, u, 1 / 30, 5 + i / 30, false, { r: 0, f: 6, fb: true }); if (p.sway > 0.6) maxL = Math.max(maxL, p.flapL - p.flapR); if (p.sway < -0.6) maxR = Math.max(maxR, p.flapR - p.flapL); }
   assert.ok(maxL > 0.3 && maxR > 0.3, 'each half lifts with its own leg: ' + maxL.toFixed(2) + ', ' + maxR.toFixed(2));
 });
+/* 0.23 WARDROBE. The unlock rules are pure functions of the saved settings; js/wardrobe.js loads under Node without a page. */
+const WD = (require(path.join(__dirname, '..', 'js', 'wardrobe.js')), LL.wardrobe);
+// what main.js does at boot: its own fields from the save, then the wardrobe's (defaults, saved values, repair)
+const boot = (save) => { const cfg = { bestStars: 0, wins: 0, losses: 0, unl: {}, all: false }; if (save) for (const k in cfg) if (k in save) cfg[k] = save[k]; return WD.adopt(cfg, save || null); };
+// one match a person played, as events: goals done during it, Cabinet secrets found during it, then the end
+function playOne(cfg, known, m) {
+  const got = [], mid = [];
+  for (const id of m.goals || []) { WD.count(cfg, { k: 'goal', id }, null); WD.settle(cfg, known, got); }
+  for (const id of m.cab || []) { cfg.unl[id] = 1; WD.settle(cfg, known, got); }
+  mid.push(...got);
+  WD.count(cfg, Object.assign({ k: 'over' }, m.over || { short: true, n: m.n || 0, winner: 0 }), m.W || { diff: 1 }); if ((m.over || {}).short !== false && m.n > (cfg.bestStars || 0)) cfg.bestStars = m.n;
+  WD.settle(cfg, known, got); return { got, mid };
+}
+test('wardrobe: a catalogue of things in five slots, each with a line and a rule that says how to earn it', () => {
+  assert.ok(WD.ITEMS.length >= 12 && WD.ITEMS.length <= 18, WD.ITEMS.length + ' items');
+  const slots = WD.SLOTS.map(s => s.id); assert.deepStrictEqual(slots, ['trail', 'step', 'ring', 'lamp', 'ghost']);
+  for (const s of slots) assert.ok(WD.ITEMS.filter(it => it.slot === s).length >= 3, s + ' has at least three');
+  const ids = new Set(); for (const it of WD.ITEMS) { assert.ok(!ids.has(it.id), 'unique ' + it.id); ids.add(it.id); assert.ok(it.name && it.line && !/!/.test(it.line + it.name), it.id + ': a name and a quiet line');
+    assert.ok(WD.how(it).length > 4, it.id + ' says how it is earned: ' + WD.how(it)); assert.ok(WD.PAL[it.id] && WD.PAL[it.id].d, it.id + ' has colours'); }
+  for (const c of WD.ITEMS.filter(it => it.rule.cab)) assert.ok(LL.CABINET.find(x => x.id === c.rule.cab && x.feat), c.id + ' reads a real Cabinet secret');
+  for (const c of WD.ITEMS.filter(it => it.rule.goal)) assert.ok(LL.GOALS.find(x => x.id === c.rule.goal), c.id + ' reads a real goal');
+});
+test('wardrobe: old saves keep working, with defaults and credit for what they prove', () => {
+  const a = boot(null); assert.deepStrictEqual([a.starsTotal, a.rains, a.lightsTotal, a.winsBy, a.wear, a.goalsEver], [0, 0, 0, [0, 0, 0], {}, {}]); assert.deepStrictEqual(WD.open(a), [], 'a new player owns nothing yet');
+  const old = { sens: 1.2, look: 'ink', wins: 2, losses: 5, bestStars: 3, unl: { snuff: 1, plates: 1 }, petUnlocked: true }; // a 0.22 save: no wardrobe fields at all
+  const b = boot(old); assert.strictEqual(b.rains, 1, 'a best star count means a First Rain was finished'); assert.strictEqual(b.starsTotal, 3);
+  const ob = WD.open(b); for (const id of ['halo', 'powder', 'lantern', 'fireflies']) assert.ok(ob.includes(id), 'credited ' + id); assert.ok(!ob.includes('petals') && !ob.includes('motes'), 'and nothing it cannot prove');
+  assert.deepStrictEqual(b.wear, {}, 'nothing is put on at load'); assert.strictEqual(WD.worn(b, 'ring'), null);
+  const c = boot({ starsTotal: '7', rains: -2, goalsEver: null, winsBy: 'x', wear: { ring: 'motes', trail: 'nope', lamp: '' }, wardSeen: [1], unl: 'x' });
+  assert.deepStrictEqual([c.starsTotal, c.rains, c.goalsEver, c.winsBy, c.wear, c.wardSeen, c.unl], [7, 0, {}, [0, 0, 0], { lamp: '' }, {}, {}], 'broken fields repaired; a wrong slot is dropped');
+  const d = boot(JSON.parse(JSON.stringify(b))); assert.deepStrictEqual(WD.open(d), ob, 'the same after a save and a load'); assert.deepStrictEqual(boot(JSON.parse(JSON.stringify(d))), d, 'repair is idempotent');
+});
+test('wardrobe: rules are pure; locked things cannot be worn; the hidden Cabinet switch opens everything', () => {
+  const cfg = boot({ bestStars: 2, unl: { snuff: 1 } }), before = JSON.stringify(cfg);
+  for (const it of WD.ITEMS) { WD.has(cfg, it); WD.progress(cfg, it); WD.how(it); } WD.open(cfg); WD.next(cfg, 3); assert.strictEqual(JSON.stringify(cfg), before, 'reading a rule changes nothing');
+  assert.strictEqual(WD.equip(cfg, 'gilt'), false, 'locked'); assert.strictEqual(cfg.wear.ghost, undefined);
+  assert.ok(WD.equip(cfg, 'lantern')); assert.strictEqual(WD.worn(cfg, 'lamp').id, 'lantern'); assert.ok(WD.equip(cfg, '', 'lamp')); assert.strictEqual(WD.worn(cfg, 'lamp'), null); assert.strictEqual(cfg.wear.lamp, '', 'taken off on purpose');
+  cfg.all = true; assert.strictEqual(WD.open(cfg).length, WD.ITEMS.length, 'everything open'); assert.ok(WD.equip(cfg, 'gilt')); assert.strictEqual(WD.worn(cfg, 'ghost').id, 'gilt');
+  cfg.all = false; assert.strictEqual(WD.worn(cfg, 'ghost'), null, 'switched off again, what was not earned is not worn');
+  delete cfg.wear.ghost; const k = WD.known(cfg); assert.strictEqual(WD.count(cfg, { k: 'goal', id: 'echo' }), true); assert.strictEqual(WD.count(cfg, { k: 'goal', id: 'echo' }), false, 'a goal counts once');
+  const got = WD.settle(cfg, k, []); assert.deepStrictEqual(got.map(x => x.id), ['moon']); assert.strictEqual(cfg.wear.ghost, 'moon', 'the first in a never-chosen slot is put on');
+  cfg.goalsEver.orbs = 1; cfg.wear.trail = ''; WD.settle(cfg, k, []); assert.strictEqual(cfg.wear.trail, '', 'a slot taken off on purpose stays off');
+});
+test('wardrobe: the first thing opens during the first First Rain, the next when it ends', () => {
+  // the real sim (bots at the player's hands); every event is counted as main.js counts a person's
+  const W = world({ mode: 'short' }), cfg = boot(null), known = WD.known(cfg), got = []; let firstAt = -1;
+  const ev = run(W, 400, keepAlive); assert.ok(W.over, 'the rain ended');
+  for (const e of ev) { WD.count(cfg, e, W); WD.settle(cfg, known, got); if (got.length && firstAt < 0) firstAt = e.at; }
+  assert.ok(firstAt > 0 && firstAt < 120, 'something opened mid-match, at ' + firstAt.toFixed(0) + ' s: ' + got.map(x => x.id).join(', ')); assert.strictEqual(got[0].id, 'motes');
+  assert.strictEqual(cfg.rains, 1); assert.ok(cfg.starsTotal >= 0 && got.some(x => x.id === 'halo'), 'finishing it opens the halo');
+  assert.strictEqual(WD.worn(cfg, 'trail').id, 'motes', 'and they are worn at once'); assert.strictEqual(WD.worn(cfg, 'ring').id, 'halo');
+});
+test('wardrobe: the ladder gives something every match or two for the first ten, and says what is next', () => {
+  // counted thresholds rise along the ladder, kind by kind
+  for (const kind of ['rains', 'stars', 'lights']) { const t = WD.ITEMS.filter(it => it.rule[kind]).map(it => it.rule[kind]); assert.deepStrictEqual(t, t.slice().sort((a, b) => a - b), kind + ' in order: ' + t); }
+  const profiles = {
+    'one star a match, no secrets': Array.from({ length: 10 }, (_, i) => ({ n: 1, goals: i === 0 ? ['orbs', 'thread', 'view'] : [] })),
+    'a few stars, the usual goals': [{ n: 1, goals: ['orbs', 'thread', 'view'] }, { n: 1, goals: ['thief'], cab: ['snuff'] }, { n: 2, goals: ['guard'] }, { n: 1 }, { n: 2, goals: ['echo'] }, { n: 2 }, { n: 1, goals: ['mood'], cab: ['plates'] }, { n: 2 }, { n: 2 }, { n: 3, goals: ['ness'], cab: ['peachball'] }],
+    'no stars at all': Array.from({ length: 10 }, () => ({ n: 0 }))
+  };
+  for (const name in profiles) {
+    const cfg = boot(null), known = WD.known(cfg), per = [];
+    profiles[name].forEach((m, i) => { const nx = WD.next(cfg, 1)[0]; assert.ok(nx && !WD.has(cfg, nx) && WD.ITEMS.every(it => it.rank >= nx.rank || WD.has(cfg, it)), 'next is the first locked thing on the ladder');
+      const r = playOne(cfg, known, m); per.push(r.got.length); if (i === 0 && name !== 'no stars at all') assert.ok(r.mid.length >= 1, name + ': the first match opens something before it ends'); });
+    assert.ok(per[0] >= 1, name + ': something in the first match');
+    for (let i = 0; i + 1 < per.length; i++) assert.ok(per[i] + per[i + 1] >= 1, name + ': nothing new in matches ' + (i + 1) + ' and ' + (i + 2) + ' (' + per.join(' ') + ')');
+    assert.ok(WD.open(cfg).length >= 5, name + ': ' + WD.open(cfg).length + ' things after ten matches (' + per.join(' ') + ')');
+  }
+  const win = boot(null); WD.count(win, { k: 'over', winner: 0 }, { diff: 2 }); assert.deepStrictEqual(win.winsBy, [0, 0, 1], 'a livelock won on Cruel'); assert.ok(WD.has(win, 'gilt'));
+  WD.count(win, { k: 'over', winner: 0 }, { diff: 0, lean: true }); assert.deepStrictEqual(win.winsBy, [0, 0, 1], 'leaning back wins nothing, as with the record');
+  const ef = boot(null); for (let i = 0; i < 5; i++) WD.count(ef, { k: 'relit', recovered: true }); WD.count(ef, { k: 'relit' }); assert.strictEqual(ef.lightsTotal, 5); assert.ok(WD.has(ef, 'splat'));
+});
 test('the model never reads the look: sim and core have no presentation references', () => {
   for (const f of ['core.js', 'sim.js']) { const src = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8').replace(/typeof window !== 'undefined' \? window : globalThis/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/.*$/gm, '$1'); // comments may talk about the rule; code may not break it
     for (const bad of [/\bLL\.gfx\b/, /\bLL\.ui\b/, /\bdocument\b/, /\bwindow\b/, /\blook\b/i, /\bLK\b/, /localStorage/]) assert.ok(!bad.test(src), f + ' mentions ' + bad); }
