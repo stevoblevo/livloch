@@ -20,7 +20,7 @@ The owner: "We're doing everything public. Make this fully collaborative on GitH
 | A person finishes a match | Every release since 0.1 | **Corrected 18 November:** the owner has played, repeatedly, and said it is "not enticing enough to complete a whole match yet". Earlier notes in this repository saying nobody had played were wrong. No full match has been finished. 0.16 adds goals as the first answer |
 | Tidy the catalogue of `stevoblevo` repositories | First message, 15 November | Never scoped, never started. Needs the owner to say which repositories and what "optimising" means |
 | Real-device frame rate | Raised at 0.6 | The owner saw no lag or dropped frames. Not measured yet; 0.16 adds a report in the pause screen with a copy button. Reports wanted: #25 |
-| How anything sounds | Raised at 0.6 | 0.21 replaced the drone with a recorded score (`docs/MUSIC.md`). Levels were measured; nobody has listened in the game. Reports wanted: #26 |
+| How anything sounds | Raised at 0.6 | 0.21 replaced the drone with a recorded score (`docs/MUSIC.md`). Levels were measured; the owner plays with sound on, other ears wanted. Reports wanted: #26 |
 
 ## Open decisions for the owner
 - **Anna's look.** The sheet in the game (crown, goggles, braid, green coat) is not the Save Anna art (loose curls, mint sweater). Kept for now.

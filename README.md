@@ -59,7 +59,7 @@ Keyboard and mouse, touch, or a controller. Start with **First rain**: six minut
 ## Honest state of things
 
 - **No person has finished a full match yet.** The owner has played several and said a match was "not enticing enough to complete a whole match yet". Goals (0.16) and First Rain (0.17) are the answer so far. [Feel reports](https://github.com/stevoblevo/livloch/issues/new?template=feel.yml) are the most valuable thing anyone can send.
-- **Sound and music** were levelled by measurement; nobody has listened to the 0.21 score in the game yet ([`docs/MUSIC.md`](docs/MUSIC.md)).
+- **Sound and music** were levelled by measurement; the owner plays with it on; ears from anyone else are wanted ([`docs/MUSIC.md`](docs/MUSIC.md)).
 - **Frame rate on real devices** is unmeasured. Every frame in [`docs/evidence/`](docs/evidence/) was drawn by a software renderer. The pause screen has a frame-rate report with a copy button.
 - **Balance** is tuned against bots only, and bots never die and never change the view.
 - **Designed, not built:** thread tuning, the Hush folding back, the loop (painting with time), a second valley. See [`docs/ROADMAP.md`](docs/ROADMAP.md).
