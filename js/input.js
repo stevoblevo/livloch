@@ -26,7 +26,8 @@ I.init = function (cv, root) {
   canvas = cv; app = root;
   const KEYMAP = { Space: 'jump', ShiftLeft: 'dash', ShiftRight: 'dash', KeyQ: 'ab0', KeyE: 'ab1', KeyF: 'ab2', Digit1: 'ab0', Digit2: 'ab1', Digit3: 'ab2', KeyR: 'reload', KeyT: 'zip', KeyB: 'shop', KeyI: 'ink', KeyV: 'view', KeyC: 'echo', BracketRight: 'view', KeyP: 'pause', Escape: 'esc', Tab: 'shop' };
   window.addEventListener('keydown', function (ev) {
-    if (ev.target && (ev.target.tagName === 'INPUT')) return;
+    // Menus include native verdict radios and editable debrief notes. Their keys belong to the control.
+    if (ev.target && (/^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName) || ev.target.isContentEditable)) return;
     setDevice('kbm');
     if (I.play) { if (ev.code === 'Tab' || ev.code === 'Space' || ev.code.indexOf('Arrow') === 0) ev.preventDefault(); }
     if (ev.repeat) return;
