@@ -34,7 +34,7 @@ The icon sprite is bundled locally. Its provenance and license are recorded in [
 
 | File | Responsibility |
 | --- | --- |
-| [js/debrief-data.js](../js/debrief-data.js) | Five domains, all 24 stable IDs, corrected narration, mode-aware rules and diagram descriptions |
+| [js/debrief-data.js](../js/debrief-data.js) | Five domains, all 26 stable IDs (24 in 0.22; the Ness's chomp and the flood came in 0.26), corrected narration, mode-aware rules and diagram descriptions |
 | [js/debrief.js](../js/debrief.js) | DOM rendering, navigation, feedback controls, notes, progress, accessible descriptions and text export |
 | [css/debrief.css](../css/debrief.css) | Card layout, diagram arrangements, narrow-screen behavior, focus styles and reduced-motion treatment |
 | [art/ui/debrief-symbols.svg](../art/ui/debrief-symbols.svg) | Shared local SVG symbols |

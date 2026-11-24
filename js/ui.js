@@ -228,6 +228,7 @@ function sysOf(e) {
     case 'fruit': return C.FRUIT_INFO[e.kind].big ? 'bigfruit' : 'fruit'; case 'relit': return e.recovered ? 'relit' : null;
     case 'dream': return e.sys; case 'echo': return 'echo';
     case 'lastbreath': case 'nessup': case 'nessdown': case 'redwarn': case 'moodmiss': case 'moodsolved': case 'red': case 'fold': case 'fishing': case 'fray': case 'gutter': case 'structdown': return e.k;
+    case 'nesschomp': return e.hit && e.u ? 'nesschomp' : null; case 'flood': return 'flood'; // 0.26 ness
   }
   return null;
 }
@@ -308,6 +309,12 @@ UI.fx = function (e) {
     case 'death': if (e.kind === 'trooper' && e.by && e.by === W.player) { const hm = $('hitm'); hm.className = ''; void hm.offsetWidth; hm.className = 'pop'; } // 0.23: your trooper kills tick the crosshair
       if (e.kind === 'stray' && Math.hypot(e.x - C.CREASE_X[0], e.z) < 14 && !W.creaseHint) { W.creaseHint = true; feed('The ground under it is creased'); } break;
     case 'nessup': UI.banner('Something large is in the loch.', 'Kill the Ness for the Greatness: ' + C.GREAT_T + ' seconds of harder hits for your whole side', 6); feed('The <b>Ness</b> has surfaced'); break;
+    /* 0.26 ness: the chomp and the flood, said once each in the game's own voice */
+    case 'nesstell': if (e.p && !W.chompHint) { W.chompHint = true; UI.banner('The Ness has seen you.', 'Jump over the bite, dash off the ring, or take a thread', 3); } break;
+    case 'nesschomp': if (e.p && e.held) { feed('The <b>Ness</b> has you. Mash jump'); LL.input.rumble(1, 300); } else if (e.u) feed('The <b>Ness</b> took ' + hname(e.u)); else if (!e.hit && Math.hypot(e.tx - pl.x, e.tz - pl.z) < 6) feed('It missed. Its head is down'); break;
+    case 'floodwarn': UI.banner('The loch is rising.', 'The threads stay dry. The Ness will not', 4.5); feed('The <b>loch</b> is rising'); break;
+    case 'flood': feed('The valley is under water'); break;
+    case 'floodend': if (!e.dry) feed('The water has gone back'); break;
     case 'nessdown':
       if (e.team === pl.team) UI.banner('Your side has the Greatness.', '+350 souls each · guns, abilities and troopers hit harder for ' + C.GREAT_T + ' seconds', 5);
       else if (e.team >= 0) UI.banner('Hush has the Greatness.', 'Hold your structures for ' + C.GREAT_T + ' seconds', 5);
@@ -384,7 +391,7 @@ function minimap(view) {
   LL.lanes.forEach(function (L) { g.beginPath(); L.pts.forEach((p, i) => i ? g.lineTo(X(p[0]), Y(p[1])) : g.moveTo(X(p[0]), Y(p[1]))); g.stroke(); });
   g.setLineDash([5, 4]); g.lineWidth = 1.5; g.strokeStyle = LL.gfx.look.ui.line; C.CREASE_X.forEach(function (cx, i) { const c = W.creases[i]; g.strokeStyle = c.t > 0 ? '#fff0a0' : LL.gfx.look.ui.line; g.beginPath(); g.moveTo(X(cx), Y(-13)); g.lineTo(X(cx), Y(13)); g.stroke(); }); g.setLineDash([]);
   g.fillStyle = 'rgba(60,150,170,0.55)'; g.beginPath(); g.arc(X(C.LOCH.x), Y(C.LOCH.z), C.LOCH.r * sc, 0, 6.3); g.fill();
-  if (W.ness.alive) { g.fillStyle = '#fff0a0'; g.beginPath(); g.arc(X(C.LOCH.x), Y(C.LOCH.z), 5.5, 0, 6.3); g.fill(); }
+  if (W.ness.alive) { g.fillStyle = '#fff0a0'; g.beginPath(); g.arc(X(W.ness.x), Y(W.ness.z), 5.5, 0, 6.3); g.fill(); } // 0.26 ness: where it is, which in a flood is not the loch
   W.fruit.forEach(function (f) { if (!f.ripe || (f.lens && f.lens !== W.lens)) return; g.fillStyle = C.FRUIT_INFO[f.k].css; g.beginPath(); g.arc(X(f.x), Y(f.z), f.lens ? 6 : 3, 0, 6.3); g.fill(); });
   W.strays.forEach(function (s) { if (!s.alive) return; g.fillStyle = 'rgba(201,160,255,0.8)'; g.beginPath(); g.arc(X(s.x), Y(s.z), 3, 0, 6.3); g.fill(); });
   W.troopers.forEach(function (t) { if (!t.alive) return; g.fillStyle = C.TEAM_CSS[t.team]; const z = t.big ? 4.5 : 1.5; g.fillRect(X(t.x) - z, Y(t.z) - z, z * 2, z * 2); });

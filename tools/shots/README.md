@@ -39,3 +39,7 @@ Example: `LL_ROOT=$PWD node tools/shots/dream.js`
 | `rook-audio.js` | 0.25 Rook Vale's sounds rendered one at a time offline (`LL.audio.offline`): peak, RMS, length, with Dora's shot and the shared toll for scale. Measures; does not listen. `PORT` (8874) |
 | `rook-sheet.py` | A captioned contact sheet: `python3 tools/shots/rook-sheet.py out.jpg COLS "frame.png=caption" ... [--crop x0,y0,x1,y1] [--scale s]` |
 
+
+## 0.26: the Ness and the flood
+
+`ness.js` drives the real sim from the play camera. `SCENE=surface` (it comes up, idles, the camera walks round it), `chomp` (the tell, the bite, held, thrown), `dodge` (a jump over the bite; its head lies open), `flood` (the warning, the water, the Ness among the threads, a ride on a thread, the drain), `still` (one staged frame; `CAM=dx,dz,yaw,pitch` from the Ness). Also `LOOK`, `LOW=1`, `REDUCED=1`, `PAPER=1`, `EVERY`, `N`, `PORT` (8880 to 8889). Writes frames and `log.json` (per frame: phase, the Ness, the flood, events).

@@ -32,9 +32,9 @@ const duration = seconds => {
 };
 const ids = ['wave', 'soul', 'zip', 'thief', 'snuff', 'lastbreath', 'nessup', 'nessdown',
   'redwarn', 'moodmiss', 'moodsolved', 'red', 'rainwake', 'memory', 'fruit', 'bigfruit',
-  'fold', 'echo', 'mercy', 'fishing', 'fray', 'gutter', 'relit', 'structdown'];
+  'fold', 'echo', 'mercy', 'fishing', 'fray', 'gutter', 'relit', 'structdown', 'nesschomp', 'flood'];
 
-test('all 24 discovery ids still have usable cards, accessible readings and real symbols', () => {
+test('all 26 discovery ids still have usable cards, accessible readings and real symbols', () => {
   assert.deepStrictEqual(Object.keys(data.systems).sort(), ids.slice().sort());
   const groups = new Set(data.groups.map(group => group.id));
   assert.strictEqual(groups.size, data.groups.length, 'duplicate navigation group');
