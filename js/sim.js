@@ -307,6 +307,7 @@ function mkHero(defIdx, team, slot, isPlayer) {
       jit: team === 1 ? [1.5, 0.9, 0.4][diff] : 0.9, track: team === 1 ? [5, 8, 12][diff] : 8, buildI: 0, standS: 10 }
   });
   h.liftT = 0; h.liftMax = 0; h.glide = false; h.liftCaught = false; h.liftA = null; // 0.25 rook: Lantern Lift state (liftCast, liftStep)
+  guardReset(h); // 0.26 guard: guards, thread boosts, the hat, the roll
   recompute(h); h.hp = h.maxHp;
   W.heroes.push(h); if (isPlayer) W.player = h;
   return h;
@@ -439,6 +440,7 @@ function damage(t, amt, src, kind, crit) {
   }
   if (t.kind === 'hero') {
     amt *= (1 - t.st.resist);
+    amt = guardHit(t, amt, src, kind); if (amt <= 0) return 0; // 0.26 guard: the aegis blocks, the bubble soaks, the fray and a roll let it through
     if (t.shield > 0) { const a = Math.min(t.shield, amt); t.shield -= a; amt -= a; }
     t.lastHurt = W.t;
     if (hero) { t.hurtBy[hero.id] = W.t; hero.lastDmgHeroT = W.t; }
@@ -493,6 +495,7 @@ function kill(t, src, hero) {
     }
   } else if (t.kind === 'hero') {
     t.deaths++; t.zip = null; t.shield = 0; t.dotT = 0; t.slowT = 0;
+    guardReset(t); // 0.26 guard: no guard, boosts, hat charge or flying hat outlive the life
     t.respT = Math.min(45, 7 + 1.6 * t.level + min * 0.8);
     if (kt === 0 || kt === 1) W.kills[kt]++;
     let assists = 0;
@@ -728,6 +731,7 @@ function stepProjs(dt) {
       if (Math.abs(u.x - ax) > reach + u.r || Math.abs(u.z - az) > reach + u.r) continue;
       if (p.hit && p.hit.indexOf(u.id) >= 0) continue;
       const t = segCyl(ax, ay, az, bx, by, bz, u.x, u.z, u.r + p.r, u.y - 0.15, u.y + u.h + 0.25);
+      if (t >= 0 && t < bt && u.kind === 'hero' && guardPass(u, p)) continue; // 0.26 guard: through the fray, past a roll
       if (t >= 0 && t < bt) { bt = t; hu = u; world = false; }
     }
     if (p.gun && p.owner.kind === 'hero') for (let j = 0; j < orbs.length; j++) {
@@ -739,6 +743,7 @@ function stepProjs(dt) {
       p.x = ax + (bx - ax) * bt; p.y = ay + (by - ay) * bt; p.z = az + (bz - az) * bt;
       if (ho) { claimOrb(ho, p.owner); ps.splice(i, 1); continue; }
       if (hu) {
+        if (guardStop(hu, p)) { ps.splice(i, 1); continue; } // 0.26 guard: dies on the shield, unburst
         if (p.kind === 'bullet') {
           const crit = (hu.kind === 'hero' || hu.kind === 'trooper' || hu.kind === 'stray' || hu.kind === 'thief') && p.y > hu.y + hu.h * 0.78;
           damage(hu, p.dmg * (crit ? 1.5 : 1), p.owner, 'gun', crit);
@@ -816,7 +821,7 @@ function heroJump(h) {
   if (h.onGround) { h.vy = JUMP_VY; h.onGround = false; h.jumps = 1; h.hovered = false; h.holdJ = !!h.ctl.jumpHeld; fx({ k: 'jump', u: h }); return; }
   if (h.hoverT > 0) return;
   const n = Math.max(1, h.jumps || 0), cost = A.cost == null ? 1 : A.cost; // in the air with no jump used (knocked up, off a thread) counts as one used
-  if (n < (A.jumps || 1)) { if (h.stamina >= cost) { h.vy = JUMP2_VY; h.jumps = n + 1; h.stamina -= cost; fx({ k: 'jump', u: h, dbl: true, n: h.jumps }); } return; }
+  if (n < (A.jumps || 1)) { if (h.stamina >= cost) { h.vy = JUMP2_VY; h.jumps = n + 1; h.stamina -= cost; fx({ k: 'jump', u: h, dbl: true, n: h.jumps }); threadBoost(h, 'jump'); guardStart(h); } return; } // 0.26 guard: a thread under it boosts it; it opens the hero's guard
   if (A.hover) hoverStart(h);
 }
 function hoverStart(h) {
@@ -824,9 +829,11 @@ function hoverStart(h) {
   if (h.hovered || h.stamina < cost) return false;
   h.stamina -= cost; h.hovered = true; h.holdJ = false; h.hoverT = H.t; h.hoverAge = 0;
   h.vy = Math.max(h.vy * 0.3, H.lift == null ? 1.2 : H.lift); // the first beat: a rise kept a little, a fall caught
-  fx({ k: 'hover', u: h }); return true;
+  fx({ k: 'hover', u: h });
+  h.boonHov = threadBoost(h, 'hover'); // 0.26 guard: begun along a thread, the thread holds her up; ended on it, a boon
+  return true;
 }
-function hoverEnd(h, why) { if (!(h.hoverT > 0)) return; h.hoverT = 0; fx({ k: 'hoverend', u: h, why: why }); }
+function hoverEnd(h, why) { if (!(h.hoverT > 0)) return; h.hoverT = 0; fx({ k: 'hoverend', u: h, why: why }); boonCheck(h, why); } // 0.26 guard: boonCheck
 /* Gravity, or the hover's hang. Runs where gravity always ran, before the move. */
 function heroAir(h, dt) {
   const c = h.ctl, A = h.def.air, H = A && A.hover;
@@ -834,18 +841,178 @@ function heroAir(h, dt) {
   if (h.holdJ && !c.jumpHeld) h.holdJ = false;
   if (H && h.holdJ && !h.onGround && h.vy <= 0) { h.holdJ = false; hoverStart(h); } // held through the top of the jump
   if (h.hoverT > 0) {
-    h.hoverAge += dt; h.vy += (-H.sink - h.vy) * (1 - Math.exp(-(H.grip || 5) * dt));
-    if ((h.hoverT -= dt) <= 0) { h.hoverT = 0; fx({ k: 'hoverend', u: h, why: 'spent' }); }
+    h.hoverAge += dt; h.vy += (-H.sink * (h.boonHov ? C.TBOOST.sinkK : 1) - h.vy) * (1 - Math.exp(-(H.grip || 5) * dt)); // 0.26 guard: a boosted hover sinks slower
+    if ((h.hoverT -= dt) <= 0) { h.hoverT = 0; fx({ k: 'hoverend', u: h, why: 'spent' }); boonCheck(h, 'spent'); } // 0.26 guard: boonCheck
   } else if (!h.onGround) h.vy -= C.GRAV * dt;
 }
 function heroLand(h) {
   if (!h.onGround) h.vyLand = -h.vy;
   h.y = 0; h.vy = 0; h.onGround = true; h.jumps = 0; h.hovered = false; h.holdJ = false; hoverEnd(h, 'land');
+  h.tbT = 0; // 0.26 guard: a thread boost ends on landing
+}
+/* ---------- 0.26 guard ----------
+   The owner, after 0.25: "double jumps should provide some sort of blocking function". A second jump opens a short guard
+   (air.guard on the hero's row in core.js) that costs nothing beyond the second jump's stamina:
+     aegis   Anna: Athena's shield, raised toward her aim. For t seconds a hit whose source lies within `arc` degrees of
+             her aim is blocked (a projectile from the front dies on it); a melee attacker within MELEE m is shoved back
+             `knock` m (half that for a hollow) and slowed. Hits from behind still land.
+     bubble  Dora: an astral bubble that soaks up to hp damage for t seconds, then pops (early, when it is full).
+     fray    Skye: she comes apart into thread for t seconds; hits and projectiles pass through her.
+   Why these are not invulnerability: each is one second or less and needs a second jump, so it costs one stamina, which
+   comes back at one per 2.6 s (three banked, shared with the dash). Spammed for a whole fight the ceilings are about 35%
+   of the time for the aegis (and only from the front), 46% for the bubble but at most 200 damage per bubble (about 77 per
+   second), and 23% for the fray. Bleeding and the enemy fountain ('dot') are never guarded.
+   A barrel roll (Rook Vale, see rollStart) is a guard of its own kind: for its `roll` seconds, shots from farther than
+   `rollNear` m miss him.
+   THREAD BOOSTS (C.TBOOST): a second jump, or a hover begun, within r m of a thread while moving along it gets vy m/s more
+   lift and is thrown along the thread at sp times the run speed (never slower than it was going); for t seconds, or until
+   it lands, the air steers toward sp times the run speed, so held along the thread the speed carries. Counted on the
+   hero for the life (tbN). Dora's straw hat charges with them (air.hat): after `need` boosts it can be thrown, a boomerang that cuts
+   through enemies out and back. Myra Belle's hover, boosted, holds her up (sinkK of the sink), and if it ends while she is
+   still over the thread it is a boon (air.boon): a mending pulse for her and her side near her.
+   Hero state: guardT (seconds left), guardK (kind), guardMax, guardHp (the bubble's room left), shotAtT (the last time a
+   hit was aimed at the hero, landed or not, for bots), tbN, tbT, boonHov, hatN (charges), hat (the flying hat, or null),
+   rollT, rollMax, rollDir.
+   Events: guard (kind), guarded (how: block | absorb | pass | roll, x y z where the hit met it, amt, melee), guardend
+   (why: time | full), tboost (lane, tx tz: the thread under the hero, dx dz: along it, why: jump | hover, n), hatready,
+   hatthrow, hatcut, hatturn, hatback, boon (who: the heroes it mended, amt, r), roll (dir: 1 to his left, -1 right). */
+const GUARD_MELEE = 4.5;
+function guardReset(h) {
+  h.guardT = 0; h.guardK = ''; h.guardMax = 0; h.guardHp = 0; h.shotAtT = -9; h.tbN = 0; h.tbT = 0; h.boonHov = false;
+  h.hatN = 0; h.hat = null; h.rollT = 0; h.rollMax = 0; h.rollDir = h.rollDir || 1; h.shotAtX = h.x; h.shotAtZ = h.z; h.ctl.hat = false;
+}
+function guardStart(h) {
+  const G = h.def.air && h.def.air.guard; if (!G) return;
+  if (h.guardK) guardEnd(h, 'time');
+  h.guardK = G.kind; h.guardT = G.t; h.guardMax = G.t; h.guardHp = G.kind === 'bubble' ? G.hp : 0;
+  fx({ k: 'guard', u: h, kind: G.kind, t: G.t, x: h.x, y: h.y, z: h.z });
+}
+function guardEnd(h, why) {
+  if (!h.guardK) return; const k = h.guardK; h.guardK = ''; h.guardT = 0; h.guardHp = 0;
+  fx({ k: 'guardend', u: h, kind: k, why: why, x: h.x, y: h.y, z: h.z });
+}
+/* The cosmetic tracer a shooter spawned just before calling damage() (trooperStep, structStep, strayStep, knotStep all do):
+   a blocked or soaked shot stops at the guard, a passed or rolled one flies on through. Model state, so it is set here. */
+function guardTracer(t, how, rG) {
+  for (let i = W.projs.length - 1, n = 0; i >= 0 && n < 4; i--, n++) {
+    const p = W.projs[i]; if (!p.cos || p.t > 0) continue;
+    const sp = hyp(p.vx, p.vy, p.vz) || 1, ex = p.x + p.vx * p.life, ez = p.z + p.vz * p.life;
+    if (hyp(ex - t.x, ez - t.z) > t.r + 1.2) continue;
+    if (how === 'pass' || how === 'roll') p.life += 9 / sp; else p.life = Math.max(0, p.life - rG / sp);
+    return;
+  }
+}
+/* the guard's answer to one hit on a hero, after resistance: the damage that gets through */
+function guardHit(t, amt, src, kind) {
+  if (kind === 'dot') return amt;
+  t.shotAtT = W.t; if (src) { t.shotAtX = src.x; t.shotAtZ = src.z; }
+  const k = t.guardT > 0 ? t.guardK : (t.rollT > 0 ? 'roll' : ''); if (!k) return amt;
+  const dx = src ? src.x - t.x : 0, dz = src ? src.z - t.z : 0, d = hyp(dx, dz), ux = d > 0.01 ? dx / d : Math.sin(t.yaw), uz = d > 0.01 ? dz / d : Math.cos(t.yaw);
+  const at = function (r, y) { return { x: t.x + ux * r, y: t.y + y, z: t.z + uz * r }; };
+  if (k === 'fray') { const q = at(0.2, 1.1); guardTracer(t, 'pass', 0); fx({ k: 'guarded', u: t, how: 'pass', x: q.x, y: q.y, z: q.z, amt: amt, kind: kind }); return 0; }
+  if (k === 'roll') {
+    const L = t.liftA || {}; if (!src || d <= (L.rollNear || 4)) return amt;
+    const q = at(0.5, 1.1); guardTracer(t, 'roll', 0); fx({ k: 'guarded', u: t, how: 'roll', x: q.x, y: q.y, z: q.z, amt: amt, kind: kind }); return 0;
+  }
+  if (k === 'aegis') {
+    const G = t.def.air.guard; if (!src || d < 0.01) return amt;
+    if (ux * Math.sin(t.yaw) + uz * Math.cos(t.yaw) < Math.cos(G.arc * Math.PI / 180)) return amt;
+    const melee = d - (src.r || 0) < GUARD_MELEE && !src.struct && src.kind !== 'ness' && src.kind !== 'hero';
+    if (melee) { const kn = G.knock * (src.big ? 0.5 : 1); src.x += ux * kn; src.z += uz * kn; applySlow(src, 0.4, 0.8); }
+    const q = at(0.7, 1.25); guardTracer(t, 'block', 0.75); fx({ k: 'guarded', u: t, how: 'block', x: q.x, y: q.y, z: q.z, amt: amt, kind: kind, melee: melee }); return 0;
+  }
+  if (k === 'bubble') {
+    const a = Math.min(t.guardHp, amt); t.guardHp -= a;
+    const q = at(1.15, 1.05); guardTracer(t, 'absorb', 1.15); fx({ k: 'guarded', u: t, how: 'absorb', x: q.x, y: q.y, z: q.z, amt: a, left: t.guardHp, kind: kind });
+    if (t.guardHp <= 0.01) guardEnd(t, 'full');
+    return amt - a;
+  }
+  return amt;
+}
+/* A projectile that reaches a guarded hero. guardPass: it goes through the fray, and past a roll if it came from afar (said
+   once per projectile). guardStop: it dies on the aegis, unburst, if it comes from the front. The bubble is left to damage(). */
+function guardPass(u, p) {
+  if (u.kind !== 'hero') return false;
+  const pass = (u.guardT > 0 && u.guardK === 'fray') || (u.rollT > 0 && p.owner && hyp(p.owner.x - u.x, p.owner.z - u.z) > ((u.liftA && u.liftA.rollNear) || 4));
+  if (pass && !p.passed) { p.passed = true; u.shotAtT = W.t; fx({ k: 'guarded', u: u, how: u.guardT > 0 ? 'pass' : 'roll', x: u.x, y: u.y + 1.1, z: u.z, amt: p.dmg || 0, kind: 'proj' }); }
+  return pass;
+}
+function guardStop(u, p) {
+  if (u.kind !== 'hero' || !(u.guardT > 0) || u.guardK !== 'aegis') return false;
+  const n = hyp(p.vx, p.vz) || 1, G = u.def.air.guard;
+  if (-(p.vx * Math.sin(u.yaw) + p.vz * Math.cos(u.yaw)) / n < Math.cos(G.arc * Math.PI / 180)) return false;
+  u.shotAtT = W.t; fx({ k: 'guarded', u: u, how: 'block', x: p.x, y: p.y, z: p.z, amt: p.dmg || 0, kind: 'proj', melee: false });
+  return true;
+}
+/* A thread boost: why is 'jump' (a second jump) or 'hover'. True if it took. */
+function threadBoost(h, why) {
+  const B = C.TBOOST, hs = hyp(h.vx, h.vz); if (h.zip || hs < B.minSp) return false;
+  const lane = LL.nearestLane(h.x, h.z); LL.laneNearest(lane, h.x, h.z, Q); if (Q.d > B.r) return false;
+  LL.lanePoint(lane, Q.s, P); const al = (h.vx * P.dx + h.vz * P.dz) / hs; if (Math.abs(al) < B.align) return false;
+  const sg = al > 0 ? 1 : -1, dx = P.dx * sg, dz = P.dz * sg, along = Math.abs(al) * hs, latX = h.vx - dx * along, latZ = h.vz - dz * along;
+  const sp = Math.max(along, h.def.speed * h.st.speed * B.sp); // never slower; off a thread ride (27 m/s) it adds only lift
+  h.vx = dx * sp + latX * 0.4; h.vz = dz * sp + latZ * 0.4; h.vy += B.vy; h.tbT = B.t; h.tbN = (h.tbN || 0) + 1;
+  fx({ k: 'tboost', u: h, lane: lane, why: why, n: h.tbN, x: h.x, y: h.y, z: h.z, tx: P.x, tz: P.z, dx: dx, dz: dz });
+  const Ht = h.def.air.hat;
+  if (Ht && !h.hat && h.hatN < Ht.need) { h.hatN++; if (h.hatN >= Ht.need) fx({ k: 'hatready', u: h }); }
+  return true;
+}
+/* Myra Belle's boon: a boosted hover that ends while she is still over the thread (or onto it) mends her side near her. */
+function boonCheck(h, why) {
+  const Bn = h.def.air && h.def.air.boon; if (!h.boonHov) return; h.boonHov = false; if (!Bn || !h.alive) return;
+  const lane = LL.nearestLane(h.x, h.z); LL.laneNearest(lane, h.x, h.z, Q);
+  if (why !== 'zip' && Q.d > C.TBOOST.r * 1.5) return;
+  const amt = Bn.heal * h.st.ap, who = heroesNear(h.team, h.x, h.z, Bn.r);
+  for (let i = 0; i < who.length; i++) heal(who[i], amt);
+  fx({ k: 'boon', u: h, who: who, amt: amt, r: Bn.r, x: h.x, y: h.y, z: h.z });
+}
+/* Dora's hat. Out along the aim, level at chest height, `out` m (or until it meets a tree or a rock), then home to her
+   head; each enemy it passes is cut once on the way out and once on the way back. Structures are not cut. */
+function hatThrow(h) {
+  const Ht = h.def.air && h.def.air.hat; if (!Ht || h.hat || h.hatN < Ht.need || !h.alive) return false;
+  const c = h.ctl; let dx = c.ax - h.x, dz = c.az - h.z, d = hyp(dx, dz); if (d < 0.5) { dx = Math.sin(h.yaw); dz = Math.cos(h.yaw); d = 1; }
+  dx /= d; dz /= d; h.hatN = 0;
+  h.hat = { x: h.x + dx * 0.5, y: h.y + 2.0, z: h.z + dz * 0.5, dx: dx, dz: dz, vx: dx * Ht.speed, vy: 0, vz: dz * Ht.speed, t: 0, d: 0, back: false, hitO: [], hitB: [], cuts: 0 };
+  fx({ k: 'hatthrow', u: h, x: h.hat.x, y: h.hat.y, z: h.hat.z, dx: dx, dz: dz });
+  return true;
+}
+function hatStep(h, dt) {
+  const H = h.hat, Ht = h.def.air.hat; H.t += dt;
+  if (!H.back) {
+    H.vy = ((h.y > 1 ? h.y + 1.1 : 1.3) - H.y) * 5; H.x += H.vx * dt; H.y += H.vy * dt; H.z += H.vz * dt; H.d += Ht.speed * dt;
+    let hit = Math.abs(H.x) > C.HALF_X - 1 || Math.abs(H.z) > C.HALF_Z - 1;
+    for (let i = 0; i < W.obstacles.length && !hit; i++) { const o = W.obstacles[i]; if (H.y < o.h && hyp(H.x - o.x, H.z - o.z) < o.r + 0.3) hit = true; }
+    if (H.d >= Ht.out || hit || H.t > 1.5) { H.back = true; fx({ k: 'hatturn', u: h, x: H.x, y: H.y, z: H.z, wall: hit }); }
+  } else {
+    const tx = h.x - H.x, ty = h.y + 2.0 - H.y, tz = h.z - H.z, d = hyp(tx, ty, tz);
+    if (d < 0.7 || H.t > 4) { h.hat = null; fx({ k: 'hatback', u: h, cuts: H.cuts }); return; }
+    const k = Math.min(1, dt * 9), sp = Ht.back; H.vx += (tx / d * sp - H.vx) * k; H.vy += (ty / d * sp - H.vy) * k; H.vz += (tz / d * sp - H.vz) * k;
+    H.x += H.vx * dt; H.y += H.vy * dt; H.z += H.vz * dt;
+  }
+  const us = W.units, list = H.back ? H.hitB : H.hitO, ap = h.st.ap * h.botMul * (W.great[h.team] > 0 ? 1.25 : 1) * (h.furyT > 0 ? 1.3 : 1);
+  for (let i = 0; i < us.length; i++) {
+    const u = us[i]; if (!u.alive || u.team === h.team || u.struct || list.indexOf(u.id) >= 0) continue;
+    if (Math.abs(u.x - H.x) > u.r + Ht.r || Math.abs(u.z - H.z) > u.r + Ht.r || hyp(u.x - H.x, u.z - H.z) > u.r + Ht.r || H.y < u.y - 0.3 || H.y > u.y + u.h + 0.4) continue;
+    list.push(u.id); H.cuts++; damage(u, Ht.dmg * ap, h, 'ab'); fx({ k: 'hatcut', u: h, x: H.x, y: H.y, z: H.z, tk: u.kind, back: H.back });
+  }
+}
+/* 0.26 guard: Rook's barrel roll. A dash while the lift or the glide lasts flips him sideways about his own length: the dash
+   goes to his left or right (the stick's side; with the stick ahead or none, the side away from the last roll), keeping the
+   way he was flying, and for a.roll seconds shots from farther than a.rollNear m miss (guardHit, guardProj). */
+function rollStart(h, mx, mz) {
+  const a = h.liftA; if (!a || !a.roll) return;
+  const fx0 = Math.sin(h.yaw), fz0 = Math.cos(h.yaw), lx = fz0, lz = -fx0, lat = mx * lx + mz * lz;
+  const dir = Math.abs(lat) > 0.25 ? (lat > 0 ? 1 : -1) : -(h.rollDir || -1), fwd = Math.max(0, h.vx * fx0 + h.vz * fz0);
+  h.rollDir = dir; h.rollT = a.roll; h.rollMax = a.roll;
+  h.dashX = lx * dir * 20 + fx0 * fwd; h.dashZ = lz * dir * 20 + fz0 * fwd;
+  fx({ k: 'roll', u: h, dir: dir, x: h.x, y: h.y, z: h.z });
 }
 function heroStep(h, dt) {
   const c = h.ctl, st = h.st, d = h.def;
   h.fireT -= dt; for (let i = 0; i < 3; i++) if (h.cds[i] > 0) h.cds[i] -= dt;
   if (h.shieldT > 0) { h.shieldT -= dt; if (h.shieldT <= 0) h.shield = 0; }
+  if (h.guardT > 0) { h.guardT -= dt; if (h.guardT <= 0) guardEnd(h, 'time'); } // 0.26 guard: the window closes
+  if (h.rollT > 0) h.rollT = Math.max(0, h.rollT - dt); if (h.tbT > 0) h.tbT = Math.max(0, h.tbT - dt); // 0.26 guard
   if (h.slowT > 0) h.slowT -= dt;
   if (h.zestT > 0) h.zestT -= dt; if (h.furyT > 0) h.furyT -= dt;
   if (h.hipsT > 0) { h.hipsT -= dt; heal(h, h.maxHp * 0.07 * dt); }
@@ -871,11 +1038,12 @@ function heroStep(h, dt) {
   } else {
     let mx = c.mx, mz = c.mz; const m = hyp(mx, mz); if (m > 1) { mx /= m; mz /= m; }
     if (h.dashT > 0) { h.dashT -= dt; h.vx = h.dashX; h.vz = h.dashZ; if (h.dashT <= 0) { h.vx *= 0.35; h.vz *= 0.35; } }
-    else { const f = 1 - Math.exp(-(h.onGround ? 14 : 3.5) * dt); h.vx += (mx * sp - h.vx) * f; h.vz += (mz * sp - h.vz) * f; }
+    else { const f = 1 - Math.exp(-(h.onGround ? 14 : 3.5) * dt), tb = h.tbT > 0 && !h.onGround ? C.TBOOST.sp : 1; h.vx += (mx * sp * tb - h.vx) * f; h.vz += (mz * sp * tb - h.vz) * f; } // 0.26 guard: while a thread boost lasts (tbT) the air steers toward sp times the speed
     if (c.jump) heroJump(h); // 0.25 air: a jump, a second jump or the hover, by the hero's `air`
     if (c.dash && h.dashT <= 0 && h.stamina >= 1) {
       let ddx = mx, ddz = mz; if (m < 0.2) { ddx = Math.sin(h.yaw); ddz = Math.cos(h.yaw); } else { ddx = mx / Math.min(1, m) ; ddz = mz / Math.min(1, m); const n = hyp(ddx, ddz); ddx /= n; ddz /= n; }
       h.dashX = ddx * 24; h.dashZ = ddz * 24; h.dashT = 0.2; h.stamina--; fx({ k: 'dash', u: h });
+      if (h.liftT > 0 || h.glide) rollStart(h, mx, mz); // 0.26 guard: aloft, a dash is a barrel roll
     }
     heroAir(h, dt); // 0.25 air: gravity, or the hover's hang
     h.x += h.vx * dt; h.z += h.vz * dt; h.y += h.vy * dt;
@@ -890,7 +1058,8 @@ function heroStep(h, dt) {
   if (c.fire && h.reloadT <= 0 && h.ammo > 0 && h.fireT <= 0) fireGun(h);
   for (let i = 0; i < 3; i++) if (c.ab[i] && h.cds[i] <= 0 && (i < 2 || h.level >= C.ULT_LEVEL)) cast(h, i);
   if (c.zip) tryZip(h);
-  c.jump = c.dash = c.zip = c.reload = false; c.ab[0] = c.ab[1] = c.ab[2] = false; c.zipDir = 0;
+  if (c.hat) hatThrow(h); if (h.hat) hatStep(h, dt); // 0.26 guard: Dora's hat
+  c.jump = c.dash = c.zip = c.reload = c.hat = false; c.ab[0] = c.ab[1] = c.ab[2] = false; c.zipDir = 0;
 }
 function respawn(h) {
   const sp = spawnPos(h.team, h.slot);
@@ -937,6 +1106,7 @@ function think(h) {
     if (eh && ehD < d.aiRange * 0.7 && losClear(h.x, h.z, eh.x, eh.z)) { a.target = eh; a.wantFire = true; }
     for (let i = 0; i < 2; i++) { const ab = d.ab[i]; if (h.cds[i] <= 0 && (ab.kind === 'dash' || ab.kind === 'blink') && eh && ehD < 18 && !h.zip) c.ab[i] = true; }
     if (eh && ehD < 14 && h.stamina >= 2 && W.rng() < 0.2 && !h.zip) c.dash = true;
+    botGuard(h); // 0.26 guard: a guard on the way out
     botAbilities(h, a.target, eh, ehD, hpF);
     return;
   }
@@ -988,6 +1158,7 @@ function think(h) {
   }
   if (!best && h.ammo < h.magSize * 0.4) c.reload = true;
   botJump(h, eh, ehD); // 0.25 air: jumps when hurt as before, now and then in a fight, and uses the hero's air move
+  botGuard(h); botThread(h); botHat(h, best); // 0.26 guard: guard under fire, boost along its own thread, throw the hat
   botAbilities(h, best, eh, ehD, hpF);
 }
 function botAbilities(h, tgt, eh, ehD, hpF) {
@@ -1077,6 +1248,37 @@ function botAir(h, dt) {
   const a = h.ai, c = h.ctl;
   if (a.holdT > 0) a.holdT -= dt; c.jumpHeld = a.holdT > 0;
   if (a.dblT > 0 && (a.dblT -= dt) <= 0 && !h.onGround && !h.zip) c.jump = true;
+}
+/* 0.26 guard: bots. Under fire (a hit aimed at it in the last 0.45 s, landed or not), a bot with a guard opens it: on the
+   ground it jumps and plans the second jump soon after the take-off (30% a think), in the air it jumps again at once (60%).
+   Anna only bothers when the shooter is in front of her; Rook, lifting or gliding, rolls (40%). Along its own thread,
+   running fast and far from where it wants to stand, a bot with a second jump or a hover jumps and boosts (5% a think;
+   Dora, while her hat is not charged, anywhere along the thread and 15%), and one that has just let go of a thread ride
+   jumps again over it (50%). Dora throws a charged hat at a target within its
+   reach (50% a think). */
+function botGuard(h) {
+  const A = h.def.air, G = A && A.guard, c = h.ctl, a = h.ai; if (h.zip || h.guardT > 0 || W.t - h.shotAtT > 0.45 || h.stamina < 1) return;
+  if ((h.liftT > 0 || h.glide) && h.liftA && h.liftA.roll) { if (!(h.rollT > 0) && W.rng() < 0.4) c.dash = true; return; }
+  if (!G) return;
+  if (G.kind === 'aegis') { const dx = h.shotAtX - h.x, dz = h.shotAtZ - h.z, d = hyp(dx, dz) || 1; if ((dx * Math.sin(h.yaw) + dz * Math.cos(h.yaw)) / d < 0.4) return; }
+  if (h.onGround) { if (!c.jump && W.rng() < 0.3) { c.jump = true; a.dblT = 0.1 + W.rng() * 0.1; a.holdT = 0; } }
+  else if (Math.max(1, h.jumps || 0) < (A.jumps || 1) && !(a.dblT > 0) && W.rng() < 0.6) c.jump = true;
+}
+function botThread(h) {
+  const A = h.def.air, a = h.ai, c = h.ctl; if (!A || !((A.jumps || 1) > 1 || A.hover) || a.mode === 'retreat' || h.stamina < 2 || c.jump) { if (a) a.wasZip = !!h.zip; return; }
+  const wasZip = a.wasZip; a.wasZip = !!h.zip; if (h.zip) return;
+  const hs = hyp(h.vx, h.vz); if (hs < 4.5) return;
+  LL.laneNearest(a.lane, h.x, h.z, Q); if (Q.d > C.TBOOST.r - 0.3) return;
+  LL.lanePoint(a.lane, Q.s, P); if (Math.abs(h.vx * P.dx + h.vz * P.dz) / hs < 0.85) return;
+  const plan = function () { if (A.hover) { a.holdT = 0.45 + A.hover.t * (0.7 + W.rng() * 0.3); a.dblT = 0; } else { a.dblT = 0.22 + W.rng() * 0.1; a.holdT = 0; } };
+  if (!h.onGround) { if (wasZip && Math.max(1, h.jumps || 0) < (A.jumps || 1) + (A.hover ? 1 : 0) && W.rng() < 0.5) { c.jump = true; if (A.hover) a.holdT = 0.45 + A.hover.t * 0.8; } return; }
+  const charging = A.hat && h.hatN < A.hat.need && !h.hat;
+  if (!charging && hyp(a.gx - h.x, a.gz - h.z) < 14) return;
+  if (W.rng() < (charging ? 0.15 : 0.05)) { c.jump = true; plan(); }
+}
+function botHat(h, tgt) {
+  const Ht = h.def.air && h.def.air.hat; if (!Ht || h.hat || h.hatN < Ht.need || !tgt || tgt.struct || h.zip) return;
+  if (hyp(tgt.x - h.x, tgt.z - h.z) < Ht.out - 1 && losClear(h.x, h.z, tgt.x, tgt.z) && W.rng() < 0.5) h.ctl.hat = true;
 }
 function coordinate() {
   // lane fronts
