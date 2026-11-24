@@ -2,6 +2,18 @@
 
 Every version of Livloch, newest first. Each one from 0.4 on is a `release/X.Y` branch that never moves, and the published ones stay playable at [stevoblevo.github.io/livloch/versions/](https://stevoblevo.github.io/livloch/versions/). The reasons behind each step are in [`docs/PLAN.md`](docs/PLAN.md); where each was published is in [`docs/IMPORT.md`](docs/IMPORT.md).
 
+## 0.27
+**Tuned, and the same seed plays the same match.**
+
+- **One seed, one match:** the sim draws all its randomness from the match's seed, so a match can be replayed and balance measured.
+- **Balance:** the long match is tuned against Phase 1's target, measured with a scripted player that knows a chosen number of the five lessons over 24 seeds:
+  - **Even:** about a third of matches won knowing nothing, about 70% with two lessons, all of them once you answer the red rain's mood.
+  - **Cruel:** rarely won without the mood, 40-50% with it.
+  - **Gentle:** unchanged.
+- **Thin rain:** a thin red rain (the mood answered) still brings something on Even and Cruel, so answering it helps without ending the danger.
+- **First Rain:** keeps its old hollows and thieves, and a thin rain brings nothing in it. Houses stand in nearly every Even First Rain.
+- **Tools:** `tools/tune.js`, the scripted player, and `C.DIFF`, every difficulty number in one table.
+
 ## 0.26
 **Guards, the Ness, and every gun its own.**
 
