@@ -530,9 +530,10 @@ function bushFoliage(S, r, m, k, big) {
 }
 /* the fruit itself, built around its own centre (the renderer lifts, spins and scales it): one soup in the fruit's own colour */
 function fruitSoup(k, big, col) {
-  const S = new Soup(), fc = new T.Color(col), hi = fc.clone().lerp(new T.Color(0xffffff), 0.28), lo = fc.clone().multiplyScalar(0.78), lf = new T.Color(0x3f7a3a), lf2 = new T.Color(0x5aa04a);
-  const g = function (geo, m, fn) { S.geo(geo, m, fn, 1, 0); };
+  const S = new Soup(), smooth = [], fc = new T.Color(col), hi = fc.clone().lerp(new T.Color(0xffffff), 0.1), lo = fc.clone().multiplyScalar(0.78), lf = new T.Color(0x3f7a3a), lf2 = new T.Color(0x5aa04a);
+  const g = function (geo, m, fn) { const n0 = S.p.length / 3; S.geo(geo, m, fn, 1, 0); _v.set(0, 0, 0).applyMatrix4(m); smooth.push([n0, S.p.length / 3, _v.x, _v.y, _v.z]); }; // the fruit itself is shaded smooth, like a real one
   const shade = function (ry, rr) { return function (x, y) { return lerpCol(lo, hi, U_clamp(0.5 + y / (2 * rr), 0, 1)); }; };
+  lo.multiplyScalar(1.1);
   if (k === 'hips' || k === 'bighips') {
     const hs = big ? 2.6 : 1, dark = new T.Color(0x5a1810), pos = [[0, 0, 0], [0.24, -0.1, 0.1], [-0.2, -0.14, -0.12], [0.02, -0.22, 0.2]];
     pos.forEach(function (p, i) {
@@ -541,14 +542,14 @@ function fruitSoup(k, big, col) {
       S.geo(new T.ConeGeometry(0.06 * hs, 0.09 * hs, 4), mtx(p[0] * hs, p[1] * hs + 0.2 * hs * 1.1, p[2] * hs, i * 0.7, i * 1.3, 0.3 * i), dark, 0.4, 0);
       S.geo(new T.ConeGeometry(0.03 * hs, 0.11 * hs, 3), mtx(p[0] * hs, p[1] * hs - 0.2 * hs * 1.05, p[2] * hs, Math.PI + i * 0.7, 0, 0), dark, 0.4, 0);
     });
-    S.geo(new T.ConeGeometry(0.2 * hs, 0.16 * hs, 5), mtx(0, 0.27 * hs, 0, 0, 0, 0), lf, 0.5, 0);
+    S.geo(new T.ConeGeometry(0.12 * hs, 0.12 * hs, 5), mtx(0, 0.3 * hs, 0, 0, 0, 0), lf, 0.5, 0);
   } else {
     const rr = big ? 0.95 : 0.34, lemon = k === 'lemon' || k === 'biglemon', ge = new T.SphereGeometry(rr, 9, 7);
     g(ge, mtx(0, 0, 0, 0, 0, 0, lemon ? 1.3 : 1, 1, 1), shade(0, rr));
     if (lemon) { S.geo(new T.ConeGeometry(rr * 0.2, rr * 0.4, 5), mtx(rr * 1.3 + rr * 0.1, 0, 0, 0, 0, -Math.PI / 2), hi, 1, 0); S.geo(new T.ConeGeometry(rr * 0.16, rr * 0.3, 5), mtx(-rr * 1.3 - rr * 0.06, 0, 0, 0, 0, Math.PI / 2), lo, 1, 0); }
     for (let i = 0; i < 4; i++) { const a = i * 1.57 + 0.4; leafCard(S, null, [Math.sin(a) * rr * 0.12, rr * 0.92, Math.cos(a) * rr * 0.12], a, 0.55, rr * 0.75, rr * 0.5, rr * 0.18, lf, lf2, 0.5, 0); }
   }
-  return S;
+  S.smooth = smooth; return S;
 }
 P.fruitBushes = function (t, list, H) {
   init(t);
@@ -557,7 +558,8 @@ P.fruitBushes = function (t, list, H) {
     const r = rng(907 + i * 31 + Math.floor(Math.abs(f.x * 7 + f.z * 3))), base = new T.Matrix4().compose(new T.Vector3(f.x, 0, f.z), new T.Quaternion().setFromEuler(new T.Euler(0, r() * 6.28, 0)), new T.Vector3(f.big ? 1.7 : 1, f.big ? 1.7 : 1, f.big ? 1.7 : 1));
     bushFoliage(S, r, base, f.k.replace('big', ''), f.big);
     const g = new T.Group(), fr = new T.Group(), fs = fruitSoup(f.k, f.big, f.col), fm = propMat({ em: 0xffffff, emI: 0.55, emV: true, sw: 0 });
-    const fo = own(new T.Mesh(fs.build(), fm)); fo.frustumCulled = false; fr.add(fo); fr.position.y = f.big ? 3.1 : 1.9; g.add(fr);
+    const fgeo = fs.build(), fn = fgeo.attributes.normal; fs.smooth.forEach(function (q) { for (let v = q[0]; v < q[1]; v++) { _v.set(fgeo.attributes.position.getX(v) - q[2], fgeo.attributes.position.getY(v) - q[3], fgeo.attributes.position.getZ(v) - q[4]).normalize(); fn.setXYZ(v, _v.x, _v.y, _v.z); } });
+    const fo = own(new T.Mesh(fgeo, fm)); fo.frustumCulled = false; fr.add(fo); fr.position.y = f.big ? 3.1 : 1.9; g.add(fr);
     const glow = H.glowSprite(f.col, f.big ? 9 : 3.4, fr, 0, 0, 0); glow.material.userData.lk = true;
     g.fr = fr; g.glow = glow; fruit.push(g);
   });
@@ -580,7 +582,7 @@ P.stray = function (t, H) {
     S.rod([sg * 0.55, 2.2, 0.3], [sg * 0.82, 2.78, 0.22], 0.17, 0.12, 5, horn, 0.05, 0.1, 0, 0.5);
     S.rod([sg * 0.82, 2.78, 0.22], [sg * 0.68, 3.28, 0.3], 0.12, 0.03, 5, hornT, 0.1, 0.3, 0.5, 1);
     S.rod([sg * 0.8, 2.85, 0.22], [sg * 1.2, 3.18, 0.14], 0.08, 0.02, 4, hornT, 0.1, 0.3, 0.5, 1);
-    S.tri([sg * 0.42, 1.62, 1.4, 1, 0], [sg * 0.74, 1.74, 1.26, 1, 0], [sg * 0.46, 1.5, 1.42, 1, 0], lil); S.tri([sg * 0.74, 1.74, 1.26, 1, 0], [sg * 0.78, 1.62, 1.24, 1, 0], [sg * 0.46, 1.5, 1.42, 1, 0], lil); // the eye
+    S.tri([sg * 0.42, 1.62, 1.4, 0.7, 0], [sg * 0.74, 1.74, 1.26, 0.7, 0], [sg * 0.46, 1.5, 1.42, 0.7, 0], lil); S.tri([sg * 0.74, 1.74, 1.26, 0.7, 0], [sg * 0.78, 1.62, 1.24, 0.7, 0], [sg * 0.46, 1.5, 1.42, 0.7, 0], lil); // the eye
     S.tri([sg * 0.34, 1.0, 1.36, 0.2, 0], [sg * 0.05, 1.2, 1.46, 0.2, 0], [sg * 0.05, 0.84, 1.4, 0.2, 0], belly.clone().lerp(horn, 0.4)); // a pale cheek
   });
   S.tri([0, 1.25, 1.5, 0.2, 0], [0.18, 1.0, 1.46, 0.2, 0], [-0.18, 1.0, 1.46, 0.2, 0], horn);
