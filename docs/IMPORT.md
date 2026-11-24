@@ -28,6 +28,7 @@
 | 0.15 to 0.18 | artifact | Pages `vX.Y/`; saelion.co `release/livloch-X.Y-20261118` | `release/X.Y` |
 | 0.19 | artifact version `1795422940-046d` | Pages `v0.19/` (PR 32); saelion.co `release/livloch-0.19-20261123` (`a41c3d1`), deployment `dpl_5BFKyTfuFbvochS1SC2vFWDZiBya` | `release/0.19` (`e0b94ee`) |
 | 0.20 | artifact version `1795472183-a8bb` | Pages `v0.20/` (PR 33, `171b5bc`); saelion.co `release/livloch-0.20-20261123` (`2c804f8`), deployment `dpl_HczkQeNpkVWBgV3Y3Pbg7gSiYS59` | `release/0.20` (`df4bc79`) |
+| 0.21 | no artifact (the owner made everything public on 23 November; the Claude artifact stays at 0.20) | Pages `v0.21/` (PR 34); saelion.co `release/livloch-0.21-20261123` (`fd828be`), deployment `dpl_18bykBf9NAmruQ1cogR7NCMkqjoo` | `release/0.21` (`4cc4fbb`) |
 
 ## Versioning
 This session cannot push tags or create releases (the GitHub proxy refuses both), so each version is a branch: `release/0.4`, `release/0.5`, `release/0.6`, `release/0.6.1`, `release/0.7`, `release/0.8`, `release/0.9`. They never move. Turn them into tags from a normal clone with `git tag v0.7 origin/release/0.7 && git push --tags` if tags are wanted.
