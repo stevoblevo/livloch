@@ -503,7 +503,7 @@ Boards.prototype.end = function () { if (!this.m) return; for (let i = 0; i < th
    camera and shows the view that matches where the camera stands, mirrored for the other side. A hero with no sheet,
    or whose sheet fails to load, keeps the built shapes below. Add a hero by adding a line here. */
 const PAPER = R.PAPER = { // h: height in metres. hem: where the legs start (0 to 1). motion: the seven-figure sheet. arms: shoulder height, half shoulder width, arm length, all as fractions of h
-  dora: { src: 'art/heroes/dora.png', h: 2.45, hem: 0.2, motion: 'art/heroes/dora-motion.png' }, // her cloak hides her arms; they appear only when she aims
+  dora: { src: 'art/heroes/dora.png', h: 2.45, hem: 0.2, legs: 0.165, motion: 'art/heroes/dora-motion.png' }, // her cloak hides her arms; they appear only when she aims
   anna: { src: 'art/heroes/anna.png', h: 2.4, hem: 0.3, motion: 'art/heroes/anna-motion.png', arms: { y: 0.685, x: 0.105, len: 0.367 },
     /* 0.21: a finer body grid (columns, rows) for the coat halves; the coat's centre slit runs from the hem up to v 0.4 in
        the front and back cells; and the braid, cut out of the motion sheet so it can swing (see braidSheets). In each
@@ -515,7 +515,7 @@ const PAPER = R.PAPER = { // h: height in metres. hem: where the legs start (0 t
       2: { p: [0.5, 0.753], poly: [0.398,0.753,0.418,0.728,0.422,0.703,0.418,0.678,0.43,0.653,0.422,0.628,0.43,0.603,0.441,0.578,0.441,0.553,0.465,0.528,0.457,0.503,0.434,0.478,0.453,0.453,0.469,0.441,0.5,0.422,0.531,0.441,0.547,0.453,0.566,0.478,0.539,0.503,0.539,0.528,0.547,0.553,0.562,0.578,0.574,0.603,0.562,0.628,0.582,0.653,0.566,0.678,0.586,0.703,0.59,0.728,0.602,0.753] },
       5: { p: [0.508, 0.769], poly: [0.363,0.769,0.402,0.744,0.422,0.719,0.43,0.694,0.422,0.669,0.426,0.644,0.438,0.619,0.434,0.594,0.453,0.569,0.449,0.544,0.484,0.519,0.453,0.494,0.438,0.469,0.473,0.444,0.48,0.431,0.5,0.414,0.52,0.431,0.539,0.444,0.574,0.469,0.555,0.494,0.543,0.519,0.551,0.544,0.562,0.569,0.559,0.594,0.578,0.619,0.574,0.644,0.578,0.669,0.582,0.694,0.578,0.719,0.602,0.744,0.652,0.769] },
       6: { p: [0.83, 0.775], poly: [0.723,0.775,0.754,0.75,0.781,0.725,0.812,0.7,0.82,0.675,0.832,0.65,0.836,0.625,0.848,0.6,0.82,0.575,0.828,0.55,0.852,0.525,0.832,0.5,0.844,0.475,0.871,0.45,0.895,0.434,0.918,0.45,0.941,0.475,0.918,0.5,0.906,0.525,0.918,0.55,0.934,0.575,0.93,0.6,0.93,0.625,0.934,0.65,0.922,0.675,0.934,0.7,0.914,0.725,0.918,0.75,0.938,0.775] } } } },
-  myra: { src: 'art/heroes/myra.png', h: 1.95, hem: 0.22, motion: 'art/heroes/myra-motion.png', arms: { y: 0.6, x: 0.19, len: 0.356 } },
+  myra: { src: 'art/heroes/myra.png', h: 1.95, hem: 0.22, legs: 0.168, motion: 'art/heroes/myra-motion.png', arms: { y: 0.6, x: 0.19, len: 0.356 } },
   skein: { src: 'art/heroes/skein.png', h: 2.2, hem: 0.27, motion: 'art/heroes/skein-motion.png', arms: { y: 0.66, x: 0.13, len: 0.352 } }
 };
 const paperTex = {}, PAPER_FLIP = -1;
@@ -671,7 +671,7 @@ function paperFor(g, id) {
       if (P.arms) { const ta = t2.clone(); ta.needsUpdate = true; ta.repeat.set(1 / 7, 1); const ma = heroize(flatMat(ta), t2.image, 7); pp.matA = ma;
         P_.armL = part(0, 1, 1 - P.arms.len, 1, ma, 1, 6); P_.armR = part(0, 1, 1 - P.arms.len, 1, ma, 1, 6); P_.armR.scale.x = -1;
         /* 0.21: the far arm, seen from the side, swings behind the body: the side arm picture, a shade darker. */
-        if (LL.paperMotion.gaitOf(id).far) { const tf = t2.clone(); tf.needsUpdate = true; tf.repeat.set(1 / 7, 1); tf.offset.x = 3 / 7; pp.matF = heroize(flatMat(tf), t2.image, 7); pp.matF.color.setRGB(0.68, 0.66, 0.72); } }
+        if (LL.paperMotion.gaitOf(id).far) { pp.matF = heroize(flatMat(ta), t2.image, 7); pp.matF.color.setRGB(0.68, 0.66, 0.72); } } // shares the arms' texture (and its cell)
     }, undefined, function () {});
     g.paper = pp; g.body.visible = false; g.legL.visible = false; g.legR.visible = false;
   };
@@ -1335,8 +1335,9 @@ R.frame = function (dt, view) {
           } else {
             if (P_.armR.material !== pp.matA) P_.armR.material = pp.matA; P_.armR.scale.x = -1;
             sh(P_.armL, -sx2, sy2 + Math.max(0, -asw) * 0.03, -0.02); sh(P_.armR, sx2, sy2 + Math.max(0, asw) * 0.03, -0.02);
-            P_.armL.rotation.z = roll - 0.06 - asw * 0.07 - Math.max(0, st.stretch) * 0.5 - stomp * 1.2;
-            P_.armR.rotation.z = roll + 0.06 - asw * 0.07 + Math.max(0, st.stretch) * 0.5 + stomp * 1.2 + wA * 2.9 - Math.max(0, tw) * 0.35;
+            const lag = G.arm > 1 ? -0.55 * shiftX / (A.len * pp.h) - asw * 0.05 : 0; // the hands hang back from the body's sway a little
+            P_.armL.rotation.z = roll - 0.06 - asw * 0.07 + lag - Math.max(0, st.stretch) * 0.5 - stomp * 1.2;
+            P_.armR.rotation.z = roll + 0.06 - asw * 0.07 + lag + Math.max(0, st.stretch) * 0.5 + stomp * 1.2 + wA * 2.9 - Math.max(0, tw) * 0.35;
             const fsh = G.arm > 1 ? 0.12 : 0; P_.armL.scale.y = 1 - fsh * Math.abs(asw); P_.armR.scale.y = 1 - fsh * Math.abs(asw) * (1 - wA) - Math.max(0, tw) * 0.2;
           } } }
       // legs: seen from the side they scissor; from front or back they lift in turn; in the air they tuck. 0.21: swing per gait; a stomp or a braced shot plants them wide

@@ -193,7 +193,7 @@ test('motion rig: aim rises fast and lets go slower; a landing squashes; a telep
   const ph = m.phase; u.z += 30; M.pose(m, u, 0.016, 3, false); assert.strictEqual(m.phase, ph, 'a respawn jump does not advance the stride');
   const r = M.pose(M.create(), u, 0.016, 3, true); assert.strictEqual(r.sway + r.body + r.roll + r.squash, 0, 'reduced motion is still');
 });
-test('motion gaits (0.21): a hero with no gait line strides as in 0.20; Anna is lower, rolls more and plants her feet', () => {
+test('motion gaits (0.21): Dora bobs and rolls as in 0.20; Anna is lower, rolls more and plants her feet', () => {
   const M = require(path.join(__dirname, '..', 'js', 'motion.js'));
   assert.strictEqual(M.gaitOf('dora').bob, 1); assert.strictEqual(M.gaitOf('dora').braid, null); assert.strictEqual(M.gaitOf('myra').throw, 0);
   const walk = (id, n) => { const m = M.create(), u = { x: 0, z: 0, yaw: 0, onGround: true, def: { id }, lastShotT: -99 }; let p, sq = 0, contacts = 0;

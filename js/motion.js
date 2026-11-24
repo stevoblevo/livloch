@@ -35,6 +35,8 @@ const RIGS = {
    far: the far arm swings behind the body in the side view. */
 const GAIT0 = { bob: 1, shift: 1, roll: 1, swing: 1, arm: 1, knee: 1, lean: 0, stiff: 1, cloak: 1, plant: 0, idle: 0.6, flap: 0, braid: null, throw: 0, far: 0 };
 const GAITS = {
+  /* Dora: her leg strips are cut below the cloak since 0.21 (PAPER legs), which shortens them; a wider scissor keeps the stride. */
+  dora: { swing: 1.15 },
   /* Anna: "slow, heavy, accurate". A lower bounce and a bigger weight transfer, boots that come down hard, a forward
      lean into the run, a heavy coat that is slow to settle, a long braid, and a rock hammer that is thrown. */
   anna: { bob: 0.62, shift: 1.45, roll: 1.35, swing: 1.12, arm: 1.35, knee: 1.15, lean: 0.03, stiff: 0.72, cloak: 0.5, plant: 1, idle: 1, flap: 1, braid: { len: 0.46, drag: 0.05 }, throw: 1, far: 1 }
