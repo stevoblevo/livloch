@@ -2,6 +2,9 @@
 
 Every version of Livloch, newest first. Each one from 0.4 on is a `release/X.Y` branch that never moves, and the published ones stay playable at [stevoblevo.github.io/livloch/versions/](https://stevoblevo.github.io/livloch/versions/). The reasons behind each step are in [`docs/PLAN.md`](docs/PLAN.md); where each was published is in [`docs/IMPORT.md`](docs/IMPORT.md).
 
+## 0.24
+**Heroes in 3D.** The painted paper cutouts are replaced by 3D figures with a real skeleton, because over the shoulder a flat card turning and bending read as broken. All four heroes are rebuilt from their key art: Dora (straw hat, red riding cloak with the gold stag, vented at the back so the stride shows, lantern), Anna (green coat, braid, crown over goggles, rock hammer), Myra (plum, wings, spools), the Skein Doll (burlap, yarn mop, needle). The same motion rig now poses joints: feet plant where the rig says they land and stay planted, knees bend by IK, the hips turn toward where the legs run while the chest stays on your aim, arms pump and come up to aim, cloth and braid trail on springs and clear the legs. Bots, the Echo and dash afterimages use the same figures; the wardrobe attaches to them. Painted paper is still there: Settings, "Heroes as 3D figures".
+
 ## 0.23
 **Feel and the wardrobe.** Your shots flash at the muzzle and kick the camera back along its own line of sight (aim never moves); hits throw paper bits that flutter down, Hush tissue drifts up like ash, structures chip, a ward shimmers when a hit can't land yet; Reign troopers crumple into paper, Hush tear into tissue, hollows come apart in a cloud; your kills tick the crosshair. The wardrobe: 17 things you wear or carry (trails, footfalls, rings, a light at your shoulder, dash doubles), earned by stars, First Rains, goals and secrets, with a Wardrobe screen on the title, a line when something opens mid-match and the next one shown at the end of every match.
 
