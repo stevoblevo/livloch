@@ -129,8 +129,8 @@ LL.HEROES = [
       { key: 'E', name: 'Mending', kind: 'zone', cd: 16, r: 7, heal: 55, life: 6, fx: 'ward', desc: 'Lay a circle of stitches that mends you and your side while you stand in it.' },
       { key: 'F', name: 'Pull the Thread', kind: 'zone', ult: true, cd: 80, r: 13, burst: 430, delay: 1.3, life: 0.5, fx: 'toll', desc: 'Wind the spool, then pull. Everything nearby comes undone at once.' }
     ] },
-  { id: 'skein', name: 'Skein Doll', title: 'Every thread is hers', col: 0xe0955f, css: '#e0955f',
-    blurb: 'Fast, fragile, everywhere. Needles by the dozen and a knot that shoots.',
+  { id: 'skein', name: 'Skye', title: 'The Skein Doll', /* 0.26: the owner named her Skye; the id stays 'skein' (saves and hooks) */ col: 0xe0955f, css: '#e0955f',
+    blurb: 'Every thread is hers. Fast, fragile, everywhere. Needles by the dozen and a knot that shoots.',
     air: { jumps: 2 }, // 0.25 air: the second jump is a loose spinning tuck
     hp: 580, speed: 7.6, aiRange: 30, build: [1, 0, 5, 3, 6, 2, 8, 4, 9, 7, 11, 10, 12, 13, 14],
     gun: { name: 'Needles', dmg: 5.6, rate: 14, mag: 42, reload: 1.4, speed: 100, spread: 0.028, pellets: 1, range: 36, size: 0.11 },
@@ -148,7 +148,7 @@ LL.HEROES = [
      Lantern Lift ('lift', sim.js liftCast/liftStep): rise seconds of steerable climb toward cap metres, then a glide at
      glide times gravity, sinking no faster than sink m/s; boost is the air speed multiplier he steers toward. Moving along a
      thread within threadR metres of it adds thread seconds, once per lift. */
-  { id: 'rook', name: 'Rook Vale', title: 'The Wick Aviator', col: 0x91e5c6, css: '#91e5c6',
+  { id: 'rook', name: 'Rook Vale', title: 'The Wick Aviator', col: 0xe39a90, css: '#e39a90', /* 0.26: rose gold (his coat is copper and rose gold, teal highlights) */
     blurb: 'A loch courier with a glazed lantern-kite. Take the high line, then land clean.',
     hp: 610, speed: 7.1, aiRange: 34, build: [0, 5, 3, 7, 1, 6, 10, 2, 8, 11, 4, 9, 12, 13, 14], air: { jumps: 1 },
     gun: { name: 'Wick sparks', dmg: 15.5, rate: 5, mag: 18, reload: 1.35, speed: 100, spread: 0.011, pellets: 1, range: 44, size: 0.19 },

@@ -615,10 +615,12 @@ HERO.rook = {
     addPanels(r, P, this.coat);
   },
   body: function (B, P) {
-    const wool = 0x3f5f96, woolD = 0x2c4470, woolL = 0x5674a8, stitch = 0xc6d2e2, tan = 0xb8875c, tanD = 0x8a6244, wood = 0xc08a54, woodL = 0xe2c48c, kite = 0xead6a4, cer = 0xdcdfca, cerD = 0xb9bfa8,
-      mint = 0x95eed4, teal = 0x469989, gold = 0xffe1a1, skin = 0xe6b592, glove = 0x7a5a4c, boot = 0x4a3f4c, brass = 0xe3ba83, dark = 0x26344d;
+    /* 0.26: the owner's palette, "copper mint tea": copper and rose gold, with copper sulfate's aquamarine teal for the
+       highlights (stitches, laces, scarf, the hood's strokes) and a lantern glazed like a sulfate crystal. */
+    const wool = 0xb06a50, woolD = 0x7a4234, woolL = 0xe0a48a, stitch = 0x5fe0d2, tan = 0x8f5b42, tanD = 0x5f3a2b, wood = 0xc9876c, woodL = 0xf1c4ad, kite = 0xf3d6c6, cer = 0xd99a82, cerD = 0xa8705e,
+      mint = 0x3fd6cc, teal = 0x1d8f9b, gold = 0xffd2b0, skin = 0xe6b592, glove = 0x5a3328, boot = 0x3e2622, brass = 0xd88c66, dark = 0x123c44;
     const K = this.KT, PK = this.PK;
-    legs(B, P, { thighR: 0.09, kneeR: 0.078, ankleR: 0.062, thigh: woolD, shin: woolD, boot: boot, bootTop: 0.4, bootR: 0.086, cuff: 0.05, bootCuff: 0xa79581, laceBack: 0xa79581, footW: 0.08, footH: 0.064, sole: 0x241c24 });
+    legs(B, P, { thighR: 0.09, kneeR: 0.078, ankleR: 0.062, thigh: woolD, shin: woolD, boot: boot, bootTop: 0.4, bootR: 0.086, cuff: 0.05, bootCuff: 0x2fb8b2, laceBack: 0x2fb8b2, footW: 0.08, footH: 0.064, sole: 0x241c24 });
     const tw = torsoW(P), ct = this.coat, pw = panelW(ct, 'hips');
     // the coat above the belt: cobalt wool, a pale dashed seam down the front
     B.add(shellG([[P.neck + 0.02, 0.075, 0.075], [P.shY + 0.04, 0.17, 0.13], [P.chest, 0.2, 0.152], [1.26, 0.21, 0.16], [P.pelv - 0.04, 0.2, 0.158], [P.hip - 0.02, 0.2, 0.158]], 18, 0, TAU), null,
@@ -642,7 +644,7 @@ HERO.rook = {
     headBall(B, P, { skin: skin, face: 14, neckR: 0.062 });
     // the hood: pale glazed ceramic, open at the face, three cream strokes over the crown, a guard down the back of the neck
     const R = P.headR, C = P.headC;
-    const hcol = function (lx, ly, lz) { const a = Math.atan2(lx, lz); if (ly > 0.35 && lz < 0.75 && Math.min(Math.abs(a), Math.abs(Math.abs(a) - 0.5)) < 0.085 && Math.abs(a) < 0.62) return 0xf7e4ac; if (lz < -0.2 && Math.abs(lx) < 0.1 && ly < 0.8) return cerD; return ly < -0.45 ? cerD : cer; }; // and a seam down the back
+    const hcol = function (lx, ly, lz) { const a = Math.atan2(lx, lz); if (ly > 0.35 && lz < 0.75 && Math.min(Math.abs(a), Math.abs(Math.abs(a) - 0.5)) < 0.085 && Math.abs(a) < 0.62) return 0x7ff0e4; if (lz < -0.2 && Math.abs(lx) < 0.1 && ly < 0.8) return cerD; return ly < -0.45 ? cerD : cer; }; // and a seam down the back
     B.add(new T.SphereGeometry(1, 16, 10, Math.PI / 2 + 0.78, TAU - 1.56, 0, 2.1), M(0, C + 0.015, -0.012, 0, 0, 0, R * 1.14, R * 1.1, R * 1.14), hcol, 'head');
     B.add(new T.SphereGeometry(1, 14, 5, 0, TAU, 0, 1.02), M(0, C + 0.03, 0.006, 0.16, 0, 0, R * 1.13, R * 1.08, R * 1.14), hcol, 'head');
     B.add(shellG([[C - 0.1, R * 1.1, R * 1.08, -0.012], [C - 0.2, R * 0.98, R * 0.98, -0.02], [C - 0.27, R * 0.9, R * 0.95, -0.03]], 10, Math.PI - 1.35, Math.PI + 1.35), null, function (lx, ly, lz, wx, wy) { return wy < C - 0.245 ? cerD : cer; }, [['head', 0.75], ['neck', 0.25]]);
@@ -653,18 +655,18 @@ HERO.rook = {
       function (lx, ly, lz, wx, wy, wz) { return frac(Math.atan2(wx, wz) * 1.6 + wy * 9) < 0.2 ? teal : mint; }, [['chest', 0.7], ['neck', 0.3]]);
     B.add(capG([K.x - 0.03, 1.6, -0.17], [K.x, K.y, K.z + 0.01], 0.05, 0.045, 6, 1), null, mint, 'chest'); B.add(sph(8, 6), M(K.x, K.y + 0.005, K.z + 0.012, 0, 0, 0, 0.07, 0.06, 0.055), teal, 'chest'); // the scarf's end runs back over the top of the frame to its knot
     for (let i = 0; i < 5; i++) { const y0 = K.y - i * 0.145, x0 = K.x + i * 0.006, z0 = K.z - i * 0.004 - 0.012, w = 0.125 * (1 - i * 0.11);
-      B.add(new T.PlaneGeometry(w, 0.15, 1, 1), M(x0, y0 - 0.0725, z0, 0.08, 0, 0), function (lx, ly) { return i === 4 && ly < -0.01 ? gold : (i === 3 || (i === 4) ? 0x5cc2b0 : mint); }, 'kt' + i, { em: i === 4 ? 0.12 : 0 });
+      B.add(new T.PlaneGeometry(w, 0.15, 1, 1), M(x0, y0 - 0.0725, z0, 0.08, 0, 0), function (lx, ly) { return i === 4 && ly < -0.01 ? gold : (i === 3 || (i === 4) ? 0x24a9b0 : mint); }, 'kt' + i, { em: i === 4 ? 0.12 : 0 });
       if (i === 1 || i === 3) [1, -1].forEach(function (k) { B.add(new T.ConeGeometry(0.05, 0.11, 3), M(x0 + k * 0.075, y0 - 0.075, z0 - 0.004, 0, 0, k * Math.PI / 2, 1, 1, 0.3), i === 1 ? gold : teal, 'kt' + i); }); } // a kite tail's bows
     // THE LANTERN-KITE. The frame: an eight-sided wooden board on the back, a dark slate panel set in it.
     B.add(new T.CylinderGeometry(1, 1, 1, 8, 1, false, Math.PI / 8), M(0, PK.y, PK.z, Math.PI / 2, 0, 0, PK.w, 0.11, PK.h), function (lx, ly, lz) { return ly < -0.45 ? wood : (lz < -0.3 ? woodL : wood); }, 'pack');
     B.add(new T.CylinderGeometry(1, 1, 1, 8, 1, false, Math.PI / 8), M(0, PK.y, PK.z - 0.058, Math.PI / 2, 0, 0, PK.w * 0.78, 0.016, PK.h * 0.8), dark, 'pack');
-    [1, -1].forEach(function (k) { B.add(new T.ConeGeometry(0.07, 0.15, 3), M(k * 0.2, PK.y - PK.h - 0.03, PK.z - 0.03, Math.PI, 0, k * 0.5, 1, 1, 0.3), 0xc3d6bb, 'pack'); }); // two pale tabs at the foot of the frame
+    [1, -1].forEach(function (k) { B.add(new T.ConeGeometry(0.07, 0.15, 3), M(k * 0.2, PK.y - PK.h - 0.03, PK.z - 0.03, Math.PI, 0, k * 0.5, 1, 1, 0.3), 0x6fe6dc, 'pack'); }); // two pale tabs at the foot of the frame
     // the two wooden arms that carry the lantern between the fins, with brass pins at the hinges
     [0.2, -0.2].forEach(function (dy) { B.add(new T.BoxGeometry(PK.w * 2 + 0.03, 0.028, 0.034), M(0, PK.y + dy, PK.z - 0.1), woodL, 'pack');
       [1, -1].forEach(function (k) { B.add(capG([k * PK.w, PK.y + dy, PK.z - 0.02], [k * PK.w, PK.y + dy, PK.z - 0.12], 0.02, 0.02, 5, 1), null, wood, 'pack'); B.add(sph(5, 4), M(k * PK.w, PK.y + dy, PK.z - 0.125, 0, 0, 0, 0.026, 0.026, 0.02), brass, 'pack'); }); });
     // the wick lantern: a faceted mint glass, brass caps top and bottom, a bright core
     const ly0 = PK.y, lz0 = PK.z - 0.17;
-    B.add(new T.OctahedronGeometry(1, 0), M(0, ly0, lz0, 0, Math.PI / 4, 0, 0.125, 0.185, 0.115), function (lx, ly) { return Math.abs(ly) < 0.3 ? 0xa6f7dc : 0x58d6b2; }, 'wick', { em: function (lx, ly) { return Math.abs(ly) < 0.3 ? 0.62 : 0.4; } });
+    B.add(new T.OctahedronGeometry(1, 0), M(0, ly0, lz0, 0, Math.PI / 4, 0, 0.125, 0.185, 0.115), function (lx, ly) { return Math.abs(ly) < 0.3 ? 0x8ff6ee : 0x2fc4c0; }, 'wick', { em: function (lx, ly) { return Math.abs(ly) < 0.3 ? 0.62 : 0.4; } });
     B.add(new T.ConeGeometry(0.05, 0.07, 6), M(0, ly0 + 0.19, lz0), brass, 'wick'); B.add(new T.ConeGeometry(0.045, 0.06, 6), M(0, ly0 - 0.185, lz0, Math.PI), brass, 'wick');
     B.add(new T.TorusGeometry(0.03, 0.007, 4, 8), M(0, ly0 + 0.235, lz0, 0, Math.PI / 2, 0), brass, 'wick');
     // the fins: swept kite vanes, cream cloth on a wooden spar, hinged at the frame's sides, folded back by this.PK.fin at rest
@@ -678,7 +680,7 @@ HERO.rook = {
     B.add(new T.TorusGeometry(0.034, 0.009, 4, 8), M(hx, hy - 0.06, 0.02, Math.PI / 2, 0, 0), brass, 'handR');
     B.add(sph(6, 5), M(hx, hy - 0.275, 0.02, 0, 0, 0, 0.03, 0.036, 0.03), 0xd8fff0, 'handR', { em: 0.9 });
   },
-  glow: { bone: 'wick', y: 0, z: -0.06, col: 0x91e5c6, size: 1.15 },
+  glow: { bone: 'wick', y: 0, z: -0.06, col: 0x5ff0e2, size: 1.15 },
   pose: function (fig, st, h, c) {
     const b = fig.b, S = fig.S, dt = c.dt, red = c.red, PK = this.PK;
     const aloft = (h.liftT > 0 || h.glide) && h.alive !== false, rising = h.liftT > 0;
