@@ -42,3 +42,6 @@ jobs:
 
       - name: Rule regressions and the motion rig (node tools/test.js)
         run: node tools/test.js
+
+      - name: Dreamwalk debrief contracts (node tools/test-debrief.js)
+        run: node tools/test-debrief.js
