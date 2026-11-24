@@ -71,7 +71,7 @@ function buildTube() {
   // the fin down the back, a tooth of membrane every second ring, and the tail's blade
   const fin = colOf(FIN, 0.9), top = Math.PI / 2;
   for (let i = 1; i < NR - 6; i += 2) { const h = (i < NK ? 0.5 : 0.75) * Math.min(1, RAD[i] * 1.1); tri(tv(i, top, 1), tv(i + 2, top, 1), tv(i + 2, top, 1, h), fin, 0.15, [1, 1, 1]); }
-  for (let i = NR - 6; i < NR - 1; i++) { const h0 = 0.25 + (i - (NR - 6)) * 0.22, h1 = h0 + 0.22; tri(tv(i, top, 1, h0), tv(i + 1, top, 1, h1), tv(i + 1, -top, 1, -h1 * 0.6), fin, 0.15); tri(tv(i, top, 1, h0), tv(i + 1, -top, 1, -h1 * 0.6), tv(i, -top, 1, -h0 * 0.6), fin, 0.15); }
+  for (let i = NR - 6; i < NR - 1; i++) { const h0 = 0.12 + (i - (NR - 6)) * 0.11, h1 = h0 + 0.11; tri(tv(i, top, 1, h0), tv(i + 1, top, 1, h1), tv(i + 1, -top, 1, -h1 * 0.6), fin, 0.15); tri(tv(i, top, 1, h0), tv(i + 1, -top, 1, -h1 * 0.6), tv(i, -top, 1, -h0 * 0.6), fin, 0.15); }
 }
 /* A closed loft through sections of the same point count, for the rigid pieces. cols(seg, side) gives the colour. */
 function loft(part, secs, cols, capEnd) {
@@ -187,21 +187,21 @@ function buildWater() {
   const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(p, 3)); g.setIndex(ix); g.userData.lk = true;
   const wc = new T.Color(LK.ground.water), day = !LK.add;
   const un = T.UniformsUtils.merge([T.UniformsLib.fog, { uC: { value: new T.Vector2(C.LOCH.x, C.LOCH.z) }, uReach: { value: 0 }, uEdge: { value: 14 }, uDepth: { value: 0.75 }, uTime: { value: 0 }, uWave: { value: X.R.reduced ? 0 : 1 },
-    uDeep: { value: wc.clone().multiplyScalar(day ? 0.5 : 0.22) }, uShal: { value: wc.clone().multiplyScalar(day ? 0.9 : 0.55) }, uGlow: { value: wc.clone().lerp(new T.Color(0xffffff), 0.6) }, uSkyH: { value: new T.Color(LK.sky[2]) }, uSkyT: { value: new T.Color(LK.sky[1]) },
-    uWarm: { value: new T.Color(0xffb070).multiplyScalar(day ? 0.25 : 0.5) }, uLanes: { value: null }, uField: { value: new T.Vector4(C.HALF_X + 6, C.HALF_Z + 6, C.HALF_X + 10, C.HALF_Z + 10) }, uA: { value: low ? 0.7 : 0.66 } }]);
+    uDeep: { value: wc.clone().multiplyScalar(day ? 0.55 : 0.3) }, uShal: { value: wc.clone().multiplyScalar(day ? 0.95 : 0.7) }, uGlow: { value: wc.clone().lerp(new T.Color(0xffffff), 0.6) }, uSkyH: { value: new T.Color(LK.sky[2]) }, uSkyT: { value: new T.Color(LK.sky[1]) },
+    uWarm: { value: new T.Color(0xffb070).multiplyScalar(day ? 0.25 : 0.5) }, uLanes: { value: null }, uField: { value: new T.Vector4(C.HALF_X + 6, C.HALF_Z + 6, C.HALF_X + 10, C.HALF_Z + 10) }, uA: { value: low ? 0.74 : 0.76 } }]);
   if (!low) un.uLanes.value = laneTex();
-  const m = new T.ShaderMaterial({ uniforms: un, vertexShader: WATER_V, fragmentShader: WATER_F, transparent: true, depthWrite: false, fog: true, defines: low ? { LOW: 1 } : {} });
+  const m = new T.ShaderMaterial({ uniforms: un, vertexShader: WATER_V, fragmentShader: WATER_F, transparent: true, depthWrite: false, fog: true, side: T.DoubleSide, defines: low ? { LOW: 1 } : {} });
   m.userData.lk = m.userData.bl = m.userData.solid = true;
   water = new T.Mesh(g, m); water.frustumCulled = false; water.renderOrder = 3; water.visible = false; X.world.add(water);
   st.waterTris = ix.length / 3;
   // the threads above the water: a flat ribbon of their own light where riders ride
-  const rp = [], rc = [], ri = [], q = { x: 0, z: 0, dx: 0, dz: 0 }, a = new T.Color(0xff8a5c), mid = new T.Color(0xffe2a0), b = new T.Color(0x6fe8c0), c = new T.Color(), HW = 0.32;
+  const rp = [], rc = [], ri = [], q = { x: 0, z: 0, dx: 0, dz: 0 }, a = new T.Color(0xff8a5c), mid = new T.Color(0xffe2a0), b = new T.Color(0x6fe8c0), c = new T.Color(), HW = 0.2;
   for (let l = 0; l < 3; l++) { const L = LL.lanes[l], base = rp.length / 3; let n = 0;
     for (let s = 0; s <= L.len; s += low ? 8 : 4, n++) { LL.lanePoint(l, s, q); const x = q.x + Math.sin(s * 0.11 + l * 2) * 1.1, t = U.clamp((q.z + 104) / 208, 0, 1); if (t < 0.5) c.copy(a).lerp(mid, t * 2); else c.copy(mid).lerp(b, (t - 0.5) * 2);
       rp.push(x - q.dz * HW, 0.93, q.z + q.dx * HW, x + q.dz * HW, 0.93, q.z - q.dx * HW); rc.push(c.r, c.g, c.b, c.r, c.g, c.b); }
     for (let k = 0; k < n - 1; k++) { const o = base + k * 2; ri.push(o, o + 1, o + 2, o + 1, o + 3, o + 2); } }
   const rg = new T.BufferGeometry(); rg.setAttribute('position', new T.Float32BufferAttribute(rp, 3)); rg.setAttribute('color', new T.Float32BufferAttribute(rc, 3)); rg.setIndex(ri); rg.userData.lk = true;
-  const rm = new T.ShaderMaterial({ uniforms: { uC: un.uC, uReach: un.uReach, uEdge: un.uEdge, uK: { value: day ? 0.8 : 1 } },
+  const rm = new T.ShaderMaterial({ uniforms: { uC: un.uC, uReach: un.uReach, uEdge: un.uEdge, uK: { value: day ? 0.6 : 0.5 } },
     vertexShader: 'uniform vec2 uC; uniform float uReach; uniform float uEdge; attribute vec3 color; varying vec3 vC; varying float vL; void main(){ vC = color; vL = clamp((uReach - length(position.xz - uC)) / uEdge, 0.0, 1.0); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
     fragmentShader: 'uniform float uK; varying vec3 vC; varying float vL; void main(){ if (vL < 0.02) discard; gl_FragColor = vec4(vC * uK, vL * 0.85); }',
     transparent: true, depthWrite: false, side: T.DoubleSide, blending: day ? T.NormalBlending : T.AdditiveBlending });

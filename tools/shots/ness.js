@@ -32,7 +32,7 @@ const FRAMES = { surface: 300, chomp: 170, dodge: 150, flood: 700, still: 8 };
     const v = LL.dbg.view; v.pitch = -0.02; v.zoom = o.zoom; window.__sc = o.scene; n.floodAt = 1e9; n.floodHp = true;
     if (o.scene === 'surface') { park(); p.x = n.x - 2; p.z = n.z - 21; v.yaw = 0.1; v.pitch = 0.1; n.respT = 0.5; }
     else if (o.scene === 'chomp' || o.scene === 'dodge') { park(); p.x = n.x; p.z = n.z - 19; v.yaw = 0; v.pitch = 0.06; n.respT = 0; LL.sim.step(1 / 60); n.rise = 1; n.chompT = 1e9; }
-    else if (o.scene === 'flood') { p.x = 3; p.z = -26; v.yaw = 0.75; v.pitch = 0.02; n.respT = 0; LL.sim.step(1 / 60); n.rise = 1; n.chompT = 2; W.heroes.forEach((h, i) => { if (h !== p) { h.x = i ? 44 : -4; h.z = -30 - i * 4; } }); }
+    else if (o.scene === 'flood') { p.x = 6; p.z = -14; v.yaw = 0.9; v.pitch = 0.02; n.respT = 0; LL.sim.step(1 / 60); n.rise = 1; n.chompT = 2; W.heroes.forEach((h, i) => { if (h !== p) { h.x = i ? 44 : -4; h.z = -30 - i * 4; } }); }
     else if (o.scene === 'still') { park(); n.respT = 0; LL.sim.step(1 / 60); n.rise = 1; n.chompT = 1e9; const q = (o.cam || '-3,-18,0.15,0.1').split(',').map(Number); p.x = n.x + q[0]; p.z = n.z + q[1]; v.yaw = q[2]; v.pitch = q[3]; if (o.aggro) { n.aggro = p; n.lastHurt = 1e9; n.spitT = 1e9; } }
     for (const e of W.fx) LL.gfx.fx(e); W.fx.length = 0;
     for (let k = 0; k < 6; k++) LL.gfx.frame(0.033, v); }, { hud: !!process.env.HUD, zoom: +(process.env.ZOOM || 0), scene: scene, cam: process.env.CAM, aggro: !!process.env.AGGRO });
