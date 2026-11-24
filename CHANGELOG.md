@@ -2,7 +2,9 @@
 
 Every version of Livloch, newest first. Each one from 0.4 on is a `release/X.Y` branch that never moves, and the published ones stay playable at [stevoblevo.github.io/livloch/versions/](https://stevoblevo.github.io/livloch/versions/). The reasons behind each step are in [`docs/PLAN.md`](docs/PLAN.md); where each was published is in [`docs/IMPORT.md`](docs/IMPORT.md).
 
-## Unreleased
+## 0.22
+
+Anna moves like herself: a heavier gait with more weight transfer and grit at each footfall, her braid cut out of the sheet and swinging on its own pendulum, coat halves that lift with each knee, arms that follow the body and bend at the elbow, a wind-up and release for the hammer, reactions to Core Sample, Tumble and Fawn Charge, a living idle. Every hero gets a gait table and small cast reactions; leg strips are cut below the coat hem. The game points people to GitHub issues instead of a chat, and the footer links the repository.
 
 - The repository opens to everyone: an MIT licence for the code, [`ASSETS.md`](ASSETS.md) for the art and names, [`CONTRIBUTING.md`](CONTRIBUTING.md), a code of conduct, a security policy, issue forms (bug, feel report, idea, art and audio), a pull request checklist, CI on every pull request, and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). [`AGENTS.md`](AGENTS.md) gains a "Start here" for any agent. The version history moves here from the README.
 
