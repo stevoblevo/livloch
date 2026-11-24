@@ -193,6 +193,52 @@ test('motion rig: aim rises fast and lets go slower; a landing squashes; a telep
   const ph = m.phase; u.z += 30; M.pose(m, u, 0.016, 3, false); assert.strictEqual(m.phase, ph, 'a respawn jump does not advance the stride');
   const r = M.pose(M.create(), u, 0.016, 3, true); assert.strictEqual(r.sway + r.body + r.roll + r.squash, 0, 'reduced motion is still');
 });
+test('motion gaits (0.21): Dora bobs and rolls as in 0.20; Anna is lower, rolls more and plants her feet', () => {
+  const M = require(path.join(__dirname, '..', 'js', 'motion.js'));
+  assert.strictEqual(M.gaitOf('dora').bob, 1); assert.strictEqual(M.gaitOf('dora').braid, null); assert.strictEqual(M.gaitOf('myra').throw, 0);
+  const walk = (id, n) => { const m = M.create(), u = { x: 0, z: 0, yaw: 0, onGround: true, def: { id }, lastShotT: -99 }; let p, sq = 0, contacts = 0;
+    for (let i = 0; i < n; i++) { u.z += 0.2; p = M.pose(m, u, 1 / 30, i / 30, false, { r: 0, f: 6, fb: true, m: 1, h: 2.4 }); if (p.contact) contacts++; sq = Math.max(sq, p.squash); } return { p, sq, contacts }; };
+  const d = walk('dora', 90), a = walk('anna', 90), lift = Math.abs(Math.sin(d.p.phase)) * d.p.mix;
+  assert.ok(Math.abs(d.p.body - (0.062 * lift - 0.024 * d.p.mix)) < 1e-9, 'Dora bobs exactly as in 0.20');
+  assert.ok(Math.abs(d.p.roll - d.p.sway * 0.03 - Math.max(-0.06, Math.min(0.06, -d.p.turn * 0.02))) < 1e-9, 'Dora rolls exactly as in 0.20 (no idle while striding)');
+  assert.ok(a.contacts > 3, 'Anna steps: ' + a.contacts); assert.ok(a.sq > d.sq + 0.1, 'each of Anna\'s steps squashes, Dora\'s do not: ' + a.sq.toFixed(2) + ' vs ' + d.sq.toFixed(2));
+  assert.ok(a.p.g.shift > 1 && a.p.g.bob < 1, 'Anna moves her weight more and bounces less');
+});
+test('the braid (0.21): hangs at rest, trails a run across the screen, swings with the step and settles when she stops', () => {
+  const M = require(path.join(__dirname, '..', 'js', 'motion.js')), u = { x: 0, z: 0, yaw: 0, onGround: true, def: { id: 'anna' }, lastShotT: -99, id: 1 };
+  const run = (m, n, sc, step, fps) => { let p, lo = 0, hi = 0; const dt = 1 / (fps || 30); for (let i = 0; i < n; i++) { u.x += (step || 0) * 30 * dt; p = M.pose(m, u, dt, (m.t = (m.t || 0) + dt), false, sc); lo = Math.min(lo, p.braid); hi = Math.max(hi, p.braid); } return { p, lo, hi }; };
+  let m = M.create(); let r = run(m, 60, { r: 0, f: 0, fb: true, m: 1, h: 2.4 }); assert.ok(Math.abs(r.p.braid) < 0.02, 'hangs straight when standing: ' + r.p.braid.toFixed(3));
+  m = M.create(); r = run(m, 90, { r: 6, f: 0, fb: false, m: 1, h: 2.4 }, 0.2); assert.ok(r.p.braid < -0.15, 'running to the right of the screen trails it to the left: ' + r.p.braid.toFixed(2));
+  const mm = M.create(); const r2 = run(mm, 90, { r: -6, f: 0, fb: false, m: 1, h: 2.4 }, 0.2); assert.ok(Math.abs(r2.p.braid + r.p.braid) < 0.05, 'and the mirror of it running left');
+  m = M.create(); r = run(m, 90, { r: 0, f: 6, fb: true, m: 1, h: 2.4 }, 0.2); assert.ok(r.hi - r.lo > 0.12, 'walking away, the step swings it side to side: ' + (r.hi - r.lo).toFixed(2));
+  const settle = run(m, 120, { r: 0, f: 0, fb: true, m: 1, h: 2.4 }, 0); assert.ok(Math.abs(settle.p.braid) < 0.03, 'and it settles after she stops: ' + settle.p.braid.toFixed(3));
+  const a = M.create(), b = M.create(); u.x = 0; const ra = run(a, 30, { r: 6, f: 0, fb: false, m: 1, h: 2.4 }, 0.2, 30); u.x = 0; const rb = run(b, 120, { r: 6, f: 0, fb: false, m: 1, h: 2.4 }, 0.05, 120);
+  assert.ok(Math.abs(ra.p.braid - rb.p.braid) < 0.06, 'about the same at 30 and 120 frames a second: ' + ra.p.braid.toFixed(3) + ' vs ' + rb.p.braid.toFixed(3));
+  const d = M.pose(M.create(), { x: 0, z: 0, yaw: 0, onGround: true, def: { id: 'dora' } }, 1 / 30, 0, false, { r: 6, f: 0 }); assert.strictEqual(d.braid, 0, 'no braid, no swing');
+  assert.strictEqual(M.pose(M.create(), u, 1 / 30, 0, true, { r: 6, f: 0 }).braid, 0, 'reduced motion: still');
+});
+test('the throw (0.21): a held trigger winds up before the next shot, the shot throws, letting go settles; others never wind up', () => {
+  const M = require(path.join(__dirname, '..', 'js', 'motion.js')), m = M.create(), u = { x: 0, z: 0, yaw: 0, onGround: true, def: { id: 'anna' }, lastShotT: -99, ctl: { fire: true }, fireT: 0.4, ammo: 5, reloadT: 0 };
+  let p; for (let i = 0; i < 12; i++) { u.fireT -= 1 / 30; p = M.pose(m, u, 1 / 30, i / 30, false); } assert.ok(p.throw < -0.4, 'wound up as the shot comes: ' + p.throw.toFixed(2));
+  u.lastShotT = 0.4; u.fireT = 0.476; p = M.pose(m, u, 1 / 30, 0.41, false); assert.ok(p.throw > 0.6, 'thrown on the shot: ' + p.throw.toFixed(2));
+  u.ctl.fire = false; for (let i = 0; i < 30; i++) p = M.pose(m, u, 1 / 30, 0.45 + i / 30, false); assert.ok(Math.abs(p.throw) < 0.02, 'settles when the trigger is let go');
+  const d = M.create(), ud = Object.assign({}, u, { def: { id: 'dora' }, ctl: { fire: true }, fireT: 0.05 }); for (let i = 0; i < 10; i++) p = M.pose(d, ud, 1 / 30, i / 30, false); assert.strictEqual(p.throw, 0, 'Dora fires, she does not throw');
+});
+test('ability poses (0.21): Tumble stomps, Core Sample braces and holds the aim, a dash has no pose', () => {
+  const M = require(path.join(__dirname, '..', 'js', 'motion.js')), u = { x: 0, z: 0, yaw: 0, onGround: true, def: { id: 'anna' }, lastShotT: -99 };
+  let m = M.create(); M.pose(m, u, 1 / 30, 0, false); assert.strictEqual(M.cast(m, 'nova'), 'stomp'); let sq = 0, st = 0, p; for (let i = 1; i < 6; i++) { p = M.pose(m, u, 1 / 30, i / 30, false); sq = Math.max(sq, p.squash); st = Math.max(st, p.stomp); }
+  assert.ok(sq > 0.5 && st > 0.8, 'a stomp squashes hard: ' + sq.toFixed(2));
+  m = M.create(); M.pose(m, u, 1 / 30, 0, false); assert.strictEqual(M.cast(m, 'line', false), 'brace'); let bk = 0; for (let i = 1; i < 9; i++) { p = M.pose(m, u, 1 / 30, i / 30, false); bk = Math.max(bk, p.brace); }
+  assert.ok(bk > 0.15 && p.aim > 0.8, 'shoved back and holding the aim: ' + bk.toFixed(2) + ', aim ' + p.aim.toFixed(2)); for (let i = 0; i < 60; i++) p = M.pose(m, u, 1 / 30, 1 + i / 30, false); assert.ok(p.brace < 0.01 && p.aim < 0.2, 'and recovers');
+  assert.strictEqual(M.cast(M.create(), 'dash'), null); assert.strictEqual(M.cast(M.create(), 'line', true), 'point');
+});
+test('idle and coat (0.21): standing is not a frozen card; the coat halves lift with their own knee', () => {
+  const M = require(path.join(__dirname, '..', 'js', 'motion.js')), u = { x: 0, z: 0, yaw: 0, onGround: true, def: { id: 'anna' }, lastShotT: -99, id: 2 }, m = M.create();
+  const xs = []; for (let i = 0; i < 150; i++) xs.push(M.pose(m, u, 1 / 30, i / 30, false, { r: 0, f: 0, fb: true }).idle); assert.ok(Math.max(...xs) - Math.min(...xs) > 0.3, 'the weight drifts while standing');
+  assert.strictEqual(M.pose(M.create(), u, 1 / 30, 3, true).idle, 0, 'reduced motion: still');
+  const w = M.create(); let maxL = 0, maxR = 0; for (let i = 0; i < 60; i++) { u.z += 0.2; const p = M.pose(w, u, 1 / 30, 5 + i / 30, false, { r: 0, f: 6, fb: true }); if (p.sway > 0.6) maxL = Math.max(maxL, p.flapL - p.flapR); if (p.sway < -0.6) maxR = Math.max(maxR, p.flapR - p.flapL); }
+  assert.ok(maxL > 0.3 && maxR > 0.3, 'each half lifts with its own leg: ' + maxL.toFixed(2) + ', ' + maxR.toFixed(2));
+});
 test('the model never reads the look: sim and core have no presentation references', () => {
   for (const f of ['core.js', 'sim.js']) { const src = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8').replace(/typeof window !== 'undefined' \? window : globalThis/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/.*$/gm, '$1'); // comments may talk about the rule; code may not break it
     for (const bad of [/\bLL\.gfx\b/, /\bLL\.ui\b/, /\bdocument\b/, /\bwindow\b/, /\blook\b/i, /\bLK\b/, /localStorage/]) assert.ok(!bad.test(src), f + ' mentions ' + bad); }
