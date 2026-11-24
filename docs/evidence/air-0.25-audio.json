@@ -1,0 +1,44 @@
+{
+ "jump (Dora)": {
+  "peak": 0.044,
+  "rms": 0.0018,
+  "seconds": 0.08,
+  "threw": null
+ },
+ "jump (Anna, plain)": {
+  "peak": 0.02,
+  "rms": 0.0005,
+  "seconds": 0.02,
+  "threw": null
+ },
+ "second jump (Anna, rock-hop)": {
+  "peak": 0.134,
+  "rms": 0.0062,
+  "seconds": 0.16,
+  "threw": null
+ },
+ "second jump (Skein Doll, tuck)": {
+  "peak": 0.059,
+  "rms": 0.0022,
+  "seconds": 0.1,
+  "threw": null
+ },
+ "hover (Myra Belle)": {
+  "peak": 0.068,
+  "rms": 0.0083,
+  "seconds": 1.23,
+  "threw": null
+ },
+ "hoverend release (Myra Belle)": {
+  "peak": 0.039,
+  "rms": 0.0027,
+  "seconds": 0.11,
+  "threw": null
+ },
+ "dash (for scale)": {
+  "peak": 0.042,
+  "rms": 0.0015,
+  "seconds": 0.07,
+  "threw": null
+ }
+}

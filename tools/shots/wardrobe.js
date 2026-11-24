@@ -5,7 +5,7 @@
 //   python3 tools/shots/wardrobe-sheet.py /tmp/t/wd docs/evidence/wardrobe-0.23.jpg
 //   ffmpeg -y -framerate 30 -i /tmp/t/wd/clip/f%03d.png -c:v libx264 -preset veryfast -crf 26 -pix_fmt yuv420p docs/evidence/wardrobe-0.23.mp4
 // Env: LL_ROOT, OUT (default /tmp/t/wd), PORT (default 8810; 8810 to 8814 are this script's), LOOKS (default snow,lantern,origami),
-//      SETS (default all four below), HERO (0 Dora, 1 Anna, 2 Myra, 3 Skein), CLIP=0 to skip the clip.
+//      SETS (default all four below), HERO (0 Dora, 1 Anna, 2 Myra, 3 Skein, 4 Rook), CLIP=0 to skip the clip.
 const { chromium } = require('/opt/npm-tools/node_modules/playwright');
 const fs = require('fs'), http = require('http'), path = require('path');
 const root = process.env.LL_ROOT || process.cwd(), out = process.env.OUT || '/tmp/t/wd', port = +(process.env.PORT || 8810), hero = +(process.env.HERO || 0);

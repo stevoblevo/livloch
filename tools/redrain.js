@@ -9,7 +9,7 @@ for (const diff of [1, 2]) {
   for (const name in variants) {
     let wins = 0, lossT = [], dark = 0, deaths = 0, lost1012 = 0;
     for (let seed = 1; seed <= n; seed++) {
-      const W = S.newWorld({ heroPick: seed % 4, difficulty: diff, auto: true, seed: seed * 7 + diff, tune: variants[name] });
+      const W = S.newWorld({ heroPick: seed % LL.HEROES.length /* 0.25 rook: five heroes */, difficulty: diff, auto: true, seed: seed * 7 + diff, tune: variants[name] });
       while (!W.over && W.t < 1500) { S.step(1 / 40); for (const e of W.fx) { if (e.k === 'thiefhome' && e.carry) dark++; if (e.k === 'herokill') deaths++; if (e.k === 'structdown' && e.u.team === 0 && W.t >= 600 && W.t < 720) lost1012++; } W.fx.length = 0; }
       if (W.winner === 0) wins++; else lossT.push(W.t);
     }

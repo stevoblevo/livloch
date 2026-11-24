@@ -7,7 +7,7 @@ const S = LL.sim, n = +process.argv[2] || 6;
 for (const diff of [0, 1, 2]) {
   let wins = 0; const out = [];
   for (let seed = 1; seed <= n; seed++) {
-    const W = S.newWorld({ heroPick: seed % 4, difficulty: diff, auto: true, seed: seed * 7 + diff });
+    const W = S.newWorld({ heroPick: seed % LL.HEROES.length /* 0.25 rook: five heroes */, difficulty: diff, auto: true, seed: seed * 7 + diff });
     while (!W.over && W.t < 1500) {
       S.step(1 / 40); W.fx.length = 0;
       for (const u of W.units) if (!isFinite(u.x + u.z + u.hp)) { console.error('NaN in', u.kind); process.exit(1); }

@@ -184,7 +184,11 @@ body:not(.touch) #tZip { display: none; }
 #title h1 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: clamp(54px, 11vw, 112px); line-height: 0.9; letter-spacing: 0.01em; }
 #title h1 em { color: var(--ember); font-style: italic; }
 #title .tag { margin: 0; font-family: var(--f-display); font-style: italic; font-size: clamp(18px, 2.6vw, 24px); color: var(--paper); }
-#heroes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+/* 0.25 rook: five heroes. One row of five: on a wide window the row runs a little past the text column, over the painting's sky;
+   narrower, the cards tighten; on a phone two columns and the fifth card takes the full width (below, in the 760px block). */
+#heroes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 1100px) { #heroes { width: min(930px, calc(100vw - 110px)); gap: 10px; } }
+@media (min-width: 761px) and (max-width: 1099px) { .hero { padding: 9px 9px 10px; } .hero h4 { font-size: 17px; gap: 5px; } .hero .ti { font-size: 13px; } .hero p { font-size: 12.5px; } .hero ul { font-size: 12px; } }
 .hero { text-align: left; padding: 12px; border-radius: 4px; border: 1px solid var(--line); background: rgba(var(--wash), 0.66); cursor: pointer; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .hero[aria-pressed="true"] { border-color: var(--hc); background: rgba(46, 26, 36, 0.86); box-shadow: inset 0 0 22px -10px var(--hc); }
 .hero h4 { margin: 0; font-family: var(--f-sc); font-weight: 400; font-size: 20px; letter-spacing: 0.03em; display: flex; align-items: center; gap: 7px; }
@@ -282,6 +286,7 @@ body[data-look="glow"] #app::after { content: ""; position: absolute; inset: 0; 
 
 @media (max-width: 760px) {
   #heroes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero:last-child:nth-child(odd) { grid-column: 1 / -1; } /* 0.25 rook: an odd card out takes the row */
   .hero ul { display: none; }
   #shopCols { grid-template-columns: minmax(0, 1fr); }
   .opt { grid-template-columns: minmax(0, 1fr); }
@@ -403,7 +408,7 @@ body[data-look="glow"] #app::after { content: ""; position: absolute; inset: 0; 
         <dl class="keys k-pad"><dt>Sticks</dt><dd>move and aim</dd><dt>RT · LT</dt><dd>fire · zoom</dd><dt>A · B · X</dt><dd>jump · dash · reload</dd><dt>LB RB Y</dt><dd>abilities</dd><dt>D-pad up · right · Back · Start</dt><dd>ride thread · change the view · shop · pause</dd></dl>
       </div>
       <p id="worlds">Other doors: </p>
-      <footer>Livloch 0.24.1 · <a href="https://stevoblevo.github.io/livloch/versions/">every version</a> · <a href="https://github.com/stevoblevo/livloch">made in the open on GitHub</a> · part of <a href="https://saelion.co">Saelion</a> · music made with ElevenLabs Music</footer>
+      <footer>Livloch 0.25 · <a href="https://stevoblevo.github.io/livloch/versions/">every version</a> · <a href="https://github.com/stevoblevo/livloch">made in the open on GitHub</a> · part of <a href="https://saelion.co">Saelion</a> · music made with ElevenLabs Music</footer>
     </div>
   </section>
 
