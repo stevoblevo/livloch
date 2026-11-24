@@ -1207,7 +1207,7 @@ function ghost(m, h, P, pt) {
   gh.scale.set(wd * (m.paper.sign || 1), P.h, 1); gh.material.color.setHex(LK.team[h.team]).multiplyScalar(LK.add ? 0.55 : 1); gh.life = 0.24; gh.t = 0; gh.visible = true;
   if (LL.wardrobe) LL.wardrobe.ghost(gh, h, LK.add); // 0.23 wardrobe: the player's dash colour (and puts the pooled copy back for others)
 }
-function stepGhosts(dt) { for (let i = 0; i < ghosts.length; i++) { const g = ghosts[i]; if (!g || !g.visible) continue; g.t += dt; const f = g.t / g.life; if (f >= 1) { g.visible = false; continue; } g.material.opacity = (LK.add ? 0.7 : 0.35) * (1 - f) * (1 - f); g.scale.y *= 1 + dt * 0.3; } }
+function stepGhosts(dt) { for (let i = 0; i < ghosts.length; i++) { const g = ghosts[i]; if (!g || !g.visible) continue; g.t += dt; const f = g.t / g.life; if (f >= 1) { g.visible = false; continue; } g.material.opacity = (g.userData.op || (LK.add ? 0.7 : 0.35)) * (1 - f) * (1 - f); /* 0.23 wardrobe: userData.op, a dense dash colour */ g.scale.y *= 1 + dt * 0.3; } }
 /* TITLE CAMERA (0.20). The title screen used to circle the valley from high up. Now it is a slow trailer: a run of
    shots, each a gentle move with eased ends — gliding low along the middle thread, craning up over the loch, circling a
    lantern house, drifting past the Hush side, then the wide view — cut together, about twelve seconds each. Reduced

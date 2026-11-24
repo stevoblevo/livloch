@@ -151,12 +151,12 @@ WD.known = function (cfg) { const k = {}; ITEMS.forEach(function (it) { if (WD.h
 /* Atlas shapes: 0 soft dot, 1 petal, 2 folded square, 3 puff, 4 ink splat, 5 firefly, 6 gold flake, 7 four-point glint. */
 const FX = WD.FX = {
   motes: { mesh: 'glow', k: 0, alt: 7, altP: 0.18, every: 0.3, idle: 2.2, y: [0.5, 1.5], back: 0.25, spread: 0.35, size: [0.1, 0.17], end: 0.4, life: [1.1, 1.8], vx: 0.25, vy: [0.25, 0.7], grav: -0.25, drag: 1.5, flut: 0.35, spin: 0, blink: 0.35 },
-  petals: { mesh: 'paper', k: 1, every: 0.42, idle: 1.1, y: [1.5, 2.1], back: 0.2, spread: 0.45, size: [0.15, 0.22], end: 1, life: [2.2, 3.0], vx: 0.4, vy: [0, 0.3], grav: 0.7, drag: 2.0, flut: 0.9, spin: 3, blink: 0 },
+  petals: { mesh: 'paper', k: 1, every: 0.34, idle: 1.3, y: [1.5, 2.2], back: 0.2, spread: 0.5, size: [0.19, 0.27], end: 1, life: [2.2, 3.0], vx: 0.4, vy: [0, 0.3], grav: 0.7, drag: 2.0, flut: 0.9, spin: 3, blink: 0 },
   fireflies: { mesh: 'glow', k: 5, every: 0.55, idle: 1.6, y: [0.3, 1.9], back: 0.4, spread: 0.9, size: [0.2, 0.3], end: 0.8, life: [2.5, 3.8], vx: 0.5, vy: [-0.1, 0.3], grav: 0, drag: 0.6, flut: 0.7, spin: 0, blink: 1 },
   confetti: { mesh: 'paper', k: 2, every: 0.3, idle: 0.5, y: [1.3, 1.9], back: 0.2, spread: 0.4, size: [0.11, 0.16], end: 1, life: [1.8, 2.4], vx: 0.9, vy: [0.6, 1.4], grav: 2.2, drag: 1.6, flut: 0.6, spin: 9, blink: 0 },
   powder: { step: true, mesh: 'paper', k: 3, n: 4, size: [0.18, 0.28], end: 2.1, life: [0.5, 0.8], vx: 0.9, vy: [0.2, 0.6], grav: -0.1, drag: 3.5, spin: 0.6, glint: 1 },
-  leaf: { step: true, mesh: 'paper', k: 6, n: 3, size: [0.09, 0.13], end: 1, life: [1.3, 1.8], vx: 1.0, vy: [1.4, 2.4], grav: 5, drag: 0.8, spin: 10, flut: 0.4, glint: 1 },
-  splat: { step: true, mesh: 'flat', k: 4, n: 1, size: [0.34, 0.46], end: 1.08, life: [2.4, 2.8], vx: 0, vy: [0, 0], grav: 0, drag: 0, spin: 0, drops: 2 }
+  leaf: { step: true, mesh: 'paper', k: 6, n: 4, size: [0.13, 0.18], end: 1, life: [1.3, 1.8], vx: 1.0, vy: [1.4, 2.4], grav: 5, drag: 0.8, spin: 10, flut: 0.4, glint: 1 },
+  splat: { step: true, mesh: 'flat', k: 4, n: 1, size: [0.5, 0.64], end: 1.08, life: [2.4, 2.8], vx: 0, vy: [0, 0], grav: 0, drag: 0, spin: 0, drops: 2 }
 };
 /* Colours per look. d is the default for the dark looks; origami is daylight paper, where light cannot glow, so its
    colours are inks and folded papers instead. Ghost entries are [colour, additive]. */
@@ -167,7 +167,7 @@ const PAL = WD.PAL = {
   confetti: { snow: [0xff9ac8, 0xffd27a, 0xb8b4ff, 0xffffff], origami: [0xb8311a, 0x2a4c86, 0xc8902e, 0xffffff], d: [0xff6a4d, 0xffc060, 0x5fe6b6, 0xf4e8d6] },
   powder: { snow: [0xeef0ff, 0xffffff], lantern: [0xfff0dc, 0xffffff], origami: [0xb4c2dc, 0x8fa8d0], d: [0xf0f0ff, 0xffffff] },
   leaf: { origami: [0xc8902e, 0xa8741e], d: [0xf0c060, 0xffd890] },
-  splat: { snow: [0x1e1640, 0x2a2058], lantern: [0x140b1c, 0x241530], ink: [0x9a7cff, 0x7a5cff], glow: [0xff4faa, 0x62e6ff], origami: [0x242f3b, 0x2a3a4a], d: [0x161020, 0x221830] },
+  splat: { snow: [0x100a26, 0x1a1238], lantern: [0x140b1c, 0x241530], ink: [0x9a7cff, 0x7a5cff], glow: [0xff4faa, 0x62e6ff], origami: [0x242f3b, 0x2a3a4a], d: [0x161020, 0x221830] },
   halo: { snow: [0xffd27a], lantern: [0xffb050], origami: [0xb8311a], d: [0xffc860] },
   crane: { snow: [0xffe2f0], lantern: [0xffe6b0], origami: [0x2a4c86], d: [0xfff0e0] },
   moons: { snow: [0xffe08a], origami: [0x8c5a2b], d: [0xffd36a] },
@@ -376,7 +376,7 @@ function footfall(it, x, z, fx, fz, big) {
     else spawn(F, it, x + (rnd() - 0.5) * 0.15, 0.1, z + (rnd() - 0.5) * 0.15, Math.cos(a) * sp - fx * 0.3, rr(F.vy), Math.sin(a) * sp - fz * 0.3);
   }
   if (F.drops) for (let k = 0; k < F.drops; k++) { const a = rnd() * 6.283; spawn(DROP, it, x, 0.12, z, Math.cos(a) * 1.2, 1 + rnd(), Math.sin(a) * 1.2); }
-  if (F.glint && !R.reduced) glint(x + (rnd() - 0.5) * 0.3, 0.2 + rnd() * 0.2, z + (rnd() - 0.5) * 0.3, it.id === 'leaf' ? (isLight(look) ? 0xc8902e : 0xfff0c0) : (isLight(look) ? 0x8fa8d0 : 0xffffff), 0.16);
+  if (F.glint && !R.reduced) glint(x + (rnd() - 0.5) * 0.3, 0.2 + rnd() * 0.2, z + (rnd() - 0.5) * 0.3, it.id === 'leaf' ? (isLight(look) ? 0xc8902e : 0xfff0c0) : (isLight(look) ? 0x8fa8d0 : 0xffffff), it.id === 'leaf' ? 0.24 : 0.16);
 }
 /* The player's hero, once a frame, from the top of gfx.js's hero loop: the last frame's pose (one frame late, unseen). */
 WD.hero = function (m, h, dt, t, cam) {
@@ -437,8 +437,8 @@ WD.hero = function (m, h, dt, t, cam) {
 /* A dash or thread-ride afterimage, from the end of gfx.js's ghost(): recolour the player's; put the others back. */
 WD.ghost = function (gh, h, lookAdd) {
   if (!T) return; const mt = gh.material, cfg = cfgNow(), it = h && h.isPlayer && cfg ? WD.worn(cfg, 'ghost') : null;
-  if (!it) { if (mt.userData.wd) { mt.blending = lookAdd ? T.AdditiveBlending : T.NormalBlending; mt.userData.wd = 0; } return; }
-  const p = pal(it.id, look); mt.color.setHex(p[0]); if (p[1] && lookAdd) { mt.blending = T.AdditiveBlending; mt.color.multiplyScalar(0.7); } else mt.blending = T.NormalBlending; mt.userData.wd = 1;
+  if (!it) { if (mt.userData.wd) { mt.blending = lookAdd ? T.AdditiveBlending : T.NormalBlending; mt.userData.wd = 0; } gh.userData.op = 0; return; }
+  const p = pal(it.id, look); mt.color.setHex(p[0]); if (p[1] && lookAdd) { mt.blending = T.AdditiveBlending; mt.color.multiplyScalar(0.7); gh.userData.op = 0; } else { mt.blending = T.NormalBlending; gh.userData.op = 1.6; } mt.userData.wd = 1; // ink must be dense to read as ink: over 1, it stays solid for the first part of its fade
   if (!PG || R.reduced) return;
   if (it.id === 'ink') { const P = PP; Q.x = h.x + (rnd() - 0.5) * 0.4; Q.y = 0.6 + rnd() * 1.2; Q.z = h.z + (rnd() - 0.5) * 0.4; Q.vx = Q.vz = 0; Q.vy = -0.5; Q.life = 0.7; Q.s0 = 0.09; Q.s1 = 0.07; Q.rot = rnd() * 6; Q.spin = 0; Q.grav = 9; Q.drag = 0.4; Q.flut = 0; Q.col = isLight(look) || !p[1] ? p[0] : 0x3a2a70; Q.a = 1; Q.k = 4; Q.blink = 0; Q.floor = 0.05; P.put(Q); }
   else if (it.id === 'moon') glint(h.x + (rnd() - 0.5) * 0.6, 0.5 + rnd() * 1.6, h.z + (rnd() - 0.5) * 0.6, isLight(look) ? 0x2a4c86 : 0xe8f4ff, 0.22);
@@ -469,7 +469,7 @@ Prev.prototype.put = function (x, y, vx, vy, F, col, k, s0, glow) {
 };
 Prev.prototype.tick = function (dt) {
   const cv = this.cv, g = this.g, W = cv.width, H = cv.height, o = this.o, cfg = cfgNow() || {}, lk = cfg.look || 'snow', light = isLight(lk), red = !!(R && R.reduced);
-  this.t += dt; const t = this.t, K = H * 0.6 / 2.45, gy = H * 0.86, x0 = W * 0.42, speed = o.small ? 2.6 : 3.4, dash = !!o.wear.ghost && (t % (o.small ? 2.2 : 3.2)) < 0.42, v = speed * (dash ? 2.6 : 1);
+  this.t += dt; const t = this.t, K = H * (o.small ? 0.74 : 0.68) / 2.45, gy = H * 0.88, x0 = W * (o.small ? 0.36 : 0.4), SZ = o.small ? 1.8 : 1.45, speed = o.small ? 2.6 : 3.4, dash = !!o.wear.ghost && (t % (o.small ? 2.2 : 3.2)) < 0.42, v = speed * (dash ? 2.6 : 1);
   const X = function (m) { return x0 + m * K; }, Y = function (m) { return gy - m * K; };
   // background: the look's night and its ground
   const L = LL.gfx && LL.gfx.LOOKS ? LL.gfx.LOOKS[lk] : null, hx = function (n) { return '#' + ('00000' + n.toString(16)).slice(-6); };
@@ -495,7 +495,7 @@ Prev.prototype.tick = function (dt) {
   // particles: the world slides right under a figure walking left
   for (let pass = 0; pass < 2; pass++) for (let i = 0; i < this.P.length; i++) { const p = this.P[i]; if (p.l <= 0 || p.flat !== (pass === 0)) continue; // marks on the ground first
     { p.l -= dt; const dm = Math.exp(-p.dr * dt); p.vx = (p.vx - v) * dm + v; p.vy = p.vy * dm - p.gr * dt; p.x += (p.vx + (p.fl && !red ? Math.sin(t * 3.1 + p.ph) * p.fl : 0)) * dt; p.y += p.vy * dt; if (p.y < 0.02 && !p.flat) { p.y = 0.02; p.vy = 0; p.vx = v; p.sp *= 0.3; } p.r += p.sp * dt; }
-    if (p.l <= 0) continue; const f = 1 - p.l / p.m, s = (p.s0 + (p.s1 - p.s0) * f) * K, a = Math.min(1, (p.m - p.l) * 10) * Math.pow(1 - f, 1.3) * (p.bl && !red ? 1 - p.bl * (0.5 + 0.5 * Math.sin(t * 7 + p.ph * 3)) : 1);
+    if (p.l <= 0) continue; const f = 1 - p.l / p.m, s = (p.s0 + (p.s1 - p.s0) * f) * K * SZ, a = Math.min(1, (p.m - p.l) * 10) * Math.pow(1 - f, 1.3) * (p.bl && !red ? 1 - p.bl * (0.5 + 0.5 * Math.sin(t * 7 + p.ph * 3)) : 1);
     const img = tinted('s', p.k, p.c, shapeCanvas(p.k)); ctx.save(); ctx.globalAlpha = a; ctx.globalCompositeOperation = p.glow && A ? 'lighter' : 'source-over'; ctx.translate(X(p.x), Y(p.y)); if (p.flat) ctx.scale(1, 0.32); ctx.rotate(p.r); ctx.drawImage(img, -s / 2, -s / 2, s, s); ctx.restore(); }
   // the figure, its dash copies behind it
   const pic = heroPic(o.hero || 'dora'), P = LL.gfx && LL.gfx.PAPER ? LL.gfx.PAPER[o.hero || 'dora'] : null, hh = (P ? P.h : 2.4) * K;
@@ -510,7 +510,7 @@ Prev.prototype.tick = function (dt) {
   }
   // the light at the shoulder (behind it, as it walks)
   const li = o.wear.lamp;
-  if (li) { const p = pal(li.id, lk), lx = X(0.5 + (li.id === 'moth' && !red ? Math.sin(t * 3.1) * 0.15 : 0)), ly = Y(2.0 + (red ? 0 : Math.sin(t * 2.3) * 0.07)), r = 0.13 * K;
+  if (li) { const p = pal(li.id, lk), lx = X(0.5 + (li.id === 'moth' && !red ? Math.sin(t * 3.1) * 0.15 : 0)), ly = Y(2.0 + (red ? 0 : Math.sin(t * 2.3) * 0.07)), r = 0.13 * K * Math.min(SZ, 1.5);
     if (A) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(tinted('g', 'l', p[1] || p[0], glowCanvas()), lx - r * 5, ly - r * 5, r * 10, r * 10); ctx.restore(); }
     ctx.save(); ctx.translate(lx, ly); const hx2 = function (n) { return '#' + ('00000' + n.toString(16)).slice(-6); };
     if (li.id === 'lantern') { ctx.fillStyle = light ? '#242f3b' : '#2a1a14'; ctx.fillRect(-0.5, -r * 2.6, 1, r * 1.4); ctx.fillRect(-r * 0.75, -r * 1.25, r * 1.5, r * 0.3); ctx.fillRect(-r * 0.75, r * 0.95, r * 1.5, r * 0.3); ctx.fillStyle = hx2(p[0]); ctx.beginPath(); ctx.ellipse(0, 0, r * 0.95, r * 1.05, 0, 0, 6.28); ctx.fill(); ctx.fillStyle = 'rgba(0,0,0,0.18)'; for (let y = -2; y <= 2; y++) ctx.fillRect(-r * 0.9, y * r * 0.4, r * 1.8, 1); }
@@ -536,7 +536,7 @@ function save() { if (saveFn) saveFn(); }
 function sound(k) { try { LL.audio.init(); LL.audio.ui(k); } catch (e) {} }
 
 /* ---------- the wardrobe screen ---------- */
-let big = null, focusIt = null;
+let big = null, focusIt = null, openedAt = 0;
 function unseen(cfg) { let n = 0; ITEMS.forEach(function (it) { if (WD.has(cfg, it) && !cfg.wardSeen[it.id]) n++; }); return cfg.all ? 0 : n; }
 WD.badge = function () { const b = $('bWard'), cfg = cfgNow(); if (!b || !cfg) return; const n = unseen(cfg); b.innerHTML = 'Wardrobe' + (n ? ' <i class="wdot">' + n + ' new</i>' : ''); b.setAttribute('aria-label', 'Wardrobe' + (n ? ', ' + n + ' new' : '')); };
 function info(it, plainSlot) {
@@ -563,7 +563,7 @@ function card(it, slot) {
   b.setAttribute('aria-label', (it ? it.name : 'Plain ' + SLOT[slot].name) + (open ? (worn ? ', worn' : '') : ', locked: ' + WD.how(it)));
   const w = {}; if (it) w[slot] = it; const p = new Prev(b.querySelector('canvas'), { wear: w, hero: heroId(), small: true, sil: !open }); watch(p);
   const show = function () { focusIt = it; info(it, slot); };
-  b.addEventListener('focus', show); b.addEventListener('pointerenter', show);
+  b.addEventListener('focus', show); b.addEventListener('pointerenter', function () { if (performance.now() - openedAt > 450) show(); }); // not the card that happens to open under the pointer
   b.addEventListener('click', function () {
     if (it && !open) { sound('no'); show(); return; }
     WD.equip(cfg, it ? (worn ? '' : it.id) : '', slot); save(); sound('ok'); draw(b.dataset.slot, b.dataset.id);
@@ -587,7 +587,7 @@ WD.openScreen = function () {
   const UI = LL.ui, cfg = cfgNow(); if (!UI || !UI.show || !cfg) return;
   if (!big) { big = new Prev($('wardPrev'), { wear: {}, hero: heroId() }); }
   sound();
-  UI.show('ward'); $('ward').hidden = false; $('ward').scrollTop = 0; draw(null, null); watch(big);
+  openedAt = performance.now(); UI.show('ward'); $('ward').hidden = false; $('ward').scrollTop = 0; draw(null, null); watch(big);
   if (LL.input && LL.input.device !== 'touch') { const b = $('bWardClose'); try { b.focus({ preventScroll: true }); } catch (e) {} }
   ITEMS.forEach(function (it) { if (WD.has(cfg, it)) cfg.wardSeen[it.id] = 1; }); save(); WD.badge();
 };
@@ -616,7 +616,7 @@ function overBox(on) {
   let h = '';
   if (gained.length) {
     h += '<h3>New in the wardrobe</h3>';
-    gained.slice(0, 3).forEach(function (it) { h += '<div class="wNew"><canvas width="240" height="150"></canvas><div><span class="sl">' + esc(SLOT[it.slot].name) + '</span><b>' + esc(it.name) + '</b><p>' + esc(it.line) + '</p><button class="btn small" data-wear="' + it.id + '"></button></div></div>'; });
+    h += '<div class="wNewRow">'; gained.slice(0, 3).forEach(function (it) { h += '<div class="wNew"><canvas width="240" height="140"></canvas><span class="sl">' + esc(SLOT[it.slot].name) + '</span><b>' + esc(it.name) + '</b><p>' + esc(it.line) + '</p><button class="btn small" data-wear="' + it.id + '"></button></div>'; }); h += '</div>';
     if (gained.length > 3) h += '<p class="sub">And ' + (gained.length - 3) + ' more in the wardrobe, on the title.</p>';
   }
   const nx = WD.next(cfg, 1)[0];

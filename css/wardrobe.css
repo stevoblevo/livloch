@@ -22,25 +22,30 @@
 .wcard .nw { position: absolute; right: 10px; top: 9px; font-style: normal; font-family: var(--f-sc); font-size: 11px; letter-spacing: 0.1em; color: var(--night); background: var(--gold); padding: 0 6px; border-radius: 2px; }
 #bWard .wdot { font-style: normal; font-size: 0.75em; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--gold); color: var(--night); vertical-align: 2px; }
 body[data-look="origami"] .wcard, body[data-look="origami"] #wardPrev { border-radius: 0; }
+/* --veil is worked out at :root from the dark wash, so in daylight Origami a panel stays dark under dark text; this screen takes the look's own wash */
+body[data-look="origami"] #ward .panel { background: rgba(var(--wash), 0.9); }
 body[data-look="origami"] .wcard[aria-pressed="true"] { background: rgba(184, 49, 26, 0.1); }
 
 /* the end screen */
 #wardOver { margin: 4px 0 14px; }
-#wardOver .wNew, #wardOver .wNext { display: grid; grid-template-columns: minmax(0, 240px) minmax(0, 1fr); gap: 14px; align-items: center; margin: 6px 0; }
-#wardOver .wNext { grid-template-columns: minmax(0, 130px) minmax(0, 1fr); margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+#wardOver .wNewRow { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin: 6px 0; }
+#wardOver .wNew { display: flex; flex-direction: column; gap: 2px; padding: 8px; border: 1px solid var(--gold); border-radius: 3px; background: rgba(var(--wash), 0.5); }
+#wardOver .wNew canvas { margin-bottom: 4px; }
+#wardOver .wNew .btn { align-self: flex-start; margin-top: auto; }
+#wardOver .wNext { display: grid; grid-template-columns: minmax(0, 120px) minmax(0, 1fr); gap: 14px; align-items: center; margin-top: 10px; }
 #wardOver canvas { width: 100%; height: auto; display: block; border: 1px solid var(--gold); border-radius: 3px; }
 #wardOver .wNext canvas { border-color: var(--line); border-style: dashed; }
-#wardOver b { font-family: var(--f-display); font-style: italic; font-weight: 400; font-size: 24px; display: block; line-height: 1.15; }
+#wardOver b { font-family: var(--f-display); font-style: italic; font-weight: 400; font-size: 22px; display: block; line-height: 1.15; }
 #wardOver .wNext b { display: inline; font-size: 20px; }
 #wardOver .wNext small { display: block; font-family: var(--f-sc); letter-spacing: 0.12em; color: var(--gold); font-size: 12px; }
-#wardOver p { margin: 4px 0 8px; color: var(--paper-dim); line-height: 1.4; }
+#wardOver p { margin: 2px 0 8px; color: var(--paper-dim); line-height: 1.35; font-size: 14px; }
 #wardOver .btn[aria-pressed="true"] { border-color: var(--ember); }
 
 @media (max-width: 760px) {
   .wTop { grid-template-columns: minmax(0, 1fr); }
   #wardPrev { max-width: 420px; }
   .wRow { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); }
-  #wardOver .wNew { grid-template-columns: minmax(0, 150px) minmax(0, 1fr); gap: 10px; }
+  #wardOver .wNewRow { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
   #wardOver .wNext { grid-template-columns: minmax(0, 100px) minmax(0, 1fr); }
   #wardOver b { font-size: 20px; }
 }
