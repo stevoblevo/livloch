@@ -95,7 +95,8 @@ var C = LL.C = {
    tools/tune.js (before and after tables: docs/evidence/tune-0.27-before.txt, -after.txt). Gentle is as it was. The
    tuning showed the long match is decided by the red rain, so the rain's two halves are the main knobs: what a full rain
    brings (rainWave, rainHollows) and what is left of it once the mood is answered (thinWave, thinHollows; until 0.27 a
-   thin rain brought nothing, and answering the mood alone won Cruel 97% of scripted matches). */
+   thin rain brought nothing, and answering the mood alone won Cruel 97% of scripted matches). In First Rain the rain is
+   the ending, so there a thin rain still brings nothing (sim.js). */
 C.DIFF = [
   { build: 1.2, towerH: 1, wave: 4, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 1500, hollowDmg: 55, hollowBack: 30, thiefEvery: 85, orbDrift: 0.7 },
   { build: 1.5, towerH: 1.25, wave: 4, rainWave: 2, thinWave: 1, rainHollows: 3, thinHollows: 2, hollowHp: 3000, hollowDmg: 82, hollowBack: 18, thiefEvery: 50, orbDrift: 0.4 },

@@ -1585,7 +1585,7 @@ function spawnWave() {
   const min = W.t / 60;
   for (let team = 0; team < 2; team++) for (let lane = 0; lane < 3; lane++) {
     const L = lanes[lane];
-    const D = C.DIFF[W.diff], cnt = team === 0 ? 4 : D.wave + (W.red > 0 ? (W.thin ? D.thinWave : D.rainWave) : 0) - (W.mercy ? 1 : 0);
+    const D = C.DIFF[W.diff], cnt = team === 0 ? 4 : D.wave + (W.red > 0 ? (W.thin ? (W.short ? 0 : D.thinWave) : D.rainWave) : 0) - (W.mercy ? 1 : 0);
     for (let k = 0; k < cnt; k++) {
       const s = team === 0 ? 2 + k * 2.4 : L.len - 2 - k * 2.4;
       LL.lanePoint(lane, s, P);
@@ -1661,7 +1661,7 @@ function hushStep(dt) {
   }
   else if (W.t >= W.redNext) {
     W.redNext += W.redEvery; W.red = C.RED_T; W.fallN++; if (W.mood && !W.mood.done) { W.mood.done = true; fx({ k: 'moodlost' }); }
-    fx({ k: 'red', thin: W.thin, n: W.fallN }); { const D = C.DIFF[W.diff], nh = W.fallen ? (W.thin ? 0 : 3) : (W.thin ? D.thinHollows : D.rainHollows); for (let l = 0; l < Math.min(3, nh); l++) spawnHollow(nh >= 3 ? l : [1, 0, 2][l], true); if (W.fallen && !W.thin) for (let k = 1; k < W.fallN; k++) spawnHollow(Math.floor(W.rng() * 3), true); } // 0.27 tune: how many hollows a rain brings is in C.DIFF
+    fx({ k: 'red', thin: W.thin, n: W.fallN }); { const D = C.DIFF[W.diff], nh = W.fallen ? (W.thin ? 0 : 3) : (W.thin ? (W.short ? 0 : D.thinHollows) : D.rainHollows); for (let l = 0; l < Math.min(3, nh); l++) spawnHollow(nh >= 3 ? l : [1, 0, 2][l], true); if (W.fallen && !W.thin) for (let k = 1; k < W.fallN; k++) spawnHollow(Math.floor(W.rng() * 3), true); } // 0.27 tune: how many hollows a rain brings is in C.DIFF; in First Rain the rain is the ending, so answering the mood still keeps them all away
   }
   // mercy: when the Reign is two structures behind, the Hush eases off
   let rd = 0, hd = 0; for (let i = 0; i < W.structs.length; i++) { const s = W.structs[i]; if (!s.alive) { if (s.team === 0) rd++; else hd++; } }

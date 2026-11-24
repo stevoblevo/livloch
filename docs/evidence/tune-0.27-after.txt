@@ -1,0 +1,44 @@
+
+LONG MATCH, 24 seeds from 1 (scripted player; simulator output, not human play)
+diff    lessons  win   margin  median  lost by gutter/overrun  structs lost R-H  player deaths (by)          longest quiet  folds moods ness
+Gentle  none     100%     4.1   11:38   0/0                    1.1-5.2           0.0 (ness 0.0)                 3:25        0.0   0.0  0.0
+Gentle  1         96%     3.6   12:20   0/1                    1.4-5.0           0.4 (ness 0.4, stray 0.0)      3:07        0.0   0.0  1.1
+Gentle  12       100%     3.9   11:25   0/0                    1.2-5.1           0.1 (ness 0.1)                 3:26        0.0   0.0  1.5
+Gentle  123      100%     5.4    9:18   0/0                    0.3-5.7           0.2 (ness 0.2)                 2:53        0.0   1.4  1.1
+Gentle  1234     100%     5.5    9:32   0/0                    0.0-5.5           0.0 ()                         2:57        3.5   1.4  1.4
+Gentle  12345    100%     5.2    9:40   0/0                    0.2-5.3           0.0 (ness 0.0)                 2:59        3.5   1.5  1.5
+Even    none      33%    -0.7   12:23   0/16                   4.5-3.8           0.0 (ness 0.0)                 4:17        0.0   0.0  0.2
+Even    1         54%    -1.1   14:20   0/11                   4.5-3.3           0.5 (ness 0.5)                 5:33        0.0   0.0  0.8
+Even    12        71%    -1.5   16:15   2/5                    4.7-3.2           0.2 (ness 0.2, trooper 0.0)    5:34        0.0   0.0  1.0
+Even    123      100%     0.9   14:20   0/0                    3.1-4.0           0.1 (ness 0.1)                 5:12        0.0   2.5  1.5
+Even    1234      96%     0.3   14:24   1/0                    3.8-4.0           0.1 (ness 0.1)                 4:56        3.6   2.5  1.5
+Even    12345    100%     0.1   14:00   0/0                    3.8-3.9           0.2 (ness 0.1, hollow 0.0)     4:13        3.1   2.4  1.4
+Cruel   none       4%    -2.5   11:52   0/23                   5.1-2.7           0.0 ()                         4:16        0.0   0.0  0.0
+Cruel   1          4%    -2.9   11:51   0/23                   5.0-2.1           0.1 (ness 0.1)                 4:26        0.0   0.0  0.6
+Cruel   12        13%    -2.5   12:18   1/20                   4.8-2.3           0.1 (ness 0.1, trooper 0.0)    4:08        0.0   0.0  0.6
+Cruel   123       42%    -1.0   13:41   0/14                   4.5-3.6           0.3 (ness 0.2, trooper 0.1, hollow 0.0)   4:34        0.0   2.5  1.3
+Cruel   1234      50%    -1.7   13:33   0/12                   4.9-3.3           0.1 (hollow 0.1)               4:15        2.9   2.4  1.2
+Cruel   12345     38%    -1.9   14:02   0/15                   4.9-3.0           0.0 (ness 0.0)                 4:10        2.8   2.4  1.1
+
+FIRST RAIN, 24 seeds from 1 (scripted player; simulator output, not human play)
+diff    lessons  stars  3+    houses  structs lost R-H  player deaths  moods ness  star sets
+Gentle  none       2.0    0%    100%   0.0-2.8                     0.0     0.0   0.0   HT 24
+Gentle  1          2.1   21%     92%   0.1-2.5                     0.2     0.0   0.2   HT 17, HTN 5, T 2
+Gentle  12         2.2   33%     88%   0.1-2.3                     0.0     0.0   0.4   HT 12, HTN 8, T 2, H 1
+Gentle  123        4.6  100%    100%   0.0-3.7                     0.0     1.0   0.6   HMTNG 14, HMTG 10
+Gentle  1234       4.7  100%    100%   0.0-3.5                     0.0     1.0   0.7   HMTNG 16, HMTG 8
+Gentle  12345      4.6  100%     96%   0.0-3.5                     0.0     1.0   0.7   HMTNG 16, HMTG 7, MTG 1
+Even    none       1.1    0%     38%   0.8-0.8                     0.0     0.0   0.0   T 9, HT 8, - 6, H 1
+Even    1          0.7    0%     13%   1.7-0.6                     0.2     0.0   0.0   - 11, T 10, HT 3
+Even    12         0.5    0%      4%   1.8-0.5                     0.1     0.0   0.0   T 12, - 11, H 1
+Even    123        2.7   63%     25%   1.0-0.7                     0.0     1.0   0.1   MTG 10, MG 4, M 3, HM 2
+Even    1234       2.8   58%     25%   1.3-0.5                     0.1     1.0   0.1   MG 10, MTG 7, HMTG 3, HMG 2
+Even    12345      3.0   75%     13%   1.5-1.0                     0.0     1.0   0.1   MTG 15, MG 6, HMTNG 3
+Cruel   none       0.1    0%      0%   2.3-0.1                     0.0     0.0   0.0   - 22, T 2
+Cruel   1          0.2    0%      0%   2.5-0.1                     0.0     0.0   0.0   - 20, T 3, N 1
+Cruel   12         0.2    4%      4%   2.5-0.1                     0.0     0.0   0.1   - 22, HTN 1, N 1
+Cruel   123        1.8    8%      4%   2.3-0.1                     0.3     1.0   0.0   MG 14, M 8, HMTNG 1, MTG 1
+Cruel   1234       2.1   13%      0%   2.8-0.1                     0.0     1.0   0.0   MG 21, MTG 2, MNG 1
+Cruel   12345      2.5   33%      0%   2.7-0.4                     0.0     1.0   0.1   MG 16, MTG 5, MTNG 3
+
+864 matches in 1042 s
