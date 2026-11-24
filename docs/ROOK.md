@@ -76,8 +76,16 @@ Camera kick for his gun: 0.85 (Dora 0.7, Myra 1.0, Anna 1.25, the Skein Doll 0.4
 ## What is checked, and how
 
 - **Tested** (`node tools/test.js`, seven tests named for Rook and Lantern Lift): the roster order; his numbers within the others'; the rise, the cap, the glide's sink rate, landing; firing and steering aloft and the jump adding nothing; the cooldown; the thread catch (once, only along a thread, from the glide too, not when crossing or standing); the Landing Bell follows him and waits for level 3; bots with Rook in all three modes and as an ally; a pilot who dies mid-lift.
-- **Seen in frame:** `docs/evidence/rook-0.25-*` (listed in that folder's file names: segments from the play camera and close, the lift from behind and the side, the turntable of all five, the picker at six sizes, the views, paper mode, and a clip from the real sim).
-- **Measured:** triangle, bone and draw counts; flight times and distances (above); bot win rates with five heroes are simulator results and noisy.
+- **Seen in frame**, all headless Chrome with a software renderer, in `docs/evidence/`:
+  - `rook-0.25-play.mp4` and `rook-0.25-play.jpg`: the play camera, the real sim (`tools/shots/rook.js`): run, strafes firing, a lift along the Middle thread with the catch, firing in the glide, landing, a second lift banking off the thread (its cooldown zeroed for the picture).
+  - `rook-0.25-playcam.jpg`: scripted segments from the play camera behind him: idle, run, both strafes firing, back-pedal, aim, side-on, toward the camera, the fall, and three lifts (straight, firing, banking).
+  - `rook-0.25-close.jpg`, `rook-0.25-lift-close.jpg`: the same closer, and the lift from behind, firing, and from the side.
+  - `rook-0.25-turntable.mp4` and `.jpg`: all five heroes in a row, the camera circling, then each running a small circle. Rook stands at the end of the row and leaves the frame at some angles.
+  - `rook-0.25-looks.jpg`: Rook between two others in all eight views, from behind and in front.
+  - `rook-0.25-paper.jpg`: painted-paper mode.
+  - `rook-0.25-picker-desktop.jpg` (1440, 1280, 900 and 844 px wide), `rook-0.25-picker-phone.jpg` (390 and 360 px wide): the picker with five cards. `tools/shots/picker.js` also reports no clipped text at any of the six sizes.
+- **Measured** in `docs/evidence/rook-0.25-measured.txt`: the test names, the flight numbers (`node tools/rookfly.js`), a bot soak, and each sound's level and length rendered offline (`tools/shots/rook-audio.js`).
+- Also measured: triangle, bone and draw counts. Bot win rates with five heroes are simulator results and noisy.
 - **Unverified:** how the lift feels in the hand; whether 9 s is the right cooldown for a person; how any of the sounds sound (they are rendered, not listened to); frame rate on a real device; touch and gamepad play of the lift (it is on the ordinary E / second ability button, so no new input was added).
 
 ## Still weak
@@ -85,5 +93,7 @@ Camera kick for his gun: 0.85 (Dora 0.7, Myra 1.0, Anna 1.25, the Skein Doll 0.4
 - **Paper mode.** One turnaround, no motion sheet: no arms, no aim pose, no lift picture. A motion sheet for him is the fix.
 - **No touchdown control.** He lands where the glide ends. A way to cut the glide short (drop) would make the Landing Bell more deliberate; it was left out to keep the jump code, which another change owns in 0.25, untouched.
 - **The lantern's mint** washes toward white under bloom in the brightest views.
-- **The coat's skirt** flares hard in the lift seen from the side.
+- **The coat's skirt** flares hard in the lift seen from the side, and its front panels swing wide in a side-on run.
+- **The scarf tail** is small from the play camera, and it stands up when he has fallen on his face.
+- **The lift is on a button only.** There is no height or lift meter on the HUD beyond the ability's ordinary cooldown.
 - **Balance** is by numbers, not play. Bots use the lift mostly to travel.

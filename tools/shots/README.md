@@ -34,3 +34,6 @@ Example: `LL_ROOT=$PWD node tools/shots/dream.js`
 | `feel.js` | 0.23 shot, hit and kill feel: the bot fights for `T` seconds, then `N` frames are recorded with every event passed to the renderer and HUD as main.js does. `LOOK`, `HERO`, `PORT`, `OUT` |
 | `rook.js` | 0.25 Rook Vale from the play camera, driven by the real sim (controls set per frame, `LL.sim.step`, events to the renderer): run, strafes firing, Lantern Lift along the Middle thread with the catch, firing in the glide, landing, a second lift banking off the thread. Writes frames and `log.json` (height, lift state and events per frame). `OUT`, `PORT` (8873), `LOOK`, `PAPER=1`, `HUD=1`, `ZOOM`, `W`, `H`. Evidence: `docs/evidence/rook-0.25-*` |
 | `picker.js` | 0.25 the title's hero picker at six window sizes (desktop, laptop, tablet, two phones, a phone on its side); prints each card's box and whether any text is clipped. `OUT`, `PORT` (8872), `SIZES`, `PICK` |
+| `rook-audio.js` | 0.25 Rook Vale's sounds rendered one at a time offline (`LL.audio.offline`): peak, RMS, length, with Dora's shot and the shared toll for scale. Measures; does not listen. `PORT` (8874) |
+| `rook-sheet.py` | A captioned contact sheet: `python3 tools/shots/rook-sheet.py out.jpg COLS "frame.png=caption" ... [--crop x0,y0,x1,y1] [--scale s]` |
+
