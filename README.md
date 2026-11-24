@@ -88,6 +88,7 @@ No build step, no bundler, nothing to install. Three.js r128 and the fonts load 
 | [`js/gfx.js`](js/gfx.js) | the WebGL scene, the eight views, paper heroes, painted flats, bloom |
 | [`js/audio.js`](js/audio.js) | the score's two crossfading decks, and the effects synthesiser |
 | [`js/input.js`](js/input.js) | keyboard and mouse, touch, gamepad |
+| [`js/debrief-data.js`](js/debrief-data.js), [`js/debrief.js`](js/debrief.js), [`css/debrief.css`](css/debrief.css) | Dreamwalk field notes: labeled diagrams, rules, Keep / Change / Cut and copied feedback. [Design and preview](docs/DEBRIEF-SEMIOTICS.md) |
 | [`js/ui.js`](js/ui.js), [`js/main.js`](js/main.js) | HUD, menus, the Cabinet; the loop and the player's hands |
 | [`tools/`](tools/) | tests, bot soaks, sheet cutters, headless capture scripts |
 

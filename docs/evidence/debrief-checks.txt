@@ -1,0 +1,52 @@
+LIVLOCH Dreamwalk debrief checks
+Date: 2026-11-23 (America/Denver)
+Base: c398b2b44a7b61601174f8b5fb74293e40e3b0d6
+
+$ node tools/test.js
+PASS  the Hush fields no heroes; the Reign fields exactly three
+PASS  Last Breath fires once per life, and again after a respawn
+PASS  Mercy is on at exactly a two-structure deficit and off otherwise
+PASS  stolen souls come back only if the thief is caught
+PASS  a guardian robbed of its light is dark 120 s and loses 25% health; capture relights it at once
+PASS  a hollow returns to its thread after the respawn delay
+PASS  red rain starts every 300 s, lasts 60 s, and is warned 30 s ahead
+PASS  fruit: each kind does its one thing, then regrows
+PASS  the Hush cannot eat fruit
+PASS  rare fruit can be eaten only through its own view
+PASS  a mood solved by wearing the fitting view thins the red rain; three wrong views lose it
+PASS  bots do not camp on rare fruit they cannot reach
+PASS  a mood never asks for the view already worn, whichever view that is
+PASS  Ever Fallen: the Hush cannot be hurt, houses start dark, and it always ends in a fall
+PASS  Ever Fallen: a small one put down relights the nearest dark house, and the light fades after LIT_T
+PASS  Ever Fallen: the rain comes every 150 s and one hollow thicker each time
+PASS  Lean Back: the hero plays itself, goes where it is called, and the fold works from the chair
+PASS  Rainwake pays half again only while the rain is red; Memory pays half
+PASS  Echo replays the last seconds of shots from where they were fired, weaker, then rests
+PASS  Echo shots hurt at ECHO_DMG strength
+PASS  Dreamwalk shows the systems: it misses a mood once, then answers it, and wears Rainwake in the rain
+PASS  goals: one thing to do next, each pays once, any order
+PASS  First Rain ends when the first red rain ends and counts five stars
+PASS  guardian fox unlock: the events main.js listens for carry what it asks
+PASS  guardian fox unlock: an Ever Fallen rescue relights as recovered; a timer relight does not
+PASS  motion rig: stride follows distance walked, not time
+PASS  motion rig: aim rises fast and lets go slower; a landing squashes; a teleport is not a stride
+PASS  the model never reads the look: sim and core have no presentation references
+
+28 passed, 0 failed
+
+$ node tools/test-debrief.js
+PASS  all 24 discovery ids still have usable cards, accessible readings and real symbols
+PASS  export includes only discovered systems, once each, in discovery order
+PASS  missing or invalid verdicts remain unreviewed and do not count as calls
+PASS  exported notes are bounded and cannot add forged verdict lines
+PASS  saved verdicts and notes survive JSON round trips and exports do not mutate them
+PASS  mode and View quantities follow the actual model constants
+PASS  captions cannot promise survival from a lethal hit
+PASS  script ordering supplies data and renderer before the existing UI
+PASS  text fields retain arrow keys while game keyboard controls still register
+
+9 passed, 0 failed
+
+$ JavaScript / Python syntax and diff whitespace checks
+Syntax passed: 21 JavaScript files and 2 Python files. Diff whitespace passed.
+

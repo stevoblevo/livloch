@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<base href="../">
+<title>Livloch · Dreamwalk field notes preview</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Spectral:wght@400;600&display=swap">
+<link rel="stylesheet" href="css/debrief.css">
+<style>
+  body { margin: 0; background: #100c17; color: #f4e8d6; }
+  .preview-scene { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .18; pointer-events: none; }
+  #previewTools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; width: min(1180px,100%); margin: 0 auto 14px; font: 12px/1.5 system-ui,sans-serif; }
+  #previewTools > span { margin-right: auto; color: #d6c7dd; }
+  #previewTools button, #previewTools a { color: #eee4da; padding: 8px 12px; border: 1px solid #827185; border-radius: 3px; background: #1c1526; text-decoration: none; cursor: pointer; min-height: 40px; }
+  #previewTools button[aria-pressed="true"] { border-color: #e8be7b; background: #443326; }
+  #over { padding-top: 18px; } #previewMode { color: #e8be7b; font: 11px/1.4 system-ui,sans-serif; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .1em; }
+  .preview-mobile { height: 100%; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 16px; }
+  .preview-mobile a { font: 14px system-ui,sans-serif; color: #e8be7b; padding: 10px; }
+  #previewFrame { border: 1px solid #827185; box-sizing: content-box; width: 390px; max-width: 100%; flex: 1; min-height: 0; background: #100c17; }
+  #previewError { background: #4d2e2f; color: white; margin: 10px; padding: 20px; }
+</style>
+</head>
+<body>
+<img class="preview-scene" src="art/title.jpg" alt="" aria-hidden="true">
+<div id="app">
+<section id="over" class="screen">
+  <div id="previewTools">
+    <span>Presentation preview · sample run, not live gameplay</span>
+    <button id="sample20" aria-pressed="true">Screenshot’s 20</button>
+    <button id="sample24" aria-pressed="false">All 24 systems</button>
+    <button id="sampleMode" aria-pressed="false">Ever Fallen</button>
+    <button id="samplePhone" aria-pressed="false">Phone width</button>
+    <a href="index.html">Play LIVLOCH</a>
+  </div>
+  <div class="panel with-debrief">
+    <p id="previewMode">The livelock · sample completed walk</p>
+    <h2 id="overH">The Hush gate is <em>shut</em>.</h2>
+    <p class="sub" id="overP">The livelock resolved in 10:47. One door stays lit.</p>
+    <section id="calls" aria-label="Dreamwalk field notes"></section>
+  </div>
+</section>
+</div>
+<script src="js/core.js"></script>
+<script src="js/debrief-data.js"></script>
+<script src="js/debrief.js"></script>
+<script>
+/* Developer fixture: the production field-note components, with the 20 discoveries in the owner's screenshot.
+   Its storage key is separate from the game's save. Buttons expose both modes and every supported system for QA. */
+(async function () {
+  'use strict';
+  try {
+    const res = await fetch('index.html'); if (!res.ok) throw new Error('Could not load production styles');
+    const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+    const style = doc.querySelector('style'); document.head.prepend(style.cloneNode(true));
+    document.getElementById('app').style.background = 'transparent';
+    const query = new URLSearchParams(location.search);
+    if (query.has('phone')) {
+      const shell = document.createElement('div'); shell.className = 'preview-mobile';
+      const back = document.createElement('a'); back.href = location.pathname; back.textContent = 'Back to desktop preview'; shell.appendChild(back);
+      const frame = document.createElement('iframe'); frame.id = 'previewFrame'; frame.title = 'LIVLOCH at a 390-pixel viewport'; frame.src = location.pathname + '?frame=1';
+      shell.appendChild(frame); document.getElementById('app').replaceChildren(shell); return;
+    }
+    if (query.has('frame')) document.getElementById('previewTools').hidden = true;
+    const screenshotIds = ['fold','zip','fruit','soul','echo','wave','structdown','thief','nessup','bigfruit','snuff','memory','redwarn','moodmiss','moodsolved','red','rainwake','fishing','lastbreath','nessdown'];
+    let all = false, fallen = false, cfg = { calls: {}, callNotes: {} };
+    try { const s = JSON.parse(localStorage.getItem('livloch.debrief.preview') || 'null'); if (s && typeof s === 'object') cfg = s; } catch (e) {}
+    function save() { try { localStorage.setItem('livloch.debrief.preview', JSON.stringify(cfg)); } catch (e) {} }
+    function draw() {
+      LL.debrief.mount(document.getElementById('calls'), { seen: all ? Object.keys(LL.debriefData.systems) : screenshotIds, cfg: cfg, world: { fallen: fallen, mode: fallen ? 'fallen' : 'match' }, version: '0.21', save: save });
+      document.getElementById('sample20').setAttribute('aria-pressed', String(!all)); document.getElementById('sample24').setAttribute('aria-pressed', String(all)); document.getElementById('sampleMode').setAttribute('aria-pressed', String(fallen));
+      document.getElementById('previewMode').textContent = (fallen ? 'Ever Fallen' : 'The livelock') + ' · sample completed walk';
+      document.getElementById('overH').innerHTML = fallen ? 'You held for <em>10:47</em>.' : 'The Hush gate is <em>shut</em>.';
+      document.getElementById('overP').textContent = fallen ? 'Mode preview: the same discoveries, with Ever Fallen’s rules.' : 'The livelock resolved in 10:47. One door stays lit.';
+    }
+    document.getElementById('sample20').onclick = function () { all = false; draw(); };
+    document.getElementById('sample24').onclick = function () { all = true; draw(); };
+    document.getElementById('sampleMode').onclick = function () { fallen = !fallen; draw(); };
+    document.getElementById('samplePhone').onclick = function () { location.href = location.pathname + '?phone=1'; };
+    draw();
+  } catch (e) { const out = document.createElement('p'); out.id = 'previewError'; out.textContent = e.message; document.body.appendChild(out); }
+})();
+</script>
+</body>
+</html>

@@ -14,6 +14,9 @@ All authored as the owner's account; at least one is signed "Muse".
 ## Opened to everyone (0.21, 23 November)
 The owner: "We're doing everything public. Make this fully collaborative on GitHub so that any and all of our other agents can also collaborate and develop this game with us; we would love even anonymous strangers developing it with us." Done in the repository: `LICENSE` (MIT for the code), `ASSETS.md` (art, characters, story, music and names stay the owner's), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, issue forms, a pull request checklist, CI, `docs/ARCHITECTURE.md`, a "Start here" in `AGENTS.md`, labels, and fifteen seed issues (#25 to #39). Left for the owner or lead: making the repository public, turning on Discussions and private vulnerability reporting, and protecting `main`.
 
+## Dreamwalk field notes (issue #23)
+The owner asked ChatGPT to make the end page clear through semiotics, in collaboration with Claude. The proposed implementation uses labeled diagrams for all 24 existing discoveries, five navigation groups, explicit durations and conditions, saved Keep / Change / Cut calls, optional notes and a complete text export. [The handoff](DEBRIEF-SEMIOTICS.md) records source corrections; [design QA](../design-qa.md) records the 28 game / 9 debrief test passes and desktop/390-pixel presentation captures. The cloud browser could not render WebGL, so a completed live Dreamwalk and real-device checks remain for integration. The owner's actual verdicts remain undecided; the QA choices were cleared.
+
 ## Never done
 | Thread | Asked | State |
 |---|---|---|
