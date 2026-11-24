@@ -80,12 +80,12 @@ const PAL = {
    flowers, a pale crease for the rim); Hypermetapunk gets a dashed lit line on the path edge instead of drifts. */
 PAL.snow.verge = { worn: [0.8, 0.45, 0.13, 1.45], light: 0xffb070, drift: [0xc8ccf4, 0.5], flowers: [0xb084ff, 0xff5fae, 0x8ff0ff], fk: [0.95, 0.85], stroke: [0x8a90d8, 0.6] };
 PAL.lantern.verge = { worn: [0.8, 0.45, 0.13, 1.45], light: 0xffa850, drift: [0xff9ab0, 0.35], flowers: [0xff8a5c, 0xffd27a, 0xff6fa0], fk: [0.9, 0.7], stroke: [0x5a8a70, 0.6] };
-PAL.knight.verge = { worn: [0.82, 0.45, 0.09, 1.4], light: 0xf0c75e, drift: [0xe8d8f0, 0.35], flowers: [0x8fb4e8, 0xf0c75e, 0xf4efe6], fk: [0.85, 0.65], stroke: [0x5e84a8, 0.55] };
+PAL.knight.verge = { worn: [0.82, 0.45, 0.09, 1.4], light: 0xf0c75e, drift: [0xe8d8f0, 0.35], flowers: [0x8fb4e8, 0xf0c75e, 0xf4efe6], fk: [0.85, 0.65], stroke: [0x5e84a8, 0.22] }; // a pale path: dark dabs would read as puddles
 PAL.origami.verge = { worn: [0.7, 0.04, 0, 1.4], light: 0, drift: [0xf4a8b8, 0.6], flowers: [0xe0503a, 0xf0cf78, 0x4a6cb0], fk: [1, 0.4, 1.6], stroke: null, grain: 0.06 };
 PAL.glow.verge = { worn: [1, 0.3, 0, 1.4], light: 0, drift: null, flowers: [0xff4faa, 0x62e6ff, 0xffd64a], fk: [0.9, 0.5], stroke: null, edge: [0x62e6ff, 0.55], grain: 0.05 };
 PAL.ink.verge = { worn: [0.72, 0.4, 0.07, 1.45], light: 0xffb347, drift: [0xd8d0c0, 0.3], flowers: [0xffb347, 0xebe6da, 0xd9824a], fk: [0.8, 0.55], stroke: [0x4a4660, 0.6] };
 PAL.rain.verge = { worn: [0.78, 0.45, 0.1, 1.45], light: 0xffc070, drift: [0x8a3a48, 0.3], flowers: [0xffc070, 0x6fe0d0, 0xff6a6a], fk: [0.85, 0.6], stroke: [0x7a3a44, 0.55] };
-PAL.memory.verge = { worn: [0.84, 0.45, 0.08, 1.4], light: 0xe8b060, drift: [0xe8d8c0, 0.4], flowers: [0xf0e0c0, 0xe8b060, 0x8aa8c0], fk: [0.8, 0.6], stroke: [0x8a7a64, 0.5] };
+PAL.memory.verge = { worn: [0.84, 0.45, 0.08, 1.4], light: 0xe8b060, drift: [0xe8d8c0, 0.4], flowers: [0xf0e0c0, 0xe8b060, 0x8aa8c0], fk: [0.8, 0.6], stroke: [0x8a7a64, 0.3] };
 SC.PAL = PAL;
 
 /* ---------- small helpers ---------- */

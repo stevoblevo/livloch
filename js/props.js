@@ -360,7 +360,7 @@ function hollowLightGeo() {
     for (let j = 0; j < 4; j++) { S.tri(A[j], A[j + 1], B[j], cs[j], cs[j + 1], cs[j]); S.tri(A[j + 1], B[j + 1], B[j], cs[j + 1], cs[j + 1], cs[j]); } }
   // light leaking from two small tears on each flank, so a hollow seen side on shows cold light too
   [-1, 1].forEach(function (sd) {
-    [[0.86, 0.02, 0.1, 0.2], [0.7, -0.14, 0.07, 0.15]].forEach(function (t) {
+    [[0.86, 0.02, 0.14, 0.28], [0.69, -0.15, 0.1, 0.21]].forEach(function (t) {
       const y = t[0], z = t[1], x = sd * (Math.sqrt(Math.max(0.01, 0.53 * 0.53 - z * z)) + 0.03), h = t[3], w = t[2] * 0.5, F = [x + sd * 0.02, y, z];
       const Tp = [x, y + h / 2, z + 0.02], B = [x, y - h / 2, z - 0.02], Lf = [x, y, z - w], Rb = [x, y, z + w];
       S.tri(Lf, F, Tp, rim, core, rim); S.tri(Tp, F, Rb, rim, core, rim); S.tri(Rb, F, B, rim, core, rim); S.tri(B, F, Lf, rim, core, rim);
