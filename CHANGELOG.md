@@ -2,6 +2,19 @@
 
 Every version of Livloch, newest first. Each one from 0.4 on is a `release/X.Y` branch that never moves, and the published ones stay playable at [stevoblevo.github.io/livloch/versions/](https://stevoblevo.github.io/livloch/versions/). The reasons behind each step are in [`docs/PLAN.md`](docs/PLAN.md); where each was published is in [`docs/IMPORT.md`](docs/IMPORT.md).
 
+## 0.26
+**Guards, the Ness, and every gun its own.**
+
+- **Guards on the second jump:** Anna raises Athena's shield (it blocks shots and hits from the front and shoves back what swings at her). Dora gets a second jump that wraps her in an astral bubble, which soaks up to 200 damage. Skye frays into thread for a moment and shots pass straight through her. A double jump in a fight is a way out now.
+- **Thread boosts:** a second jump made along a thread throws you higher and faster down it.
+  - Three boosts charge Dora's hat. Press G (or R3, or the touch button) and it flies out like a boomerang, cutting through the Hush there and back, then lands on her head again.
+  - When Myra's hover ends on a thread, she heals herself and the friends around her.
+  - Rook's dash while he glides is a barrel roll that long shots miss.
+- **The Ness** is a jade creature now, not a painted card. It warns before it bites: a ring marks the spot, jade while it follows you and gold once it has locked. If it catches you it holds you in its jaws for a second, and you can mash, or a friend can hit it, to get free. About once each time it surfaces, it floods the whole valley and swims out among the threads after whoever hurt it. In the flood you wade slower, jump and dash farther, and are carried by the current, but the threads stay dry paths.
+- **Shots:** every gun has its own shot: lantern orbs, a tumbling hammer, spools that trail thread, silver needles and copper embers. Only a few shots leave a streak. The ammo counter shows a row of icons in the gun's shape.
+- **Rook and Skye:** Rook is copper and rose gold with copper sulfate teal. The Skein Doll's name is Skye.
+- **Tests:** a browser test now runs on every pull request.
+
 ## 0.25
 **Rook, the air, and the world from behind.** Rook Vale, the Wick Aviator, joins as the fifth hero (from the Lantern Ford study): a cobalt courier with a lantern-kite on his back, Wick Skip, Lantern Lift (about a second of steerable rise to 4.2 m, then a glide you can aim and fire from; a thread you lift along catches you once and carries you further) and Landing Bell as his ultimate. Every hero moves through the air their own way: Dora one clean jump, Anna a rock-hop off thin air, the Skein Doll a loose somersault, Myra Belle a short hanging flight (hold jump: her wings beat and she hangs for up to 1.2 s, drifting and shooting). The camera follows height more slowly in the air, so a jump or a lift rises on screen. Your troopers wear warm team-colour capes you can see from behind, a hollow shows a cold rift of light down its spine when you chase it, and the ground along every thread is a worn, flowered path. The Dreamwalk end page explains each discovery as a labelled diagram (ChatGPT's PR #43).
 
