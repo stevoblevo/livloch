@@ -126,7 +126,8 @@ SH.put = function (p) {
       spawn('lamp', p.x, p.y, p.z, Q, r, r, r, TMP);
       if (!low) {
         TMP.copy(cx.tc(ghost ? 0x9fd0ff : WARM)); if (cold) TMP.lerp(cx.tc(COLD), 0.45);
-        halo(p.x, p.y, p.z, r * (mine ? 5.6 : 4.6) * (1 + Math.sin(TIME * 23 + ph) * 0.1), TMP, mine ? 0.55 : 0.38);
+        /* lead, 0.26: smaller for your own bolts, and the halo grows in over its first tenth of a second, so it doesn't bloom white at the hand */
+        halo(p.x, p.y, p.z, r * (mine ? 3.9 : 4.6) * (0.35 + 0.65 * Math.min(1, a * 10)) * (1 + Math.sin(TIME * 23 + ph) * 0.1), TMP, mine ? 0.4 : 0.38);
         if (mine) { TMP.copy(cx.tc(0xffc27a)); streak('streak', p.x, p.y, p.z, ux, uy, uz, Math.min(2.4, a * sp), 0.05, TMP, 0.3); }
       }
       break;
@@ -194,7 +195,7 @@ SH.muzzle = function (e, mine) {
   const rx = Math.cos(e.u.yaw), rz = -Math.sin(e.u.yaw);
   switch (id) {
     case 'dora':
-      sprite(e.x + d[0] * 0.15, e.y + d[1] * 0.15, e.z + d[2] * 0.15, 0xffb860, 0.95 * big, mine ? 0.12 : 0.08, 0.12);
+      sprite(e.x + d[0] * 0.15, e.y + d[1] * 0.15, e.z + d[2] * 0.15, 0xffb860, (mine ? 0.6 : 0.95) * big, mine ? 0.1 : 0.08, 0.12); /* lead, 0.26: a smaller puff for your own bolts */
       if (!low) cx.emit(e.x, e.y, e.z, mine ? 3 : 1, 0xffd08a, 0.7, 0.55, 1.4, 0);
       break;
     case 'anna':
