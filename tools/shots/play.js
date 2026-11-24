@@ -18,6 +18,8 @@ const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split
   await pg.goto('http://localhost:' + (process.env.PORT || 8771) + '/'); await pg.waitForTimeout(2000);
   await pg.evaluate((i) => { LL.cfg.mode = 'match'; LL.cfg.petUnlocked = LL.cfg.pet = !!+(new URLSearchParams('x=' + 0).get('x') || 0) || false; document.querySelectorAll('.hero')[i].click(); }, hero);
   if (process.env.FOX) await pg.evaluate(() => { LL.cfg.petUnlocked = LL.cfg.pet = true; LL.gfx.setPet(true); });
+  if (process.env.PAPER) await pg.evaluate(() => { LL.cfg.heroes3d = false; if (LL.gfx.setHeroes3d) LL.gfx.setHeroes3d(false); }); // 0.24: the painted cards, for before-and-after
+  if (process.env.LOOK) await pg.evaluate((l) => { LL.cfg.look = l; document.body.setAttribute('data-look', l); LL.gfx.setLook(l); }, process.env.LOOK);
   await pg.click('#bPlay'); await pg.waitForTimeout(3500); await pg.evaluate((o) => { window.__zoom = o.z; window.__dash = o.dash; }, { z: +(process.env.ZOOM || 0), dash: !!process.env.DASH });
   await pg.evaluate(() => { window.requestAnimationFrame = () => 0; document.getElementById('hud').hidden = true; const W = LL.sim.W; W.troopers.length = 0; W.thieves.length = 0; W.projs.length = 0;
     const p = W.player, g = W.structs.find(s => s.team === 0 && s.kind === 'guardian' && s.lane === 1); p.x = g.x + 6; p.z = g.z + 34; p.y = 0; p.onGround = true; p.yaw = Math.PI; p.alive = true; p.hp = p.maxHp;
