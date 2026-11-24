@@ -512,7 +512,7 @@ test('the flood: a warning, the water runs out from the loch, stands, drains, an
   assert.ok(!n.out && n.x === n.hx && n.z === n.hz && n.alive, 'and is back in it'); assert.ok(S._t.flood('again') && W.flood.ph === 'swell', 'and a later flood can start');
 });
 test('in the flood heroes wade slower, move faster in the air, skim farther on a dash, and are carried by the current', () => {
-  const setup = (wet) => { const W = nessUp(), h = W.player; if (wet) { S._t.flood('test'); run(W, NS.SWELL + NS.FAR / NS.FRONT + 0.3); assert.strictEqual(W.flood.ph, 'high'); } W.ness.alive = wet; if (!wet) W.ness.respT = 1e9; h.x = -24; h.z = -30; h.y = 0; h.vx = h.vz = h.vy = 0; h.onGround = true; h.stamina = 3; return { W, h }; };
+  const setup = (wet) => { const W = nessUp(), h = W.player; if (wet) { S._t.flood('test'); run(W, NS.SWELL + NS.FAR / NS.FRONT + 0.3); assert.strictEqual(W.flood.ph, 'high'); W.ness.out = false; W.ness.x = W.ness.hx; W.ness.z = W.ness.hz; W.ness.chomp = null; W.player.held = null; } else { W.ness.alive = false; W.ness.respT = 1e9; } h.x = -24; h.z = -30; h.y = 0; h.vx = h.vz = h.vy = 0; h.onGround = true; h.stamina = 3; return { W, h }; };
   const walk = (wet) => { const { W, h } = setup(wet); W.ness.out = false; W.ness.x = W.ness.hx; h.ctl.mx = 1; for (let i = 0; i < 45; i++) { h.ctl.mx = 1; S.step(1 / 30); } return Math.hypot(h.vx, h.vz); };
   const dry = walk(false), wet = walk(true); assert.ok(Math.abs(wet / dry - NS.WADE) < 0.02, 'wading is NESS.WADE of walking: ' + (wet / dry).toFixed(2));
   const air = (wet) => { const { W, h } = setup(wet); let top = 0; h.ctl.jump = true; for (let i = 0; i < 20; i++) { h.ctl.mx = 1; S.step(1 / 30); if (!h.onGround) top = Math.max(top, Math.hypot(h.vx, h.vz)); } return top; };

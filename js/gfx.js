@@ -159,6 +159,7 @@ function construct() {
   applyLook();
 }
 function scx() { let id = 'snow'; for (const k in LOOKS) if (LOOKS[k] === LK) id = k; return { T: T, scene: scene, world: world, sky: sky, renderer: renderer, LK: LK, id: id, R: R, groundH: groundH, ground: groundM }; }
+function nsx() { return { T: T, world: world, dyn: dyn, LK: LK, R: R, renderer: renderer, glowTex: glowTex, emit: emit, ring: ring, puff: puff, near: dist2cam, shake: function (v) { if (v > shake) shake = v; } }; } // 0.26 ness: what js/ness.js is handed
 R.setLook = function (id) {
   if (!LOOKS[id] || !R.ok) return;
   LK = LOOKS[id]; R.look = LK; C.TEAM_CSS = LK.css;
@@ -1013,7 +1014,7 @@ function sceneryTrees() {
 R.build = function (w) {
   W = w;
   heroM.concat(structM, strayM).forEach(function (g) { dyn.remove(g); });
-  if (!nessM) nessM = nessModel(); nessY = -11;
+  if (!nessM) nessM = LL.ness ? LL.ness.build(nsx()) : nessModel(); nessY = -11; // 0.26 ness: the creature and the flood (js/ness.js); without it, the painted card
   heroM = W.heroes.map(heroModel); structM = W.structs.map(structModel); strayM = W.strays.map(strayModel);
   const freshDecor = !R.decor;
   buildDecor(); buildCues(); buildFruitArt(); buildPet();
@@ -1034,6 +1035,7 @@ function ring(x, y, z, r0, r1, col, life) {
   }
 }
 R.fx = function (e) {
+  if (LL.ness) LL.ness.fx(e, W); // 0.26 ness: the tell, the bite, the flood
   switch (e.k) {
     case 'echo': case 'echoend': for (let k = 0; k < 14; k++) emit(e.x, 0.4 + Math.random() * 1.6, e.z, 1, 0x9fd0ff, 2.2, 0.6, 1.5, 0); break;
     case 'echoshot': emit(e.x, e.y, e.z, 2, 0x9fd0ff, 1.5, 0.25, 0, 0); if (echoM && echoM.u) echoM.u.lastShotT = W.t; /* 0.24 heroes3d: the echo raises its aim */ break;
@@ -1565,6 +1567,7 @@ R.frame = function (dt, view) {
     else if (t.big) { roll = (moving ? Math.sin(ph) * 0.09 : Math.sin(time * 1.3 + t.id) * 0.03) * red; tilt = moving ? 0.12 : 0.03; }
     else roll = (moving ? Math.sin(ph) * 0.07 : 0) * red;
     if (t.flash > 0) tilt -= 0.25 * red; // a hit rocks it back
+    if (W.flood && LL.ness) hop += LL.ness.bob(t, time); // 0.26 ness: troopers float in the flood
     const sc = (t.flash > 0 ? 1.2 : 1) * (W.great[t.team] > 0 ? 1.2 : 1);
     shadowPut(t.x, t.z, (t.big ? 2.3 : 1.15) * (1 - hop * 0.6), 1);
     const sx = t.big ? 2.1 : (t.ranged ? 0.78 : 1), sy = t.big ? 2.3 : (t.ranged ? 1.35 : 1);
@@ -1620,8 +1623,9 @@ R.frame = function (dt, view) {
   {
     const n = W.ness, tgt = n.alive ? (n.rise - 1) * 8 : -11;
     nessY += (tgt - nessY) * Math.min(1, dt * (n.alive ? 6 : 1.4));
-    nessM.visible = nessY > -10.6;
-    if (nessM.visible) {
+    if (nessM.isNess3d) LL.ness.frame(W, dt, time, camPos, camera); // 0.26 ness: the creature poses itself; below is the card of 0.25
+    else { nessM.visible = nessY > -10.6; }
+    if (!nessM.isNess3d && nessM.visible) {
       const sc = n.flash > 0 ? 1.04 : 1; nessM.scale.set(sc, sc, sc);
       nessM.position.set(n.x, nessY, n.z); nessM.rotation.y = n.yaw;
       if (nessM.flat) { const f = nessM.flat, tc = Math.atan2(camPos.x - n.x, camPos.z - n.z); let d = tc - n.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); f.rotation.y = tc - n.yaw; f.scale.x = f.userData.w * (d * PAPER_FLIP > 0 ? -1 : 1); }

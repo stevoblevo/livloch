@@ -261,6 +261,17 @@ A.fx = function (e, W, cam) {
     case 'nessdown': bell(0, 0.24, 3.5); bell(18, 0.2, 3); bell(40, 0.16, 2.6); if (e.team === 0) [31, 41, 49, 59, 72].forEach((n, i) => tone(edo(n), 0.5, 'triangle', 0.12, 0, 0.3 + i * 0.09)); break;
     case 'nesswind': noise(1.1, 0.3 * near(e.x, e.z, 70), 180, 1.2, 'bandpass', 0, 1600); break;
     case 'nessspit': noise(0.25, 0.2 * near(e.x, e.z, 60), 1200, 2, 'bandpass', 0, 300); break;
+    /* 0.26 ness: its voice is low and in the score's key (A: edo 0 is A2). The tell is a rising growl with a tick when the
+       spot locks; the chomp a snap, a thud and water; let go, a wet gasp. The flood: a horn call on A and E (a fifth, edo 18)
+       under a long swell of water for the warning, a rush as the front runs out, a falling wash and a far bell as it drains. */
+    case 'nesstell': { const g = e.p ? 1 : near(e.x, e.z, 70); tone(edo(-31), e.t, 'sawtooth', 0.13 * g, edo(-13)); tone(edo(0), e.t, 'triangle', 0.07 * g, edo(13)); noise(e.t, 0.1 * g, 300, 1.4, 'bandpass', 0, 1500); break; }
+    case 'nesslock': if (e.p) { tone(edo(93), 0.05, 'square', 0.06); tone(edo(93), 0.05, 'square', 0.06, 0, 0.1); } break;
+    case 'nesschomp': { const g = e.p ? 1 : near(e.tx, e.tz, 70); noise(0.09, 0.5 * g, 2600, 1.2, 'bandpass', 0, 500); tone(90, 0.3, 'sine', 0.4 * g, 38); noise(0.6, 0.26 * g, 900, 0.7, 'lowpass', 0.04, 200); if (e.hit && e.u) bell(-13, 0.1 * g, 1.2); else if (!e.hit) tone(edo(31), 0.2, 'triangle', 0.06 * g, edo(18), 0.12); break; }
+    case 'nessrelease': { const g = e.p ? 1 : near(e.x, e.z, 60); noise(0.35, 0.2 * g, 700, 1, 'bandpass', 0, 2600); tone(edo(18), 0.3, 'triangle', 0.07 * g, edo(49)); break; }
+    case 'floodwarn': tone(edo(0), 2.6, 'sawtooth', 0.09, edo(0) * 0.985); tone(edo(18), 2.2, 'sawtooth', 0.06, edo(18) * 0.985, 0.5); tone(edo(-31), 3.2, 'sine', 0.2, edo(-31) * 0.97); noise(e.t, 0.16, 140, 0.8, 'lowpass', 0, 700); bell(0, 0.08, 3); break;
+    case 'flood': noise(3.2, 0.3, 500, 0.6, 'lowpass', 0, 1600); noise(2.4, 0.12, 2400, 0.8, 'bandpass', 0.3, 900); tone(60, 2.4, 'sine', 0.2, 34); break;
+    case 'flooddrain': noise(3.2, 0.2, 1500, 0.7, 'lowpass', 0, 160); tone(edo(18), 1.6, 'sine', 0.06, edo(0)); bell(31, 0.06, 2.5); break;
+    case 'nessdive': case 'nesshome': noise(0.7, 0.24 * near(e.x, e.z, 70), 600, 0.8, 'lowpass', 0, 150); break;
     case 'fishing': if (e.team === 1) { tone(edo(40), 0.3, 'square', 0.07); tone(edo(36), 0.4, 'square', 0.07, 0, 0.25); } break;
     case 'greatend': if (e.team === 0) tone(edo(62), 0.5, 'sine', 0.1, edo(31)); break;
   }
