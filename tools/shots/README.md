@@ -28,3 +28,4 @@ Example: `LL_ROOT=$PWD node tools/shots/dream.js`
 | `crop.py` | A contact sheet of `anna.js` frames cropped round the hero: `python3 tools/shots/crop.py OUT sheet.jpg 0,10,20 [cols] [w] [h] [scale]` |
 | `braid-outline.py` | Not a capture: measures the braid outline in each of Anna's motion cells from the hair colours and prints the `PAPER.anna.braid` lines (0.21). `python3 tools/shots/braid-outline.py art/heroes/anna-motion.png [debug.png]` |
 | `play.js` | 0.22.2 play-like motion: camera behind, the hero facing where it looks, running, strafing both ways, back-pedalling, stopping, running while the camera turns. Point `LL_ROOT` at a version folder (for example the Pages clone's `livloch/v0.19`) to compare versions frame for frame. `HERO`, `OUT`, `N`, `PORT` |
+| `feel.js` | 0.23 shot, hit and kill feel: the bot fights for `T` seconds, then `N` frames are recorded with every event passed to the renderer and HUD as main.js does. `LOOK`, `HERO`, `PORT`, `OUT` |
