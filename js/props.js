@@ -303,7 +303,9 @@ function lanternGeo() { const g = new T.BoxGeometry(0.15, 0.24, 0.15); g.transla
    streaming behind. About 1.75 m to the hood's tip. */
 function hushGeo(LK, hollow) {
   const S = new Soup(), r = rng(hollow ? 29 : 23), hc = hushCols(LK);
-  const body = hollow ? hc.body.clone().multiplyScalar(0.72) : hc.body, edge = hollow ? hc.edge.clone().lerp(hc.body, 0.35) : hc.edge, deep = body.clone().multiplyScalar(0.55);
+  let body = hollow ? hc.body.clone().multiplyScalar(0.72) : hc.body, edge = hollow ? hc.edge.clone().lerp(hc.body, 0.35) : hc.edge;
+  if (hollow && LK.cues) { body = new T.Color(0x5b4f96); edge = new T.Color(0xb4a6f0); } // 0.28 world: Inkblot Noir's three-tone post turns anything that dark to flat black; a hollow side-on was a black cut-out (0.25 note), so its cloth is lifted into the hatched tones
+  const deep = body.clone().multiplyScalar(0.55);
   if (!hollow) {
     S.skirt(r, { seg: 9, rot: 0.3, cx: 0, cz: 0.05, yTop: 1.3, rTop: 0.15, yMid: 0.86, rMid: 0.3, yBot: 0.4, rBot: 0.47, tear: 0.36, notch: 0.1, colTop: body, colMid: body, colHem: edge, glwTop: 0.02, glwMid: 0.06, glwHem: 0.9, swayHem: 1.0 });
     // the head deep in a big hood whose point folds back and down
