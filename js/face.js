@@ -5,9 +5,11 @@
      while this module says so, steps it and draws it through the 0.20 trailer camera (gfx attractCam). After HOLD seconds
      of the painting the valley starts drawing under it, and after LIVE seconds the painting dissolves over FADE seconds.
    - The painting stays when: reduced motion is on (a still title is calmer than any camera move), Lighter graphics is on
-     (the player has said the device needs the help, so the menu should not spend it on a trailer), or the title is slow:
-     once the painting is fading, if the median of the last 40 frames is slower than SLOW_MS, the painting comes back
-     and stays for the session. LL.faceForce (set by capture tools only) keeps the valley regardless.
+     (chosen, or turned on by itself in a match that struggled: the device needs the help, so the menu should not
+     spend it on a trailer), or the title is slow:
+     if the median of the last 30 frames is slower than SLOW_MS, the painting comes back
+     and stays for the session. The frames drawn under the painting before it fades are measured too: if they are slow
+     (or fewer than 8 come in 1.2 s), it never fades. LL.faceForce (set by capture tools only) keeps the valley regardless.
    - Walk in: the painting comes back over the valley and the menu fades (VEIL ms, so the build of the match world and
      its first shader compile happen under the painting), then the match starts and the painting dissolves into it while
      the camera settles from a crane above and behind the chosen hero down to the play camera (SETTLE s, gfx calls
@@ -21,7 +23,7 @@ const LL = window.LL;
 const HOLD = 1.4, LIVE = 2.6, FADE = 2.4, SLOW_MS = 45, VEIL = 420, SETTLE = 2.6, REVEAL = 1.5;
 const F = LL.face = { VEIL: VEIL };
 const HUD_AT = 1.3, HUD_IN = 0.8;
-let hudT = -1, plate = null, pl = 1, plTo = 1, plRate = 0, t = 0, fading = false, fell = false, fadeT = 0, ft = [], settleT = -1, pending = 0;
+let hudT = -1, plate = null, pl = 1, plTo = 1, plRate = 0, t = 0, fading = false, fell = false, drawn = 0, ft = [], settleT = -1, pending = 0;
 let T = null, q0 = null, q1 = null, p1 = null, m4 = null, up = null, eye = null, at = null, fov1 = 60;
 const reduced = function () { return !!(LL.gfx && LL.gfx.reduced); };
 /* The painting's opacity is driven here, frame by frame, rather than by a CSS transition, so it stays in step with the
@@ -33,19 +35,19 @@ F.tick = function (sec) {
   if (pl !== plTo) pl = plRate ? (pl < plTo ? Math.min(plTo, pl + sec * plRate) : Math.max(plTo, pl - sec * plRate)) : plTo;
   const o = (pl * pl * (3 - 2 * pl)).toFixed(3); if (plate.style.opacity !== o) { plate.style.opacity = o; plate.style.visibility = pl > 0 ? 'visible' : 'hidden'; }
 };
-F.wantLive = function () { return !!LL.faceForce || (!reduced() && !(LL.cfg && LL.cfg.low) && !fell); };
+F.wantLive = function () { return !!LL.faceForce || (!reduced() && !(LL.gfx && LL.gfx.low) && !fell); };
 /* The title is showing again (boot, or quit from a match): the painting, at once. */
-F.title = function () { t = 0; fading = false; fadeT = 0; ft.length = 0; settleT = -1; pending = 0; setPlate(true, 0); const ti = document.getElementById('title'); if (ti) ti.classList.remove('leaving'); };
+F.title = function () { t = 0; fading = false; drawn = 0; ft.length = 0; settleT = -1; pending = 0; setPlate(true, 0); const ti = document.getElementById('title'); if (ti) ti.classList.remove('leaving'); };
 /* Every title frame. raw: this frame's length in ms. Returns true when main.js should step and draw the attract world. */
 F.titleFrame = function (dt, raw) {
-  t += Math.min(0.25, raw / 1000 || 0); /* wall time: the painting is held for the person looking at it */
+  const sec = Math.min(1, raw / 1000 || 0); t += sec; /* wall time: the painting is held for the person looking at it */
   if (!F.wantLive()) { if (fading) { fading = false; setPlate(true, 0.8); } return false; }
-  if (!fading && t >= LIVE) { fading = true; fadeT = 0; ft.length = 0; setPlate(false, FADE); }
-  if (fading) {
-    fadeT += Math.min(0.25, raw / 1000 || 0);
-    if (fadeT > 1 && raw > 0 && raw < 1000) { ft.push(raw); if (ft.length > 40) ft.shift(); }
-    if (!LL.faceForce && ft.length >= 40) { const s = ft.slice().sort(function (a, b) { return a - b; }); if (s[20] > SLOW_MS) { fell = true; fading = false; setPlate(true, 0.8); return false; } }
-  }
+  if (t >= HOLD) { drawn++; if (drawn > 4 && raw > 0 && raw < 2000) { ft.push(raw); if (ft.length > 30) ft.shift(); } } /* the first frames compile shaders */
+  const slow = function () { const s = ft.slice().sort(function (a, b) { return a - b; }); return s[s.length >> 1] > SLOW_MS; };
+  if (!fading && t >= LIVE) {
+    if (!LL.faceForce && (ft.length < 8 || slow())) { fell = true; return false; } /* fewer than 8 frames in 1.2 s is slow too */
+    fading = true; setPlate(false, FADE);
+  } else if (fading && !LL.faceForce && ft.length >= 12 && slow()) { fell = true; fading = false; setPlate(true, 0.8); return false; }
   return t >= HOLD;
 };
 /* Walk in, part one: the painting comes back over the valley and the menu fades. main.js starts the match VEIL ms later. */

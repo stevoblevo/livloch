@@ -3,6 +3,7 @@
                 Writes OUT/<size>-t##.png and OUT/<size>-p##.png, and with VIDEO=1 a webm of the whole run.
    MODE=hud     a match about a minute in, the HUD with a cooldown running, in each view in LOOKS. OUT/<size>-hud-<look>.png
    MODE=picker  the title's hero picker with the mute button, OUT/<size>-picker.png
+   MODE=fallback real time: whether a slow title (SwiftShader) brings the painting back; prints LL.face.state()
    SIZE desk (1280x720), phone (390x780, touch), land (844x390, touch). REDUCED=1 for reduced motion. FORCE=1 tells the
    title to show the live valley even though SwiftShader is slower than the fallback threshold (LL.faceForce).
    ROOT (default: this checkout), PORT (8870), OUT (/tmp/face). */
@@ -36,7 +37,7 @@ const VP = { desk: { viewport: { width: 1280, height: 720 } }, desk960: { viewpo
     await pg.evaluate(function () { LL.input.lockFailed = true; });
     await tap('#bPlay'); i = 0;
     for (let k = 0; k < P * FPS; k++) { await pg.clock.runFor(1000 / FPS); await pg.screenshot({ path: out + '/' + size + '-p' + String(i++).padStart(3, '0') + '.png' }); }
-    console.log('play state', JSON.stringify(await pg.evaluate(function () { return LL.face.state(); })));
+    console.log('play state', JSON.stringify(await pg.evaluate(function () { return LL.face ? LL.face.state() : null; })));
   } else if (mode === 'hud') {
     await pg.waitForTimeout(1200); await pg.evaluate(function () { LL.input.lockFailed = true; }); await tap('#bPlay'); await pg.waitForTimeout(2500);
     await pg.evaluate(function () { const S = LL.sim, W = S.W; for (let i = 0; i < 60 * 30; i++) S.step(1 / 30); W.fx.forEach(function (e) { LL.ui.fx(e); }); W.fx.length = 0;
@@ -47,6 +48,10 @@ const VP = { desk: { viewport: { width: 1280, height: 720 } }, desk960: { viewpo
       await pg.evaluate(function (k) { LL.gfx.setLook(k); document.body.setAttribute('data-look', k); LL.cfg.look = k; LL.sim.setLens(k); LL.ui.lookChips(); const p = LL.sim.W.player; p.cds[0] = p.cdMax[0] * 0.95 + 1.2; }, k);
       await pg.waitForTimeout(1300); await pg.screenshot({ path: out + '/' + size + '-hud-' + k + '.png' });
     }
+  } else if (mode === 'fallback') {
+    /* real time, no fake clock: does a slow device (SwiftShader here) get the painting back? */
+    for (let k = 0; k < 6; k++) { await pg.waitForTimeout(2500); console.log('t+' + (k + 1) * 2.5 + 's', JSON.stringify(await pg.evaluate(function () { return Object.assign(LL.face.state(), { plate: document.getElementById('plate').style.opacity }); }))); }
+    await pg.screenshot({ path: out + '/' + size + '-fallback.png' });
   } else if (mode === 'picker') {
     await pg.waitForTimeout(1500); await pg.screenshot({ path: out + '/' + size + '-picker.png' });
     const hit = await pg.evaluate(function () { const m = document.getElementById('bMute').getBoundingClientRect(); const over = []; document.querySelectorAll('#title button, #title .hero').forEach(function (el) { if (el.id === 'bMute') return; const r = el.getBoundingClientRect(); if (r.width && r.left < m.right && r.right > m.left && r.top < m.bottom && r.bottom > m.top) over.push(el.id || el.className + ':' + el.textContent.slice(0, 12)); }); return { mute: [m.left, m.top, m.width], overlaps: over }; });
