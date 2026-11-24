@@ -9,7 +9,8 @@
    0.25 air: AIR=1 plays the hero's air move through the real model (LL.sim._t.heroStep: the jump, the second jump, the
    hover, gravity and landing, two half-steps a frame as the game does), its events handed to the renderer, with the play
    camera (ZOOM 0 unless set) behind the hero, or SIDE=1 with the camera to its side. Writes OUT/a###.png and OUT/air.json
-   (per frame: height, vertical speed, jumps, hover left, stamina, events, the hero's middle on screen). Ports 8860-8869. */
+   (per frame: height, vertical speed, jumps, hover left, stamina, events, the hero's middle on screen). REDUCED=1 turns on
+   reduced motion. Ports 8860-8869. */
 const { chromium } = require('/opt/npm-tools/node_modules/playwright');
 const fs = require('fs'), http = require('http'), path = require('path');
 const root = process.env.LL_ROOT || process.cwd(), out = process.env.OUT || '/tmp/h3/x', hero = +(process.env.HERO || 0), W_ = +(process.env.W || 640), H_ = +(process.env.H || 480), port = +(process.env.PORT || 8851);
@@ -55,6 +56,7 @@ const SEGS = [
   }
   if (process.env.AIR) { // 0.25 air: the hero's air move, played by the model, from behind (or SIDE=1 from the side)
     const id = await pg.evaluate(() => LL.sim.W.player.def.id), side = !!process.env.SIDE;
+    if (process.env.REDUCED) await pg.evaluate(() => { LL.gfx.reduced = true; }); // reduced motion, as the OS setting would set it
     /* a plan per hero: frames (30 a second) at which to press jump, hold it, move ([forward, right] as fractions of full speed) and fire */
     const P = { press: [], hold: [], move: [], fire: [], N: 0 };
     const seq = (o) => { P.N = o.N; for (let f = 0; f < o.N; f++) { P.press[f] = (o.press || []).indexOf(f) >= 0; P.hold[f] = (o.hold || []).some(r => f >= r[0] && f < r[1]); P.fire[f] = (o.fire || []).some(r => f >= r[0] && f < r[1]);

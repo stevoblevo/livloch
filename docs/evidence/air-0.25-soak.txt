@@ -1,0 +1,9 @@
+# 0.25 air: node tools/soak.js 8 (bot-only matches, simulator results, not human play). Same seeds; the sim uses Math.random in places, so runs differ a little.
+# before: 23e2545 (work/0.25 before air)
+Gentle Reign wins 8/8 9:52W 12:03W 10:27W 10:52W 9:50W 12:03W 9:51W 12:20W
+Even Reign wins 5/8 11:53W 13:10W 11:56L 13:53W 11:09W 12:26L 12:00L 12:26W
+Cruel Reign wins 0/8 12:02L 11:55L 11:36L 11:48L 11:52L 11:15L 11:49L 11:40L
+# after: work/0.25-air
+Gentle Reign wins 8/8 9:40W 12:52W 10:28W 9:38W 9:14W 12:04W 9:09W 11:57W
+Even Reign wins 3/8 12:11L 12:01L 12:18L 14:01W 13:50W 11:50L 12:09L 10:52W
+Cruel Reign wins 2/8 11:53L 11:48L 15:59W 11:42L 12:00W 11:47L 11:50L 11:41L

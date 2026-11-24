@@ -1237,14 +1237,15 @@ function airFx(e) {
       ring(x, y + 0.85, z, 0.3, 1.2, 0xe0955f, 0.3);
     } else emit(x, y, z, 8, 0xf4e8d6, 3, 0.35, -1, 0);
   } else if (e.k === 'hover') { // the wings open: a shimmer off each
-    for (let s = -1; s <= 1; s += 2) { const P = airAt(h, s > 0 ? 'wingL' : 'wingR', s * 0.4, 1.0, -0.3); for (let k = 0; k < 3; k++) emit(P.x, P.y, P.z, 1, k % 2 ? 0x5a3c74 : 0x6a3a5a, 1.8, 0.6, 0.2, 1.2); }
+    const c = Math.cos(h.yaw || 0), sn = Math.sin(h.yaw || 0);
+    for (let s = -1; s <= 1; s += 2) { const P = airAt(h, s > 0 ? 'wingL' : 'wingR', s * 0.4, 1.0, -0.3); for (let k = 0; k < 2; k++) emit(P.x + c * s * 0.35, P.y, P.z - sn * s * 0.35, 1, k ? 0x3a2850 : 0x48283e, 1.4, 0.55, 0.2, 1.2); } // out at the wingtips, dim: additive, it blooms
     ring(x, y + 0.05, z, 0.3, 1.2, 0x8a70a8, 0.35);
-  } else if (e.k === 'hoverend') { for (let k = 0; k < 3; k++) emit(x, y + 0.9, z, 1, 0x5a3c74, 0.8, 0.7, 0, 2.5); }
+  } else if (e.k === 'hoverend') { const c = Math.cos(h.yaw || 0), sn = Math.sin(h.yaw || 0); for (let s = -1; s <= 1; s += 2) emit(x + c * s * 0.6, y + 1.0, z - sn * s * 0.6, 1, 0x3a2850, 0.6, 0.6, 0, 2.5); }
 }
 function airDust(m, h, dt) { // while hovering: lilac motes shaken off the wings, about 5 a second (additive: dark colours glow softly)
   m.airAcc = (m.airAcc || 0) + dt * 5;
   while (m.airAcc >= 1) { m.airAcc -= 1; const s = Math.random() < 0.5 ? 1 : -1, P = airAt(h, s > 0 ? 'wingL' : 'wingR', s * 0.4, 1.0, -0.3);
-    emit(P.x + s * 0.15 + (Math.random() - 0.5) * 0.2, P.y + (Math.random() - 0.5) * 0.2, P.z + (Math.random() - 0.5) * 0.2, 1, Math.random() < 0.5 ? 0x4a3462 : 0x5a3050, 0.5, 0.8, -0.4, 0.6); }
+    const c = Math.cos(h.yaw || 0), sn = Math.sin(h.yaw || 0); emit(P.x + c * s * 0.3 + (Math.random() - 0.5) * 0.2, P.y + (Math.random() - 0.5) * 0.2, P.z - sn * s * 0.3 + (Math.random() - 0.5) * 0.2, 1, Math.random() < 0.5 ? 0x3a2850 : 0x48283e, 0.5, 0.8, -0.4, 0.6); }
 }
 function ghost(m, h, P, pt) {
   let gh = ghosts[ghostK];
