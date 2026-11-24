@@ -45,3 +45,27 @@ jobs:
 
       - name: Dreamwalk debrief contracts (node tools/test-debrief.js)
         run: node tools/test-debrief.js
+
+  smoke:
+    # Issue #28: the page itself, not only the rules. Loads the game in headless Chromium (software WebGL), runs a First
+    # Rain for a few seconds, draws all eight views and Lighter graphics, quits to the title; fails on any page or console
+    # error. Installs Playwright here only; nothing is added to the repository.
+    name: Browser smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+
+      - name: Install Playwright and Chromium
+        run: |
+          npm i --no-save --no-package-lock playwright@1
+          npx playwright install --with-deps chromium
+
+      - name: Smoke test (node tools/smoke.js)
+        run: node tools/smoke.js
