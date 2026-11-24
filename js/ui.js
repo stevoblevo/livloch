@@ -17,6 +17,7 @@ const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', 
 UI.init = function (handlers) {
   H = handlers;
   const cfg = LL.cfg;
+  hatHudInit(); // 0.26 guard: Dora's hat and the touch Hat button
   // heroes
   const hw = $('heroes');
   LL.HEROES.forEach(function (d, i) {
@@ -256,6 +257,7 @@ UI.fx = function (e) {
         const hm = $('hitm'); if (hm.className !== 'kill' || !hm.getAnimations || !hm.getAnimations().length) { hm.className = ''; void hm.offsetWidth; hm.className = 'on'; }
       } else if (e.p === 2) { hurt = Math.min(1, hurt + 0.25 + e.amt / 300); if (e.amt > 30) LL.input.rumble(0.5, 120); }
       break;
+    case 'boon': if (e.u === pl || (e.who || []).indexOf(pl) >= 0) (e.who || []).forEach(function (u) { num(u.x, u.y + u.h + 0.2, u.z, '+' + Math.round(e.amt), 'mend'); }); break; // 0.26 guard: Myra Belle's boon, the mending it gave
     case 'soul':
       if (e.p && e.kind === 'secured') num(e.x, e.y, e.z, '+' + Math.round(e.val) + ' secured', 'soul');
       else if (e.p && e.kind === 'denied') num(e.x, e.y, e.z, 'denied +' + Math.round(e.val), 'soul');
@@ -411,6 +413,24 @@ function minimap(view) {
   const p = W.player;
   if (p.alive) { g.save(); g.translate(X(p.x), Y(p.z)); g.rotate(-view.yaw); g.fillStyle = LL.gfx.look.ui.me; g.strokeStyle = LL.gfx.look.ui.edge; g.lineWidth = 2; g.beginPath(); g.moveTo(0, -10); g.lineTo(7, 7); g.lineTo(0, 3); g.lineTo(-7, 7); g.closePath(); g.fill(); g.stroke(); g.restore(); }
 }
+/* 0.26 guard: Dora's straw hat. Three pips fill with thread boosts; charged, the hat glows and says its key (G, or R3 on a
+   pad), and on touch the Hat button appears; while it flies the hat is dim. Hidden for heroes without a hat. */
+function hatHudInit() {
+  const hud = document.createElement('div'); hud.id = 'hatHud'; hud.hidden = true; hud.setAttribute('aria-label', 'Hat');
+  hud.innerHTML = '<svg viewBox="0 0 28 16" aria-hidden="true"><path d="M1 12.6 Q14 9.6 27 12.6 L25.2 14.6 Q14 12.4 2.8 14.6Z"/><path d="M6.2 11.6 L14 1.6 L21.8 11.6 Q14 10 6.2 11.6Z"/></svg><i></i><i></i><i></i><b></b>';
+  const bt = $('bottom'); if (bt) bt.appendChild(hud);
+  const tb = document.createElement('button'); tb.className = 'tb'; tb.id = 'tHat'; tb.setAttribute('data-btn', 'hat'); tb.hidden = true; tb.textContent = 'Hat';
+  const t = $('touch'); if (t) t.appendChild(tb);
+}
+function hatHud(p) {
+  const hud = $('hatHud'), tb = $('tHat'); if (!hud) return; const Ht = p.def.air && p.def.air.hat, show = !!Ht && p.alive && !W.lean;
+  if (hud.hidden === show) hud.hidden = !show; if (!show) { if (tb && !tb.hidden) tb.hidden = true; return; }
+  const n = Math.min(p.hatN || 0, Ht.need), ready = n >= Ht.need && !p.hat, pips = hud.querySelectorAll('i');
+  for (let i = 0; i < pips.length; i++) { const on = p.hat ? false : i < n; if (pips[i].classList.contains('on') !== on) pips[i].classList.toggle('on', on); }
+  hud.classList.toggle('ready', ready); hud.classList.toggle('away', !!p.hat);
+  const k = LL.input.device === 'pad' ? 'R3' : 'G', kb = hud.querySelector('b'); if (kb.textContent !== k) kb.textContent = k;
+  if (tb && tb.hidden === ready) tb.hidden = !ready;
+}
 UI.frame = function (dt, w, view, info) {
   W = w; if ($('hud').hidden || !W.player) return;
   const p = W.player, d = p.def, R = LL.gfx;
@@ -457,6 +477,7 @@ UI.frame = function (dt, w, view, info) {
     const kb = LL.input.device === 'kbm' && !W.lean, k = $('keys'); if (k.hidden === kb) k.hidden = !kb;
     const t = kb ? 'Press B to spend souls while you wait' : 'Spend souls while you wait', d = $('bDeadShop'); if (d.textContent !== t) d.textContent = t; }
   $('autoTag').hidden = !W.auto;
+  hatHud(p); // 0.26 guard: Dora's hat and the touch Hat button
   { const bf = $('buffs'), a = []; if (p.zestT > 0) a.push('Lemon ' + Math.ceil(p.zestT)); if (p.furyT > 0) a.push('Verde Limón ' + Math.ceil(p.furyT)); if (p.hipsT > 0) a.push('Rose hips ' + Math.ceil(p.hipsT)); if (W.pull[p.team] > 0) a.push('orbs come to you ' + Math.ceil(W.pull[p.team]));
     bf.hidden = !a.length; if (a.length) { const t = a.join(' · '); if (bf.textContent !== t) bf.textContent = t; } }
   { const mo = $('moons'), pp = W.red > 0 ? 1 : U.clamp(1 - (W.redNext - W.t) / W.redEvery, 0, 1); mo.classList.toggle('red', W.red > 0); for (let i = 0; i < 5; i++) mo.children[i].style.setProperty('--ph', U.clamp(pp * 5 - i, 0, 1).toFixed(2)); }

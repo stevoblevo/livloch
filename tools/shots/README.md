@@ -39,6 +39,9 @@ Example: `LL_ROOT=$PWD node tools/shots/dream.js`
 | `rook-audio.js` | 0.25 Rook Vale's sounds rendered one at a time offline (`LL.audio.offline`): peak, RMS, length, with Dora's shot and the shared toll for scale. Measures; does not listen. `PORT` (8874) |
 | `rook-sheet.py` | A captioned contact sheet: `python3 tools/shots/rook-sheet.py out.jpg COLS "frame.png=caption" ... [--crop x0,y0,x1,y1] [--scale s]` |
 
+| `guard.js` | 0.26 the guards on the second jump, thread boosts, Dora's hat, Myra Belle's boon and Rook's barrel roll from the play camera, driven by the real sim; Hush small ones made from a hollow shoot through `trooperStep` on the frames the plan says. `HERO`, `SEGS` (guard, boost, hat, boon, roll), `OUT`, `PORT` (8860-8869), `CAM` (camera yaw about the hero), `HUD=1`, `REDUCED=1`, `LOW=1`, `PAPER=1`, `DMG`, `LOOK`, `ZOOM`. Writes frames, `log.json`, `seg.json` |
+| `guard-audio.js` | 0.26 the guard, thread and hat sounds rendered one at a time offline (`LL.audio.offline`), with Dora's shot and Anna's rock-hop for scale. Measures; does not listen. `PORT` (8860-8869) |
+| `guard-evidence.sh` | 0.26 builds `docs/evidence/guard-0.26-*` (sheets, one mp4 per hero, the audio levels) from `guard.js` captures under `SRC` |
 
 ## 0.26: the Ness and the flood
 

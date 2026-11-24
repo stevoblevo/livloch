@@ -243,13 +243,13 @@ test('idle and coat (0.21): standing is not a frozen card; the coat halves lift 
 const airHero = (id, o) => { const i = LL.HEROES.findIndex(d => d.id === id), W = world(Object.assign({ heroPick: i, auto: false }, o || {})), h = W.player; h.useAI = false; h.x = -62; h.z = -60; h.stamina = 3; h.ctl.mx = h.ctl.mz = 0; return { W, h }; };
 function airRun(W, h, secs, each) { const out = []; for (let i = 0; i < Math.round(secs * 60) && !W.over; i++) { if (each) each(i, W.t); S.step(1 / 60); h.hp = h.maxHp; for (const e of W.fx) if (e.u === h) out.push(Object.assign({ at: W.t }, e)); W.fx.length = 0; } return out; }
 const airK = (ev, k) => ev.filter(e => e.k === k);
-test('air (0.25): Dora jumps once, Anna and the Skein Doll twice, Myra Belle once and then hangs', () => {
-  const want = { dora: [1, 0, 0], anna: [2, 1, 0], skein: [2, 1, 0], myra: [1, 0, 1] };
+test('air (0.25): Anna and the Skein Doll jump twice (Dora too since 0.26), Myra Belle once and then hangs', () => {
+  const want = { dora: [2, 1, 0], anna: [2, 1, 0], skein: [2, 1, 0], myra: [1, 0, 1] }; // 0.26 guard: Dora's second jump is her bubble
   for (const id in want) { const { W, h } = airHero(id); airRun(W, h, 0.5); h.stamina = 3;
     const ev = airRun(W, h, 1.6, (i) => { if (i === 0 || i === 20 || i === 30 || i === 40) h.ctl.jump = true; h.ctl.jumpHeld = i >= 20 && i < 50; });
     const j = airK(ev, 'jump'); assert.strictEqual(j.length, want[id][0], id + ': jumps ' + j.length); assert.strictEqual(j.filter(e => e.dbl).length, want[id][1], id + ': second jumps');
     assert.strictEqual(airK(ev, 'hover').length, want[id][2], id + ': hovers'); assert.ok(h.onGround, id + ' has landed');
-    assert.strictEqual(LL.HEROES.find(d => d.id === id).air.jumps, id === 'anna' || id === 'skein' ? 2 : 1); }
+    assert.strictEqual(LL.HEROES.find(d => d.id === id).air.jumps, id === 'myra' ? 1 : 2); }
   const { W, h } = airHero('anna'); airRun(W, h, 0.3); h.stamina = 3; const ev = airRun(W, h, 0.5, (i) => { if (i === 0 || i === 18) h.ctl.jump = true; });
   assert.strictEqual(airK(ev, 'jump')[1].n, 2); assert.ok(h.stamina < 3, 'the second jump costs stamina'); // (it comes back at one per 2.6 s)
   const z = airHero('skein'); z.h.stamina = 0; const e0 = airRun(z.W, z.h, 0.6, (i) => { if (i === 0 || i === 18) z.h.ctl.jump = true; }); assert.strictEqual(airK(e0, 'jump').length, 1, 'no stamina, no second jump');
@@ -300,6 +300,118 @@ test('air poses (0.25): the rig\'s air clocks: take-off, the top, the fall, a se
   u.hoverT = 0; r = f(30); assert.ok(r.a.hov < 0.05, 'and out');
   u.onGround = true; u.vy = 0; u.jumps = 0; r = f(3); assert.strictEqual(r.a.tko + r.a.rise + r.a.apex + r.a.fall + r.a.dbl, 0, 'landed');
   const k = M.create(); u.onGround = false; u.vy = 4; M.pose(k, u, 1 / 60, 0, false); assert.ok(k.A.tk > 1, 'a knock up (4 m/s) is not a take-off');
+});
+/* 0.26 GUARD. Guards on the second jump, thread boosts, Dora's hat, Myra Belle's boon and Rook's barrel roll, through the
+   real sim at 60 steps a second, in a quiet valley (no waves, thieves or hollows; the other heroes parked far off). */
+const gHero = (id, x, z, o) => { const W = world(Object.assign({ heroPick: LL.HEROES.findIndex(d => d.id === id), auto: false }, o || {})), h = W.player; h.useAI = false;
+  W.heroes.forEach(u => { if (u !== h) { u.useAI = false; u.x = 70 + u.slot; u.z = -130; u.ctl.mx = u.ctl.mz = 0; } }); W.waveT = 1e9; W.thiefT = 1e9; W.hollowT = [1e9, 1e9, 1e9]; W.troopers.forEach(u => { u.alive = false; });
+  h.x = x; h.z = z; h.y = 0; h.vx = h.vz = h.vy = 0; h.onGround = true; h.stamina = 3; h.yaw = 0; h.aimYaw = 0; h.ctl.mx = h.ctl.mz = 0; return { W, h }; };
+// steps the world; the hero aims 30 m along h.aimYaw unless each() aims it; returns its events (and every guard event)
+function gRun(W, h, secs, each) { const out = []; for (let i = 0; i < Math.round(secs * 60) && !W.over; i++) { h.ctl.ax = h.x + Math.sin(h.aimYaw) * 30; h.ctl.az = h.z + Math.cos(h.aimYaw) * 30; h.ctl.ay = h.y + 1.5;
+  if (each) each(i, W.t); S.step(1 / 60); for (const e of W.fx) if (e.u === h || e.k === 'boon') out.push(Object.assign({ at: W.t }, e)); W.fx.length = 0; } return out; }
+// a Hush small one standing still at (x, z) that never attacks unless told: a source of hits with a place
+function foe(W, x, z, big) { S._t.spawnHollow(1); const u = W.troopers[W.troopers.length - 1]; W.fx.length = 0; Object.assign(u, { x: x, z: z, big: !!big, r: big ? 1.15 : 0.7, h: big ? 3.2 : 1.7, hp: 5000, maxHp: 5000, speed: 0, atkT: 1e9, ranged: !big, range: big ? 3.2 : 15, dmg: 20, rate: 1 }); return u; }
+const dmgFrom = (h, src, n, kind) => { const a = h.hp; S._t.damage(h, n || 40, src, kind || 'unit'); const d = a - h.hp; h.hp = h.maxHp; return d; };
+const dblJump = (W, h, at2) => gRun(W, h, (at2 || 15) / 60 + 0.02, (i) => { if (i === 0 || i === (at2 || 15)) h.ctl.jump = true; });
+const at = (h, deg, d) => [h.x + Math.sin(deg * Math.PI / 180) * d, h.z + Math.cos(deg * Math.PI / 180) * d];
+test('guard (0.26): Anna\'s aegis blocks hits from the front for its 0.9 s, not from behind; a melee attacker is shoved', () => {
+  const { W, h } = gHero('anna', -24, 20), G = h.def.air.guard; assert.deepStrictEqual([G.kind, G.t, G.arc], ['aegis', 0.9, 60]);
+  const front = foe(W, ...at(h, 0, 12)), back = foe(W, ...at(h, 180, 12)), in50 = foe(W, ...at(h, 50, 12)), out70 = foe(W, ...at(h, -70, 12));
+  assert.ok(dmgFrom(h, front) > 30, 'no guard on the ground');
+  const ev = dblJump(W, h); const g = airK(ev, 'guard'); assert.strictEqual(g.length, 1, 'the second jump raises it'); assert.strictEqual(g[0].kind, 'aegis');
+  assert.strictEqual(dmgFrom(h, front), 0, 'blocked from the front'); assert.strictEqual(dmgFrom(h, in50, 40, 'tower'), 0, 'and from 50 degrees off the aim');
+  assert.ok(dmgFrom(h, back) > 30, 'not from behind'); assert.ok(dmgFrom(h, out70) > 30, 'not from 70 degrees off');
+  assert.ok(dmgFrom(h, null) > 30, 'a hit with no source has no direction to block'); const f0 = W.fx.filter(e => e.k === 'guarded' && e.how === 'block').length; assert.ok(f0 >= 2, 'blocks are told');
+  const hol = foe(W, h.x, h.z + 2.2, true), sm = foe(W, h.x + 0.4, h.z + 1.9), z0 = hol.z, z1 = sm.z;
+  assert.strictEqual(dmgFrom(h, hol), 0); assert.strictEqual(dmgFrom(h, sm), 0);
+  assert.ok(Math.abs(hol.z - z0 - G.knock / 2) < 0.15 && hol.slowT > 0, 'a hollow is shoved half the knock: ' + (hol.z - z0).toFixed(2)); assert.ok(sm.z - z1 > G.knock * 0.85, 'a small one the whole knock: ' + (sm.z - z1).toFixed(2));
+  assert.ok(W.fx.some(e => e.k === 'guarded' && e.melee), 'a melee block is told as one');
+  let end = null; const ev2 = gRun(W, h, 1.2, () => { if (!end && h.guardT <= 0) end = W.t; }); const ge = airK(ev2, 'guardend')[0]; assert.ok(ge && ge.why === 'time');
+  assert.ok(Math.abs(ge.at - g[0].at - G.t) < 0.03, 'up for ' + (ge.at - g[0].at).toFixed(2) + ' s'); assert.ok(dmgFrom(h, front) > 30, 'and down after');
+});
+test('guard (0.26): the aegis stops a shot from the front before it bursts, and a trooper\'s shots through the real path', () => {
+  const spit = (W, h, z) => { W.ness.x = h.x; W.ness.z = z; W.projs.push({ x: h.x, y: h.y + 1.2, z: z, vx: 0, vy: 0, vz: (h.z - z) / Math.abs(h.z - z) * 38, grav: 0, life: 1.6, dmg: 62, aoe: 3.5, team: 2, owner: W.ness, r: 0.6, kind: 'orb', size: 0.85, col: 0x7fe0ff, dot: 0, dotT: 0, slow: 0, slowT: 0 }); };
+  let { W, h } = gHero('anna', -24, 20); dblJump(W, h, 18); spit(W, h, h.z + 14); let hp0 = h.hp; const ev = gRun(W, h, 0.45);
+  assert.strictEqual(h.hp, hp0, 'no damage from the front'); assert.ok(!W.projs.some(p => p.kind === 'orb'), 'the spit is gone'); assert.ok(airK(ev, 'guarded').some(e => e.how === 'block' && e.kind === 'proj'));
+  ({ W, h } = gHero('anna', -24, 20)); dblJump(W, h, 18); spit(W, h, h.z - 14); hp0 = h.hp; gRun(W, h, 0.45); assert.ok(hp0 - h.hp > 40, 'from behind it bursts on her: ' + (hp0 - h.hp).toFixed(0));
+  // a Hush trooper on the Middle thread shooting her: its tracer and damage come from trooperStep
+  ({ W, h } = gHero('anna', 0, 0)); const u = foe(W, 0, 7); u.lane = 1; u.s = LL.lanes[1].len / 2 + 7; u.atkT = 0.4; u.tgt = null; u.tgtT = 0; dblJump(W, h, 12);
+  hp0 = h.hp; const e2 = gRun(W, h, 0.5); assert.strictEqual(h.hp, hp0, 'its shots were blocked'); assert.ok(airK(e2, 'guarded').length >= 1, 'at least one shot met the shield');
+});
+test('guard (0.26): Dora jumps twice now; her bubble soaks up to 200 for 1.2 s, then pops; the rest gets through', () => {
+  let { W, h } = gHero('dora', -24, 20); const G = h.def.air.guard; assert.deepStrictEqual([h.def.air.jumps, G.kind, G.t, G.hp], [2, 'bubble', 1.2, 200]);
+  const f = foe(W, ...at(h, 180, 12)); const ev = dblJump(W, h); assert.strictEqual(airK(ev, 'jump').length, 2); assert.strictEqual(airK(ev, 'guard')[0].kind, 'bubble');
+  assert.strictEqual(dmgFrom(h, f, 120), 0, 'soaked, from any side'); assert.ok(Math.abs(h.guardHp - 80) < 1e-6);
+  assert.ok(Math.abs(dmgFrom(h, f, 120) - 40) < 1e-6, 'the bubble takes what room it has left (80); 40 gets through'); assert.ok(!(h.guardT > 0), 'and pops'); assert.strictEqual(W.fx.filter(e => e.k === 'guardend')[0].why, 'full');
+  assert.ok(dmgFrom(h, f, 120) > 100, 'nothing soaked after the pop');
+  ({ W, h } = gHero('dora', -24, 20)); const e1 = dblJump(W, h); const g0 = airK(e1, 'guard')[0]; dmgFrom(h, f, 50); const e2 = gRun(W, h, 1.4); const ge = airK(e2, 'guardend')[0];
+  assert.ok(ge.why === 'time' && Math.abs(ge.at - g0.at - G.t) < 0.03, 'unfilled, it lasts ' + (ge.at - g0.at).toFixed(2) + ' s');
+});
+test('guard (0.26): Skye frays into thread for 0.6 s: hits and shots pass through; the fountain still burns', () => {
+  const { W, h } = gHero('skein', -24, 20), G = h.def.air.guard; assert.deepStrictEqual([G.kind, G.t], ['fray', 0.6]);
+  const f = foe(W, ...at(h, 0, 12)), b = foe(W, ...at(h, 180, 12)); const ev = dblJump(W, h); const g0 = airK(ev, 'guard')[0]; assert.strictEqual(g0.kind, 'fray');
+  assert.strictEqual(dmgFrom(h, f, 80, 'tower') + dmgFrom(h, b, 80, 'unit') + dmgFrom(h, null, 80, 'ab'), 0, 'everything passes'); assert.ok(dmgFrom(h, null, 30, 'dot') > 20, 'a bleed or the fountain is not a hit');
+  W.ness.x = h.x; W.ness.z = h.z + 8; W.projs.push({ x: h.x, y: h.y + 1.1, z: h.z + 8, vx: 0, vy: 0, vz: -38, grav: 0, life: 1.6, dmg: 62, aoe: 3.5, team: 2, owner: W.ness, r: 0.6, kind: 'orb', size: 0.85, col: 0x7fe0ff, dot: 0, dotT: 0, slow: 0, slowT: 0 });
+  const p = W.projs[W.projs.length - 1], hp0 = h.hp; const e2 = gRun(W, h, 0.3); assert.strictEqual(h.hp, hp0, 'a spit flew through her'); assert.ok(p.z < h.z - 1 || p.life <= 0 || W.projs.indexOf(p) < 0, 'and on past'); assert.strictEqual(airK(e2, 'guarded').filter(e => e.how === 'pass' && e.kind === 'proj').length, 1, 'told once');
+  const e3 = gRun(W, h, 0.5); const ge = airK(e2.concat(e3), 'guardend')[0]; assert.ok(Math.abs(ge.at - g0.at - G.t) < 0.03, 'frayed for ' + (ge.at - g0.at).toFixed(2) + ' s'); assert.ok(dmgFrom(h, f) > 30, 'whole again after');
+});
+test('guard (0.26): a guard costs the second jump\'s stamina; jumping all minute long is not invulnerability', () => {
+  for (const id of ['anna', 'dora', 'skein']) { const { W, h } = gHero(id, -24, 20); h.stamina = 0; const e0 = dblJump(W, h); assert.strictEqual(airK(e0, 'guard').length, 0, id + ': no stamina, no second jump, no guard'); }
+  const cap = { anna: 0.45, dora: 0.55, skein: 0.3 };
+  for (const id in cap) { const { W, h } = gHero(id, -24, 20); h.stamina = 3; let up = 0, n = 0; const ev = gRun(W, h, 60, (i) => { h.ctl.jump = i % 3 === 0; if (h.guardT > 0) up++; n++; h.hp = h.maxHp; });
+    const gs = airK(ev, 'guard').length, most = 3 + Math.floor(60 / 2.6) + 1; assert.ok(gs >= 15 && gs <= most, id + ': ' + gs + ' guards in a minute of jumping (at most ' + most + ')'); assert.ok(up / n < cap[id], id + ': guarded ' + (100 * up / n).toFixed(0) + '% of the minute'); }
+});
+test('thread boost (0.26): only over a thread and moving along it: more lift and speed along it, counted for the life', () => {
+  const B = C.TBOOST, jump2 = (id, x, z, mx, mz) => { const { W, h } = gHero(id, x, z); let top = 0, vMax = 0; const ev = gRun(W, h, 1.6, (i) => { h.ctl.mx = mx; h.ctl.mz = mz; if (i === 30 || i === 45) h.ctl.jump = true; top = Math.max(top, h.y); if (i > 45 && !h.onGround) vMax = Math.max(vMax, Math.hypot(h.vx, h.vz)); }); return { W, h, ev, top, vMax, tb: airK(ev, 'tboost') }; };
+  const on = jump2('anna', 0, -20, 0, 1), off = jump2('anna', -24, -20, 0, 1), across = jump2('anna', -2, -20, 1, 0), still = jump2('anna', 0, -20, 0, 0);
+  assert.strictEqual(on.tb.length, 1, 'along the Middle thread: a boost'); assert.strictEqual(off.tb.length + across.tb.length + still.tb.length, 0, 'none off it, across it or standing');
+  assert.ok(on.top - off.top > 0.6, 'higher by ' + (on.top - off.top).toFixed(2) + ' m'); assert.ok(on.vMax > off.vMax * 1.4, 'faster along it: ' + on.vMax.toFixed(1) + ' vs ' + off.vMax.toFixed(1) + ' m/s');
+  const t0 = on.tb[0]; assert.ok(t0.why === 'jump' && t0.n === 1 && t0.lane === 1 && Math.abs(t0.dz) > 0.99 && Math.abs(t0.tx) < 1e-6, 'told with the thread under it');
+  assert.ok(on.h.z - off.h.z > 1.5, 'and it carried her ' + (on.h.z - off.h.z).toFixed(1) + ' m further');
+  const k = jump2('skein', 0, 20, 0, -1); assert.strictEqual(k.tb.length, 1, 'either way along a thread'); assert.strictEqual(k.h.tbN, 1); S._t.damage(k.h, 1e6, null, 'unit'); assert.strictEqual(k.h.tbN, 0, 'the count is per life');
+});
+test('hat (0.26): three thread boosts charge Dora\'s hat; thrown, it cuts each foe out and back, comes home, and the charge resets', () => {
+  const { W, h } = gHero('dora', 0, 24), Ht = h.def.air.hat; assert.deepStrictEqual([Ht.need, Ht.dmg], [3, 100]); h.aimYaw = Math.PI;
+  h.ctl.hat = true; gRun(W, h, 0.1); assert.ok(!h.hat, 'not before it is charged');
+  let ready = 0; for (let k = 0; k < 3; k++) { h.stamina = 3; const ev = gRun(W, h, 1.6, (i) => { h.ctl.mz = -1; h.ctl.mx = 0; if (i === 4 || i === 18) h.ctl.jump = true; }); ready += airK(ev, 'hatready').length; assert.strictEqual(h.hatN, k + 1, 'charge ' + (k + 1)); }
+  assert.strictEqual(ready, 1, 'told once, when full'); h.x = 0; h.z = 0; h.vx = h.vz = 0; h.aimYaw = 0; gRun(W, h, 0.5, () => { h.ctl.mz = 0; });
+  const fs = [foe(W, 0.3, 4), foe(W, -0.4, 8), foe(W, 0.5, 12), foe(W, 4, 8)], hp = fs.map(u => u.hp);
+  h.ctl.hat = true; let far = 0, flying = 0; const ev = gRun(W, h, 2.5, () => { if (h.hat) { flying += 1 / 60; far = Math.max(far, Math.hypot(h.hat.x - h.x, h.hat.z - h.z)); } });
+  assert.ok(airK(ev, 'hatthrow').length === 1 && airK(ev, 'hatturn').length === 1 && airK(ev, 'hatback').length === 1, 'out, turn, home: ' + ev.map(e => e.k).join(' '));
+  assert.ok(far > Ht.out - 1 && far < Ht.out + 1.5, 'out ' + far.toFixed(1) + ' m'); assert.ok(flying > 0.9 && flying < 1.8, 'in the air ' + flying.toFixed(2) + ' s'); assert.strictEqual(h.hat, null);
+  const took = fs.map((u, i) => hp[i] - u.hp); [0, 1, 2].forEach(i => assert.ok(Math.abs(took[i] - 2 * Ht.dmg * h.st.ap) < 1, 'foe ' + i + ' cut out and back: ' + took[i].toFixed(0))); assert.strictEqual(took[3], 0, 'one off the line is not cut');
+  assert.strictEqual(airK(ev, 'hatcut').length, 6); assert.strictEqual(h.hatN, 0, 'the charge is spent'); h.ctl.hat = true; gRun(W, h, 0.1); assert.ok(!h.hat, 'no second throw without three more boosts');
+  h.hatN = 3; h.ctl.hat = true; gRun(W, h, 0.2); assert.ok(h.hat); S._t.damage(h, 1e6, null, 'unit'); assert.ok(!h.hat && h.hatN === 0, 'a fall drops the hat and the charge');
+});
+test('boon (0.26): a hover the thread boosted that ends still on it mends Myra Belle and her side near her; off the thread, nothing', () => {
+  const B = h => h.def.air.boon, hov = (x, z, stick) => { const { W, h } = gHero('myra', x, z); const al = W.heroes.filter(u => u !== h); al[0].x = x + 3; al[0].z = z + 2; al[1].x = x + 25; al[1].z = z;
+    W.heroes.forEach(u => { u.hp = u.maxHp * 0.5; }); const hp = W.heroes.map(u => u.hp); const ev = gRun(W, h, 2.6, (i) => { const m = stick(h); h.ctl.mx = m[0]; h.ctl.mz = m[1]; h.ctl.jump = i === 10; h.ctl.jumpHeld = i >= 10 && i < 110; al[0].x = h.x + 3; al[0].z = h.z + 1; al[1].x = h.x + 25; al[1].z = h.z; });
+    return { W, h, al, ev, gain: W.heroes.map((u, i) => u.hp - hp[i]) }; };
+  const r = hov(0, -20, () => [0, 1]), b = airK(r.ev, 'boon'); assert.strictEqual(airK(r.ev, 'tboost').filter(e => e.why === 'hover').length, 1, 'the hover was boosted'); assert.strictEqual(b.length, 1, 'one boon');
+  const amt = B(r.h).heal * r.h.st.ap, iMe = r.W.heroes.indexOf(r.h), iNear = r.W.heroes.indexOf(r.al[0]), iFar = r.W.heroes.indexOf(r.al[1]);
+  assert.ok(b[0].who.indexOf(r.h) >= 0 && b[0].who.indexOf(r.al[0]) >= 0 && b[0].who.indexOf(r.al[1]) < 0, 'her and the ally beside her, not the one 25 m off');
+  assert.ok(r.gain[iNear] >= amt - 0.5 && r.gain[iFar] < amt * 0.5, 'the near ally gained ' + r.gain[iNear].toFixed(0) + ', the far one ' + r.gain[iFar].toFixed(0));
+  const d = hov(0, -20, (h) => h.hoverT > 0 ? [1, 0.3] : [0, 1]); assert.strictEqual(airK(d.ev, 'tboost').length, 1, 'boosted at the start'); assert.strictEqual(airK(d.ev, 'boon').length, 0, 'but she drifted off the thread: ' + d.h.x.toFixed(1) + ' m');
+  const o = hov(-24, -20, () => [0, 1]); assert.strictEqual(airK(o.ev, 'tboost').length + airK(o.ev, 'boon').length, 0, 'off a thread: no boost, no boon');
+  const H = r.h.def.air.hover; let { W, h } = gHero('myra', 0, -20); let vyB = null; gRun(W, h, 1.6, (i) => { h.ctl.mz = 1; h.ctl.jump = i === 10; h.ctl.jumpHeld = i >= 10; if (h.hoverT > 0 && h.hoverAge > 0.95 && vyB == null) vyB = h.vy; });
+  assert.ok(Math.abs(vyB + H.sink * C.TBOOST.sinkK) < 0.2, 'the thread holds her up: she sinks at ' + (-vyB).toFixed(2) + ' m/s, not ' + H.sink);
+});
+test('bots (0.26): under fire a bot opens its guard (Rook rolls) and the guard catches hits', () => {
+  /* Bots choose by Math.random (issue #27); each hero gets 12 s under steady fire (a 15-damage hit from 10 m in front every
+     0.6 s), and the counts are summed over three seeds with floors far below what they usually reach. */
+  const got = {}; for (const id of ['anna', 'dora', 'skein', 'rook']) { got[id] = { guard: 0, guarded: 0 };
+    for (const seed of [3, 4, 5]) { const { W, h } = gHero(id, -24, 20, { seed: seed }); h.useAI = true; const f = foe(W, h.x, h.z + 10); let next = 0.5;
+      const ev = gRun(W, h, 12, (i, t) => { if (id === 'rook' && h.onGround && h.cds[1] <= 0) h.ctl.ab[1] = true; if (t >= next) { next += 0.6; f.x = h.x + Math.sin(h.yaw) * 10; f.z = h.z + Math.cos(h.yaw) * 10; S._t.damage(h, 15, f, 'unit'); } h.hp = h.maxHp; });
+      got[id].guard += ev.filter(e => e.k === 'guard' || e.k === 'roll').length; got[id].guarded += airK(ev, 'guarded').length; } }
+  for (const id in got) assert.ok(got[id].guard >= 3 && got[id].guarded >= 3, id + ': ' + JSON.stringify(got[id])); if (process.env.SHOW) console.log('      ' + JSON.stringify(got));
+});
+test('bots (0.26): whole matches: they boost along their own threads, Dora throws her hat, and nothing breaks', () => {
+  const got = { tboost: 0, hat: 0, cuts: 0, boon: 0, guard: 0 }; let bad = 0;
+  for (const id of ['dora', 'anna', 'skein', 'myra']) for (const seed of [3, 4, 5, 6]) { const W = world({ heroPick: LL.HEROES.findIndex(d => d.id === id), seed: seed });
+    for (let i = 0; i < 150 * 30 && !W.over; i++) { keepAlive(W); S.step(1 / 30); for (const e of W.fx) { if (e.k === 'hatthrow') got.hat++; else if (e.k === 'hatcut') got.cuts++; else if (e.k in got) got[e.k]++; } W.fx.length = 0;
+      if (i % 30 === 0 && !W.heroes.every(u => [u.x, u.y, u.z, u.vx, u.vy, u.vz, u.hp].every(Number.isFinite) && (!u.hat || [u.hat.x, u.hat.y, u.hat.z].every(Number.isFinite)))) bad++; } }
+  assert.strictEqual(bad, 0, 'every number stays finite'); // (measured over seeds 1 to 8: 4 to 24 boosts and 0 to 5 hat throws a seed)
+  assert.ok(got.tboost >= 10 && got.hat >= 1 && got.cuts >= 1 && got.guard >= 20, 'over 16 bot runs of 150 s: ' + JSON.stringify(got));
 });
 /* 0.23 WARDROBE. The unlock rules are pure functions of the saved settings; js/wardrobe.js loads under Node without a page. */
 const WD = (require(path.join(__dirname, '..', 'js', 'wardrobe.js')), LL.wardrobe);
@@ -446,6 +558,16 @@ test('bots with Rook play whole matches, use the lift, and nothing breaks', () =
   let allied = 0; for (let seed = 1; seed < 40 && allied < 4; seed++) { const W = world({ heroPick: seed % 4, seed: seed }); if (W.heroes.some(u => u.def.id === 'rook' && !u.isPlayer)) { allied++; run(W, 40); } } assert.ok(allied >= 3, 'Rook rolled as a bot ally ' + allied + ' times');
   const { W, h } = rookAt(-24, 20); h.ctl.ab[1] = true; for (let i = 0; i < 20; i++) S.step(1 / 60); assert.ok(h.liftT > 0 && h.y > 1); S._t.kill ? S._t.damage(h, 1e6, null, 'unit') : 0; assert.ok(!h.alive); W.fx.length = 0;
   const ev = run(W, 40, w => { w.patron.forEach(p => { p.hp = p.maxHp; }); }); assert.ok(h.alive, 'respawned'); assert.ok(!ev.some(e => e.k === 'liftland' || e.k === 'glide'), 'no lift events from a dead pilot'); assert.ok(!h.glide && h.liftT === 0);
+});
+test('roll (0.26): Rook\'s dash aloft is a barrel roll to one side; shots from afar miss while it lasts, close ones land', () => {
+  const { W, h } = rookAt(-24, 20), a = h.def.ab[1]; assert.ok(a.roll > 0.3 && a.roll < 0.6 && a.rollNear === 4);
+  h.aimYaw = 0; const far = foe(W, -24, 32), near = foe(W, -24, 22.5);
+  h.ctl.dash = true; let ev = gRun(W, h, 0.1); assert.strictEqual(airK(ev, 'roll').length, 0, 'on the ground a dash is a dash');
+  gRun(W, h, 1.5); h.stamina = 3; h.ctl.ab[1] = true; gRun(W, h, 0.4); assert.ok(h.liftT > 0);
+  const x0 = h.x; ev = gRun(W, h, 0.05, (i) => { h.ctl.mx = -1; h.ctl.mz = 0; if (i === 0) h.ctl.dash = true; }); const r = airK(ev, 'roll'); assert.strictEqual(r.length, 1); assert.strictEqual(r[0].dir, -1, 'stick right: a roll to his right');
+  assert.ok(h.rollT > 0); assert.strictEqual(dmgFrom(h, far, 50, 'tower'), 0, 'a shot from 12 m misses'); assert.ok(dmgFrom(h, near, 50) > 30, 'a hit from 2.5 m lands'); assert.ok(W.fx.some(e => e.k === 'guarded' && e.how === 'roll'));
+  gRun(W, h, 0.2, () => { h.ctl.mx = -1; }); assert.ok(x0 - h.x > 3, 'he went sideways ' + (x0 - h.x).toFixed(1) + ' m'); gRun(W, h, a.roll); assert.ok(!(h.rollT > 0) && dmgFrom(h, far, 50) > 30, 'and it ends');
+  h.stamina = 3; ev = gRun(W, h, 0.05, (i) => { h.ctl.mx = 0; h.ctl.mz = 1; if (i === 0) h.ctl.dash = true; }); assert.strictEqual(airK(ev, 'roll')[0].dir, 1, 'with the stick ahead it goes the other way from the last');
 });
 /* ---------- 0.26 ness: the chomp and the flood ----------
    The sim still uses Math.random (issue #27), so staged tests place every piece by hand and whole-match tests sum over seeds. */
