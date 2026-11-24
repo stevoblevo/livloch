@@ -133,12 +133,12 @@ function capG(p, q, r0, r1, seg, rings) {
 function shellG(rows, seg, a0, a1, o) {
   o = o || {}; const nr = rows.length, nc = seg + 1, pos = [], uv = [], idx = [], cid = [];
   for (let r = 0; r < nr; r++) for (let k = 0; k < nc; k++) {
-    const a = a0 + (a1 - a0) * k / seg, R = rows[r];
+    const R = rows[r], A0 = typeof a0 === 'function' ? a0(R[0]) : a0, A1 = typeof a1 === 'function' ? a1(R[0]) : a1, a = A0 + (A1 - A0) * k / seg; // 0.24.1: a0/a1 may vary by row (y), for a vent
     pos.push((R[4] || 0) + R[1] * Math.sin(a), R[0], (R[3] || 0) + R[2] * Math.cos(a)); uv.push(k / seg, 1 - r / Math.max(1, nr - 1)); cid.push(k);
   }
   for (let r = 0; r < nr - 1; r++) for (let k = 0; k < seg; k++) { const A = r * nc + k, B = A + 1, Cc = A + nc, D = Cc + 1; idx.push(A, Cc, B, B, Cc, D); }
   let g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); g.setAttribute('cid', new T.Float32BufferAttribute(cid, 1)); g.setIndex(idx); g.computeVertexNormals();
-  if (Math.abs(a1 - a0 - TAU) < 1e-3) { const n = g.attributes.normal; for (let r = 0; r < nr; r++) { const i0 = r * nc, i1 = r * nc + seg; _v.fromBufferAttribute(n, i0).add(_v2.fromBufferAttribute(n, i1)).normalize(); n.setXYZ(i0, _v.x, _v.y, _v.z); n.setXYZ(i1, _v.x, _v.y, _v.z); } }
+  if (typeof a0 !== 'function' && typeof a1 !== 'function' && Math.abs(a1 - a0 - TAU) < 1e-3) { const n = g.attributes.normal; for (let r = 0; r < nr; r++) { const i0 = r * nc, i1 = r * nc + seg; _v.fromBufferAttribute(n, i0).add(_v2.fromBufferAttribute(n, i1)).normalize(); n.setXYZ(i0, _v.x, _v.y, _v.z); n.setXYZ(i1, _v.x, _v.y, _v.z); } }
   if (o.tile) { g = g.toNonIndexed(); const U = g.attributes.uv, Cd = g.attributes.cid;
     for (let t = 0; t < U.count; t += 3) { const k0 = Math.min(Cd.getX(t), Cd.getX(t + 1), Cd.getX(t + 2)), base = Math.floor(k0 / o.tile) * o.tile;
       for (let j = 0; j < 3; j++) U.setX(t + j, (Cd.getX(t + j) - base) / o.tile); } }
@@ -343,8 +343,10 @@ HERO.dora = {
   P: { H: 2.45, ankle: 0.115, knee: 0.56, hip: 1.0, hipW: 0.115, pelv: 1.05, spine: 1.17, chest: 1.33, neck: 1.54, head: 1.62, headC: 1.84, headR: 0.245,
     shY: 1.45, shX: 0.235, upper: 0.27, fore: 0.24, foot: 0.155 },
   two: true, item: 'lantern',
-  cloak: { name: 'ck', parent: 'chest', pivot: 1.42, mid: 0.98, hem: 0.54, top: 1.5, firm: 0.25,
-    rows: [[1.56, 0.12, 0.11, -0.01], [1.5, 0.19, 0.16, -0.02], [1.42, 0.23, 0.2, -0.03], [1.3, 0.24, 0.215, -0.04], [1.12, 0.27, 0.24, -0.05], [0.94, 0.31, 0.275, -0.06], [0.76, 0.36, 0.31, -0.07], [0.62, 0.4, 0.34, -0.08], [0.54, 0.42, 0.355, -0.08]],
+  /* 0.24.1: the hem rides above the knee and the back is vented from the seat down (a riding cloak), so from behind the
+     stride shows through: knees and boots, not a red bell bobbing. VY is where the vent starts, VG its half-angle at the hem. */
+  cloak: { name: 'ck', parent: 'chest', pivot: 1.42, mid: 0.98, hem: 0.64, top: 1.5, firm: 0.25, VY: 0.9, VG: 0.46,
+    rows: [[1.56, 0.12, 0.11, -0.01], [1.5, 0.19, 0.16, -0.02], [1.42, 0.23, 0.2, -0.03], [1.3, 0.24, 0.215, -0.04], [1.12, 0.27, 0.24, -0.05], [0.94, 0.31, 0.275, -0.06], [0.8, 0.345, 0.3, -0.07], [0.7, 0.37, 0.318, -0.08], [0.64, 0.385, 0.328, -0.08]],
     a0: 0.62, a1: TAU - 0.62, groups: [{ lo: 0, hi: TAU, az: [0.95, 1.85, Math.PI, TAU - 1.85, TAU - 0.95] }] },
   chains: [{ pre: 'sl', n: 4, seg: 0.13 }, { pre: 'sr', n: 4, seg: 0.12 }],
   rig: function (r, P) {
@@ -374,14 +376,18 @@ HERO.dora = {
       const g = new T.PlaneGeometry(w, 0.13, 1, 1); B.add(g, M(x0 + c[1] * 0.2, (y0 + y1) / 2, -0.255 - c[2] - i * 0.03 - 0.015, 0.25, 0, 0), function (lx, ly) { return i === 3 && ly < -0.03 ? 0xe8b04a : 0xc8302c; }, c[0] + i); } });
     // the cloak: red, open at the front, gold at the hem and the front edges; weighted to its panels
     const ck = this.cloak, rows = ck.rows, pw = panelW(ck, 'chest');
-    B.add(shellG(rows, 22, ck.a0, ck.a1), null, function (lx, ly, lz, wx, wy, wz) { const a = Math.atan2(wx, wz + 0.05), ea = Math.min(Math.abs(a - ck.a0), Math.abs(TAU + a - ck.a1), Math.abs(-a - ck.a0));
-      if (wy < 0.6) return gold; if (ea < 0.1 && wy < 1.4) return gold; if (wy < 0.64) return redD; return red; }, pw);
-    B.add(shellG(shellOut(rows, 0.006, 0.76, 0.63, 1), 22, ck.a0 + 0.2, ck.a1 - 0.2, { tile: 2 }), null, 0xffffff, pw, { uv: cellUV(6) }); // scrollwork above the hem
-    // the stag, on the back between the shoulder blades and the knees
-    const st = [], n = 4; for (let i = 0; i <= n; i++) { const y = 1.3 - i * (0.48 / n), A = shellR(rows, y, Math.PI); st.push([y, shellR(rows, y, Math.PI / 2).r + 0.008, -A.z + A.cz + 0.008, A.cz]); }
+    const vg = function (y) { return ck.VG * ss(ck.VY, ck.hem, y); }, vL = function (y) { return Math.PI - vg(y); }, vR = function (y) { return Math.PI + vg(y); };
+    const ckCol = function (lx, ly, lz, wx, wy, wz) { const a = Math.atan2(wx, wz + 0.05), ea = Math.min(Math.abs(a - ck.a0), Math.abs(TAU + a - ck.a1), Math.abs(-a - ck.a0));
+      if (wy < 0.7) return gold; if (ea < 0.1 && wy < 1.4) return gold; if (wy < ck.VY - 0.02 && Math.PI - Math.abs(a) < vg(wy) + 0.075) return gold; if (wy < 0.74) return redD; return red; };
+    B.add(shellG(rows, 11, ck.a0, vL), null, ckCol, pw); B.add(shellG(rows, 11, vR, ck.a1), null, ckCol, pw); // two halves, meeting above the vent
+    const sw = shellOut(rows, 0.006, 0.86, 0.745, 1); // scrollwork above the hem, either side of the vent
+    B.add(shellG(sw, 10, ck.a0 + 0.2, function (y) { return vL(y) - 0.09; }, { tile: 2 }), null, 0xffffff, pw, { uv: cellUV(6) });
+    B.add(shellG(sw, 10, function (y) { return vR(y) + 0.09; }, ck.a1 - 0.2, { tile: 2 }), null, 0xffffff, pw, { uv: cellUV(6) });
+    // the stag, on the back between the shoulder blades and the top of the vent
+    const st = [], n = 4; for (let i = 0; i <= n; i++) { const y = 1.34 - i * (0.44 / n), A = shellR(rows, y, Math.PI); st.push([y, shellR(rows, y, Math.PI / 2).r + 0.008, -A.z + A.cz + 0.008, A.cz]); }
     B.add(shellG(st, 6, Math.PI - 0.62, Math.PI + 0.62), null, 0xffffff, pw, { uv: cellUV(0) });
     // a gold tree on each front panel
-    [[0.95, 1], [TAU - 0.95, -1]].forEach(function (q) { const tr = []; for (let i = 0; i <= 2; i++) { const y = 1.05 - i * 0.16, A = shellR(rows, y, 0); tr.push([y, shellR(rows, y, Math.PI / 2).r + 0.006, A.r - A.cz + 0.006, A.cz]); } B.add(shellG(tr, 3, q[0] - 0.22, q[0] + 0.22), null, 0xffffff, pw, { uv: cellUV(10) }); });
+    [[0.95, 1], [TAU - 0.95, -1]].forEach(function (q) { const tr = []; for (let i = 0; i <= 2; i++) { const y = 1.09 - i * 0.15, A = shellR(rows, y, 0); tr.push([y, shellR(rows, y, Math.PI / 2).r + 0.006, A.r - A.cz + 0.006, A.cz]); } B.add(shellG(tr, 3, q[0] - 0.22, q[0] + 0.22), null, 0xffffff, pw, { uv: cellUV(10) }); });
     // the mantle over the shoulders, so arms come out from under it
     B.add(shellG([[1.56, 0.13, 0.12, -0.01], [1.52, 0.22, 0.18, -0.015], [1.46, 0.31, 0.24, -0.02], [1.38, 0.35, 0.265, -0.025], [1.32, 0.36, 0.27, -0.025]], 18, 0.5, TAU - 0.5), null, function (lx, ly, lz, wx, wy) { return wy < 1.35 ? gold : red; }, 'chest');
     // the hat: wide straw cone with woven panels, a dark band, on its own bone (it bobs a little after the head)
