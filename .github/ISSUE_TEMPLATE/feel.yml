@@ -1,0 +1,119 @@
+name: Feel report
+description: You played. Tell us what was fun, what was not, and where you stopped.
+title: "Feel: "
+labels: ["feel"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is the report the project needs most. Every rule in Livloch has been tested by bots; almost nothing has been judged by people. Your honest words are the evidence.
+
+        Short is fine. "Got bored at 3:40 because nothing changed" is a great report.
+  - type: dropdown
+    id: who
+    attributes:
+      label: Who played
+      options:
+        - A person (me)
+        - An AI agent driving a browser
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The number at the bottom of the title screen.
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: What you played
+      multiple: true
+      options:
+        - First rain
+        - The livelock (the long match)
+        - Ever Fallen
+        - Lean back
+        - Dreamwalk
+        - The Cabinet or Snuff
+    validations:
+      required: true
+  - type: input
+    id: setup
+    attributes:
+      label: Hero, difficulty, view
+      placeholder: "Skein Doll, Even, mostly Cobalt Snow"
+    validations:
+      required: false
+  - type: dropdown
+    id: far
+    attributes:
+      label: How far you got
+      options:
+        - Left at the title screen
+        - Under a minute
+        - One to three minutes
+        - Up to the first red rain (about five minutes)
+        - Finished a First Rain
+        - Finished a long match
+        - Ever Fallen until the fall
+    validations:
+      required: true
+  - type: textarea
+    id: fun
+    attributes:
+      label: What was fun
+      description: The moment you liked most, if there was one.
+    validations:
+      required: false
+  - type: textarea
+    id: notfun
+    attributes:
+      label: What was not, and where you stopped
+      description: When did it get boring, confusing or unfair? Why did you stop?
+    validations:
+      required: true
+  - type: checkboxes
+    id: found
+    attributes:
+      label: What you found without being told
+      description: Tick only what you found yourself. None is a useful answer.
+      options:
+        - label: Riding a thread to the front
+        - label: Shooting soul orbs to keep them
+        - label: Changing the view, and that some things exist in only one view
+        - label: The mood before the red rain, and the view that answers it
+        - label: A fruit, or a big fruit
+        - label: The fold
+        - label: The Ness in the loch
+        - label: Echo (fighting beside yourself)
+  - type: textarea
+    id: controls
+    attributes:
+      label: How moving, aiming and shooting felt
+      description: Too slow, floaty, hard to see what you hit, camera trouble, touch buttons in the way?
+    validations:
+      required: false
+  - type: textarea
+    id: sound
+    attributes:
+      label: How it sounded
+      description: Almost nobody has listened yet. Anything you noticed helps, even "I had it muted".
+    validations:
+      required: false
+  - type: input
+    id: device
+    attributes:
+      label: Device, browser and controls
+      placeholder: "iPhone 13, Safari, touch"
+    validations:
+      required: false
+  - type: textarea
+    id: perf
+    attributes:
+      label: Frame-rate report (optional)
+      description: Pause, find "How it is running", press "Copy the report", paste here.
+      render: text
+    validations:
+      required: false

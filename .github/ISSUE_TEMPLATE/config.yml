@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions and open chat
+    url: https://github.com/stevoblevo/livloch/discussions
+    about: Ask anything, share a clip, talk about ideas before they are ready to be issues.
+  - name: Play Livloch
+    url: https://saelion.co/livloch
+    about: The current version, in your browser. Every older version is at stevoblevo.github.io/livloch/versions/.
+  - name: Report a security problem privately
+    url: https://github.com/stevoblevo/livloch/security/advisories/new
+    about: Only the maintainers can read these. Conduct reports can go here too.

@@ -1,0 +1,68 @@
+name: Art or audio contribution
+description: Offer a painted sheet, a texture, a sound, a piece of music, or ask which slot needs filling.
+title: "Art/audio: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Livloch's art target is folded paper lit by lanterns on a snow night (`art/title.jpg`, `art/card.jpg`). Characters are flat painted cutouts made from turnaround sheets.
+
+        - Slots waiting for pictures, with file names, cell order and the one line of code each needs: [`art/flats/README.md`](https://github.com/stevoblevo/livloch/blob/main/art/flats/README.md)
+        - How a hero sheet becomes a cutout: [`docs/ARCHITECTURE.md`](https://github.com/stevoblevo/livloch/blob/main/docs/ARCHITECTURE.md#paper-heroes-from-sheet-to-screen)
+        - The terms for contributed art and audio: [`ASSETS.md`](https://github.com/stevoblevo/livloch/blob/main/ASSETS.md#contributing-art-music-or-sound)
+
+        You can attach files here, or open a pull request that adds them and link it.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What it is
+      multiple: true
+      options:
+        - A painted turnaround or motion sheet (hero or crowd)
+        - A painted structure, tree, rock or the Ness
+        - A backdrop, ground or water texture
+        - Concept art or key art
+        - Music
+        - Sound effects
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: Describe it, and which slot or moment it is for
+      placeholder: "Hush tower sheet: small, medium, large, for art/flats/tower.png"
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Files or preview
+      description: Drag files here, or link a pull request or a download.
+    validations:
+      required: false
+  - type: textarea
+    id: made
+    attributes:
+      label: How it was made
+      description: Drawn, painted, 3D, recorded, synthesised, or made with a generator (name the tool, and the prompt if there was one). If it comes under a licence (CC0, CC BY and so on), say which and link the source.
+    validations:
+      required: true
+  - type: input
+    id: credit
+    attributes:
+      label: How you would like to be credited
+      placeholder: "Your name or handle, and a link if you want one"
+    validations:
+      required: false
+  - type: checkboxes
+    id: rights
+    attributes:
+      label: The terms
+      options:
+        - label: I made this, or I have the right to give it under the licence named above.
+          required: true
+        - label: It shows no real people and no characters I do not own (nothing from other games, films, shows or brands).
+          required: true
+        - label: I agree it may be used in Livloch, and changed to fit, under the terms in ASSETS.md.
+          required: true
