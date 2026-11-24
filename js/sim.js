@@ -29,6 +29,8 @@
        fruit            lemon = quick feet, rose hips = mending, Verde Limon = sour shots, and one big lime for everyone
    - The Hush has no heroes. It has hollows (one heavy unit per thread, respawning), thieves (take souls or a guardian's
      light and run for the gate), and red rain every 300 s. This is Reignfawn's Hush, not a mirror team.
+   - AIR (0.25): each hero moves through the air its own way, from `air` on its row in core.js: Dora one jump, Anna and
+     the Skein Doll a second jump, Myra Belle a short hanging flight on her wings. Rules at heroJump.
    - Pacing borrowed from Knight Side: Last Breath (once per life under 30% health) and Mercy (the Hush eases off when
      the Reign is two structures behind).
    - The sim talks to the outside only through W.fx, a list of plain event objects drained every frame by gfx, audio
@@ -745,6 +747,53 @@ function tryZip(h) {
   h.zip = { lane: lane, dir: dir, s: Q.s }; h.dashT = 0; h.onGround = false;
   fx({ k: 'zip', u: h });
 }
+/* ---------- 0.25 air ----------
+   Each hero's move in the air comes from `air` on its row in LL.HEROES (core.js). jumps: how many jumps one airtime
+   allows; the second costs stamina (air.cost, 1). hover: a short hanging flight in place of a second jump (Myra Belle):
+   a second press of jump in the air, or jump held through the top of the jump, beats the wings; she hangs, sinking at
+   hover.sink m/s, while jump is held (ctl.jumpHeld), at most hover.t seconds, once per airtime, for hover.cost stamina.
+   She drifts with the stick and shoots as usual. Release, running out, landing or taking a thread ends it.
+   A row without `air` keeps the jump of 0.24 and before exactly: a jump, then a double jump for one stamina.
+   Hero state: jumps (used this airtime), hoverT (seconds of hover left, > 0 while hanging), hoverAge, hovered (spent
+   this airtime), holdJ (jump held since the take-off), vyLand (speed of the last landing, for the landing squash).
+   Events: 'jump' (dbl: true for the second, n: its number), 'hover', 'hoverend' (why: release, spent, land, zip). */
+const JUMP_VY = 9.6, JUMP2_VY = 9.2;
+function heroJump(h) {
+  const A = h.def.air;
+  if (!A) { // no `air`: as before 0.25
+    if (h.onGround) { h.vy = JUMP_VY; h.onGround = false; h.jumps = 1; fx({ k: 'jump', u: h }); }
+    else if (h.jumps < 2 && h.stamina >= 1) { h.vy = JUMP2_VY; h.jumps = 2; h.stamina--; fx({ k: 'jump', u: h, dbl: true }); }
+    return;
+  }
+  if (h.onGround) { h.vy = JUMP_VY; h.onGround = false; h.jumps = 1; h.hovered = false; h.holdJ = !!h.ctl.jumpHeld; fx({ k: 'jump', u: h }); return; }
+  if (h.hoverT > 0) return;
+  const n = Math.max(1, h.jumps || 0), cost = A.cost == null ? 1 : A.cost; // in the air with no jump used (knocked up, off a thread) counts as one used
+  if (n < (A.jumps || 1)) { if (h.stamina >= cost) { h.vy = JUMP2_VY; h.jumps = n + 1; h.stamina -= cost; fx({ k: 'jump', u: h, dbl: true, n: h.jumps }); } return; }
+  if (A.hover) hoverStart(h);
+}
+function hoverStart(h) {
+  const H = h.def.air.hover, cost = H.cost == null ? 1 : H.cost;
+  if (h.hovered || h.stamina < cost) return false;
+  h.stamina -= cost; h.hovered = true; h.holdJ = false; h.hoverT = H.t; h.hoverAge = 0;
+  h.vy = Math.max(h.vy * 0.3, H.lift == null ? 1.2 : H.lift); // the first beat: a rise kept a little, a fall caught
+  fx({ k: 'hover', u: h }); return true;
+}
+function hoverEnd(h, why) { if (!(h.hoverT > 0)) return; h.hoverT = 0; fx({ k: 'hoverend', u: h, why: why }); }
+/* Gravity, or the hover's hang. Runs where gravity always ran, before the move. */
+function heroAir(h, dt) {
+  const c = h.ctl, A = h.def.air, H = A && A.hover;
+  if (h.hoverT > 0) { if (h.onGround) hoverEnd(h, 'land'); else if (!c.jumpHeld) hoverEnd(h, 'release'); } // (on the ground: back from the dead)
+  if (h.holdJ && !c.jumpHeld) h.holdJ = false;
+  if (H && h.holdJ && !h.onGround && h.vy <= 0) { h.holdJ = false; hoverStart(h); } // held through the top of the jump
+  if (h.hoverT > 0) {
+    h.hoverAge += dt; h.vy += (-H.sink - h.vy) * (1 - Math.exp(-(H.grip || 5) * dt));
+    if ((h.hoverT -= dt) <= 0) { h.hoverT = 0; fx({ k: 'hoverend', u: h, why: 'spent' }); }
+  } else if (!h.onGround) h.vy -= C.GRAV * dt;
+}
+function heroLand(h) {
+  if (!h.onGround) h.vyLand = -h.vy;
+  h.y = 0; h.vy = 0; h.onGround = true; h.jumps = 0; h.hovered = false; h.holdJ = false; hoverEnd(h, 'land');
+}
 function heroStep(h, dt) {
   const c = h.ctl, st = h.st, d = h.def;
   h.fireT -= dt; for (let i = 0; i < 3; i++) if (h.cds[i] > 0) h.cds[i] -= dt;
@@ -761,6 +810,7 @@ function heroStep(h, dt) {
   if (!h.alive) return;
   const sp = d.speed * st.speed * (h.slowT > 0 ? 1 - h.slowAmt : 1) * (h.zestT > 0 ? 1.3 : 1);
   if (h.zip) {
+    if (h.hoverT > 0) hoverEnd(h, 'zip'); // 0.25 air
     const zp = h.zip, L = lanes[zp.lane];
     zp.s += zp.dir * (h.team === 0 ? 1 : -1) * C.ZIP_SPEED * dt;
     const ts = rel(h.team, zp.lane, zp.s);
@@ -773,17 +823,14 @@ function heroStep(h, dt) {
     let mx = c.mx, mz = c.mz; const m = hyp(mx, mz); if (m > 1) { mx /= m; mz /= m; }
     if (h.dashT > 0) { h.dashT -= dt; h.vx = h.dashX; h.vz = h.dashZ; if (h.dashT <= 0) { h.vx *= 0.35; h.vz *= 0.35; } }
     else { const f = 1 - Math.exp(-(h.onGround ? 14 : 3.5) * dt); h.vx += (mx * sp - h.vx) * f; h.vz += (mz * sp - h.vz) * f; }
-    if (c.jump) {
-      if (h.onGround) { h.vy = 9.6; h.onGround = false; h.jumps = 1; fx({ k: 'jump', u: h }); }
-      else if (h.jumps < 2 && h.stamina >= 1) { h.vy = 9.2; h.jumps = 2; h.stamina--; fx({ k: 'jump', u: h, dbl: true }); }
-    }
+    if (c.jump) heroJump(h); // 0.25 air: a jump, a second jump or the hover, by the hero's `air`
     if (c.dash && h.dashT <= 0 && h.stamina >= 1) {
       let ddx = mx, ddz = mz; if (m < 0.2) { ddx = Math.sin(h.yaw); ddz = Math.cos(h.yaw); } else { ddx = mx / Math.min(1, m) ; ddz = mz / Math.min(1, m); const n = hyp(ddx, ddz); ddx /= n; ddz /= n; }
       h.dashX = ddx * 24; h.dashZ = ddz * 24; h.dashT = 0.2; h.stamina--; fx({ k: 'dash', u: h });
     }
-    if (!h.onGround) h.vy -= C.GRAV * dt;
+    heroAir(h, dt); // 0.25 air: gravity, or the hover's hang
     h.x += h.vx * dt; h.z += h.vz * dt; h.y += h.vy * dt;
-    if (h.y <= 0) { h.y = 0; h.vy = 0; h.onGround = true; h.jumps = 0; }
+    if (h.y <= 0) heroLand(h); // 0.25 air
     collide(h);
   }
   if (h.stamina < st.stam) { h.stamT += dt * (h.zestT > 0 ? 3 : 1); if (h.stamT >= 2.6) { h.stamT = 0; h.stamina++; } } else h.stamT = 0;
@@ -890,7 +937,7 @@ function think(h) {
     }
   }
   if (!best && h.ammo < h.magSize * 0.4) c.reload = true;
-  if (W.t - h.lastHurt < 0.5 && h.onGround && W.rng() < 0.18) { if (W.rng() < 0.5) c.jump = true; else if (h.stamina >= 2) c.dash = true; }
+  botJump(h, eh, ehD); // 0.25 air: jumps when hurt as before, now and then in a fight, and uses the hero's air move
   botAbilities(h, best, eh, ehD, hpF);
 }
 function botAbilities(h, tgt, eh, ehD, hpF) {
@@ -958,6 +1005,27 @@ function aiHero(h, dt) {
     a.ax = h.x + fxx * 12; a.ay = h.y + 1.5; a.az = h.z + fzz * 12;
     c.ax = a.ax; c.ay = a.ay; c.az = a.az; c.fire = false;
   }
+  botAir(h, dt); // 0.25 air
+}
+/* 0.25 air: bots. A hurt bot on the ground jumps (or dashes) as before 0.25; a bot whose hero has `air` also jumps now
+   and then while an enemy hero is in range, and plans the rest of the airtime at the take-off: a double-jumper jumps
+   again near the top (55%), a hoverer holds jump through the top and hangs for most of its hover (70% with an enemy
+   hero in range, else 40%). Both keep two stamina back for a dash. */
+function botJump(h, eh, ehD) {
+  const c = h.ctl, A = h.def.air;
+  if (W.t - h.lastHurt < 0.5 && h.onGround && W.rng() < 0.18) { if (W.rng() < 0.5) { c.jump = true; if (A) botAirPlan(h, eh, ehD); } else if (h.stamina >= 2) c.dash = true; }
+  else if (A && h.onGround && !h.zip && h.ai.mode !== 'retreat' && eh && ehD < h.def.aiRange && W.rng() < 0.012) { c.jump = true; botAirPlan(h, eh, ehD); }
+}
+function botAirPlan(h, eh, ehD) {
+  const a = h.ai, A = h.def.air, r = W.rng; a.dblT = 0; a.holdT = 0;
+  if (h.stamina < 2) return;
+  if (A.hover) { if (r() < (eh && ehD < h.def.aiRange ? 0.7 : 0.4)) a.holdT = 0.45 + A.hover.t * (0.6 + r() * 0.4); }
+  else if ((A.jumps || 1) > 1 && r() < 0.55) a.dblT = 0.26 + r() * 0.14;
+}
+function botAir(h, dt) {
+  const a = h.ai, c = h.ctl;
+  if (a.holdT > 0) a.holdT -= dt; c.jumpHeld = a.holdT > 0;
+  if (a.dblT > 0 && (a.dblT -= dt) <= 0 && !h.onGround && !h.zip) c.jump = true;
 }
 function coordinate() {
   // lane fronts
@@ -1308,6 +1376,7 @@ S.step = function (dt) {
 
 /* Hooks for tools/test.js. Nothing in the game calls these. */
 S._t = { give: give, eat: eat, damage: damage, kill: kill, spawnThief: spawnThief, spawnHollow: spawnHollow, thiefStep: thiefStep };
+S._t.heroStep = heroStep; // 0.25 air: tools/shots drive one hero through the real jump and hover
 
 /* Aim ray for the human player: first thing the crosshair is on. */
 S.aimPoint = function (ox, oy, oz, dx, dy, dz, t0, team, out) {

@@ -1068,7 +1068,7 @@ R.fx = function (e) {
     case 'blink': for (let i = 0; i <= 8; i++) emit(U.lerp(e.x0, e.x, i / 8), e.y + 1, U.lerp(e.z0, e.z, i / 8), 4, e.col, 2, 0.5, 0.5, 0); break;
     case 'soul': if (e.kind === 'secured') emit(e.x, e.y, e.z, 16, 0xffe9a8, 5, 0.6, 3, 0); else if (e.kind === 'denied') emit(e.x, e.y, e.z, 16, 0x8a8690, 6, 0.5, 0); break;
     case 'respawn': ring(e.u.x, 0, e.u.z, 3, 0.4, SRC_TEAM[e.u.team], 0.6); emit(e.u.x, 1, e.u.z, 30, 0xf4e8d6, 4, 0.9, 5, 0); break;
-    case 'jump': if (e.dbl) emit(e.u.x, e.u.y, e.u.z, 8, 0xf4e8d6, 3, 0.35, -1, 0); break;
+    case 'jump': case 'hover': case 'hoverend': airFx(e); break; // 0.25 air: an effect per hero (airFx, after heroDust)
     case 'dash': emit(e.u.x, e.u.y + 0.8, e.u.z, 10, 0xf4e8d6, 3, 0.35, 0, 0); break;
     case 'level': ring(e.u.x, e.u.y, e.u.z, 0.4, 3, 0xffe9a8, 0.5); break;
     case 'fruit': { const fc = C.FRUIT_INFO[e.kind].col, big = !!C.FRUIT_INFO[e.kind].big; emit(e.x, big ? 3 : 1.8, e.z, big ? 90 : 26, fc, big ? 11 : 6, 0.9, 4, 3); ring(e.x, 0.05, e.z, 0.4, big ? 12 : 3.5, fc, big ? 0.8 : 0.45); break; }
@@ -1200,10 +1200,51 @@ function heroDust(m, h, st, dt) {
   if (st.landed) for (let k = 0; k < 12; k++) { const a = k / 12 * 6.283 + Math.random() * 0.3, v = 2.4 + st.landed * 2.2; puff(h.x + Math.cos(a) * 0.35, 0.12, h.z + Math.sin(a) * 0.35, Math.cos(a) * v, 0.3 + Math.random() * 0.3, Math.sin(a) * v, 0.3, 1.0, 0.62, 0.42); }
   if (h.dashT > 0 && !m.dashing) for (let k = 0; k < 7; k++) puff(h.x - fx * 0.4 + (Math.random() - 0.5) * 0.6, 0.2 + Math.random() * 0.4, h.z - fz * 0.4 + (Math.random() - 0.5) * 0.6, -fx * (2 + Math.random() * 2), 0.4, -fz * (2 + Math.random() * 2), 0.35, 1.2, 0.55, 0.4);
   m.dashing = h.dashT > 0;
+  if (h.hoverT > 0) airDust(m, h, dt); // 0.25 air: the hover's trail
   // afterimages: a copy of the full painted figure every 35 ms while dashing or riding
   const P = PAPER[h.def.id], pt = paperTex[h.def.id];
   if ((h.dashT > 0 || h.zip) && m.fig) { m.ghostT = (m.ghostT || 0) - dt; if (m.ghostT <= 0) { m.ghostT = 0.035; const gh = LL.heroes3d.ghost(m.fig, dyn, LK.team[h.team], LK.add); if (LL.wardrobe) LL.wardrobe.ghost(gh, h, LK.add); } } // 0.24 heroes3d: the figure's afterimage
   if ((h.dashT > 0 || h.zip) && P && pt && m.paper) { m.ghostT = (m.ghostT || 0) - dt; if (m.ghostT <= 0) { m.ghostT = 0.035; ghost(m, h, P, pt); } }
+}
+/* 0.25 AIR. A small effect for each hero's air move, from the pools that exist (particles, dust puffs and grit, rings):
+   any jump kicks a little dust off the ground; Dora's lifts warm motes off her lantern and a faint ring of its light;
+   Anna's second jump is a rock-hop (grit bursting from under her boots, a puff and a ring of dust at her feet in the air,
+   as if she kicked off a stone that is not there); the Skein Doll's second jump sheds copper and mint yarn in a ring;
+   Myra's hover opens with a shimmer of lilac motes off her wings, trails a few while it lasts (airDust, from heroDust) and
+   lets some fall when it ends. Reduced motion: only the small puff a second jump always had. */
+const AIRV = { x: 0, y: 0, z: 0 };
+function airAt(h, bone, lx, ly, lz) { // a point on the hero: a bone of its figure if it has one, else an offset from its feet (x left, z forward)
+  const m = heroM[W.heroes.indexOf(h)];
+  if (m && m.fig && m.fig.b[bone] && v1) { m.fig.b[bone].getWorldPosition(v1); AIRV.x = v1.x; AIRV.y = v1.y; AIRV.z = v1.z; return AIRV; }
+  const c = Math.cos(h.yaw || 0), s = Math.sin(h.yaw || 0); AIRV.x = h.x + lx * c + lz * s; AIRV.y = h.y + ly; AIRV.z = h.z - lx * s + lz * c; return AIRV;
+}
+function airFx(e) {
+  const h = e.u; if (!h || !h.def || !h.alive) return; const id = h.def.id, x = h.x, y = h.y, z = h.z;
+  if (R.reduced) { if (e.k === 'jump' && e.dbl) emit(x, y, z, 8, 0xf4e8d6, 3, 0.35, -1, 0); return; }
+  if (e.k === 'jump' && !e.dbl) {
+    if (y < 0.6) for (let k = 0; k < 5; k++) { const a = k / 5 * 6.283 + Math.random(); puff(x + Math.cos(a) * 0.25, 0.1, z + Math.sin(a) * 0.25, Math.cos(a) * 1.4 + h.vx * 0.1, 0.25, Math.sin(a) * 1.4 + h.vz * 0.1, 0.22, 0.75, 0.45, 0.3); }
+    if (id === 'dora') { const L = airAt(h, 'lant', -0.3, 0.75, 0.05); for (let k = 0; k < 8; k++) emit(L.x, L.y - 0.1, L.z, 1, 0xffc46b, 0.7, 0.8, 1.3, -0.5); ring(x, y, z, 0.25, 1.1, 0xffc46b, 0.35); }
+    return;
+  }
+  if (e.k === 'jump') {
+    if (id === 'anna') { // a rock-hop: grit from under the boots, a puff and a ring of dust where the kick met nothing
+      const fx = Math.sin(h.yaw), fz = Math.cos(h.yaw);
+      for (let k = 0; k < 9; k++) { const a = Math.random() * 6.283, v = 1 + Math.random() * 1.6; puff(x - fx * 0.2, y + 0.05, z - fz * 0.2, Math.cos(a) * v - fx * 1.2, -0.5 - Math.random() * 1.5, Math.sin(a) * v - fz * 1.2, 0.075, 0.06, 0.8, 0.9, true); }
+      for (let k = 0; k < 4; k++) puff(x - fx * 0.2 + (Math.random() - 0.5) * 0.3, y + 0.05, z - fz * 0.2 + (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 1.2, -0.4, (Math.random() - 0.5) * 1.2, 0.25, 0.85, 0.5, 0.38);
+      ring(x, y - 0.06, z, 0.2, 1.0, 0xd8c8a8, 0.3);
+    } else if (id === 'skein') { // yarn: copper and mint strands flung round her
+      for (let k = 0; k < 14; k++) emit(x, y + 0.9, z, 1, k % 3 ? 0xe0955f : 0x9fd4b0, 3.2, 0.55, 0.6, 4);
+      ring(x, y + 0.85, z, 0.3, 1.2, 0xe0955f, 0.3);
+    } else emit(x, y, z, 8, 0xf4e8d6, 3, 0.35, -1, 0);
+  } else if (e.k === 'hover') { // the wings open: a shimmer off each
+    for (let s = -1; s <= 1; s += 2) { const P = airAt(h, s > 0 ? 'wingL' : 'wingR', s * 0.4, 1.0, -0.3); for (let k = 0; k < 7; k++) emit(P.x, P.y, P.z, 1, k % 2 ? 0xe8c8ff : 0xffd6f0, 1.6, 0.7, 0.2, 1.2); }
+    ring(x, y + 0.05, z, 0.3, 1.3, 0xdcc0f0, 0.4);
+  } else if (e.k === 'hoverend') { for (let k = 0; k < 6; k++) emit(x, y + 0.9, z, 1, 0xe8c8ff, 0.8, 0.8, 0, 2.5); }
+}
+function airDust(m, h, dt) { // while hovering: lilac motes shaken off the wings, about 14 a second
+  m.airAcc = (m.airAcc || 0) + dt * 14;
+  while (m.airAcc >= 1) { m.airAcc -= 1; const s = Math.random() < 0.5 ? 1 : -1, P = airAt(h, s > 0 ? 'wingL' : 'wingR', s * 0.4, 1.0, -0.3);
+    emit(P.x + (Math.random() - 0.5) * 0.3, P.y + (Math.random() - 0.5) * 0.3, P.z + (Math.random() - 0.5) * 0.3, 1, Math.random() < 0.5 ? 0xe8c8ff : 0xffd6f0, 0.5, 0.9, -0.4, 0.6); }
 }
 function ghost(m, h, P, pt) {
   let gh = ghosts[ghostK];

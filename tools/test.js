@@ -239,6 +239,66 @@ test('idle and coat (0.21): standing is not a frozen card; the coat halves lift 
   const w = M.create(); let maxL = 0, maxR = 0; for (let i = 0; i < 60; i++) { u.z += 0.2; const p = M.pose(w, u, 1 / 30, 5 + i / 30, false, { r: 0, f: 6, fb: true }); if (p.sway > 0.6) maxL = Math.max(maxL, p.flapL - p.flapR); if (p.sway < -0.6) maxR = Math.max(maxR, p.flapR - p.flapL); }
   assert.ok(maxL > 0.3 && maxR > 0.3, 'each half lifts with its own leg: ' + maxL.toFixed(2) + ', ' + maxR.toFixed(2));
 });
+/* 0.25 AIR. Each hero's move in the air, from `air` on its row in core.js, through the real sim at 60 steps a second. */
+const airHero = (id, o) => { const i = LL.HEROES.findIndex(d => d.id === id), W = world(Object.assign({ heroPick: i, auto: false }, o || {})), h = W.player; h.useAI = false; h.x = -62; h.z = -60; h.stamina = 3; h.ctl.mx = h.ctl.mz = 0; return { W, h }; };
+function airRun(W, h, secs, each) { const out = []; for (let i = 0; i < Math.round(secs * 60) && !W.over; i++) { if (each) each(i, W.t); S.step(1 / 60); h.hp = h.maxHp; for (const e of W.fx) if (e.u === h) out.push(Object.assign({ at: W.t }, e)); W.fx.length = 0; } return out; }
+const airK = (ev, k) => ev.filter(e => e.k === k);
+test('air (0.25): Dora jumps once, Anna and the Skein Doll twice, Myra Belle once and then hangs', () => {
+  const want = { dora: [1, 0, 0], anna: [2, 1, 0], skein: [2, 1, 0], myra: [1, 0, 1] };
+  for (const id in want) { const { W, h } = airHero(id); airRun(W, h, 0.5); h.stamina = 3;
+    const ev = airRun(W, h, 1.6, (i) => { if (i === 0 || i === 20 || i === 30 || i === 40) h.ctl.jump = true; h.ctl.jumpHeld = i >= 20 && i < 50; });
+    const j = airK(ev, 'jump'); assert.strictEqual(j.length, want[id][0], id + ': jumps ' + j.length); assert.strictEqual(j.filter(e => e.dbl).length, want[id][1], id + ': second jumps');
+    assert.strictEqual(airK(ev, 'hover').length, want[id][2], id + ': hovers'); assert.ok(h.onGround, id + ' has landed');
+    assert.strictEqual(LL.HEROES.find(d => d.id === id).air.jumps, id === 'anna' || id === 'skein' ? 2 : 1); }
+  const { W, h } = airHero('anna'); airRun(W, h, 0.3); h.stamina = 3; const ev = airRun(W, h, 0.5, (i) => { if (i === 0 || i === 18) h.ctl.jump = true; });
+  assert.strictEqual(airK(ev, 'jump')[1].n, 2); assert.ok(h.stamina < 3, 'the second jump costs stamina'); // (it comes back at one per 2.6 s)
+  const z = airHero('skein'); z.h.stamina = 0; const e0 = airRun(z.W, z.h, 0.6, (i) => { if (i === 0 || i === 18) z.h.ctl.jump = true; }); assert.strictEqual(airK(e0, 'jump').length, 1, 'no stamina, no second jump');
+});
+test('air (0.25): Myra Belle\'s hover lasts about 1.2 s while jump is held, sinks slowly, drifts, and comes once per airtime', () => {
+  let { W, h } = airHero('myra'); airRun(W, h, 0.3); h.stamina = 3; const H = h.def.air.hover; let vyMid = null, yLow = 9, t0 = null, hov = 0;
+  let ev = airRun(W, h, 2.4, (i, t) => { h.ctl.jump = i === 0; h.ctl.jumpHeld = true; if (h.hoverT > 0) { if (t0 == null) t0 = t; hov += 1 / 60; if (t - t0 > 0.6 && vyMid == null) vyMid = h.vy; if (t - t0 < 1.0) yLow = Math.min(yLow, h.y); } });
+  const hs = airK(ev, 'hover'), he = airK(ev, 'hoverend'); assert.strictEqual(hs.length, 1, 'held through the top of the jump, the wings take her'); assert.strictEqual(he[0].why, 'spent');
+  const dur = he[0].at - hs[0].at; assert.ok(Math.abs(dur - H.t) < 0.05, 'hangs ' + dur.toFixed(2) + ' s, want ' + H.t);
+  assert.ok(Math.abs(vyMid + H.sink) < 0.3, 'sinks at about ' + H.sink + ' m/s: ' + vyMid.toFixed(2)); assert.ok(yLow > 0.8, 'stays up through the first second: ' + yLow.toFixed(2) + ' m');
+  const land = ev.find(e => e.k === 'hoverend') && ev[ev.length - 1].at; const air = (land || W.t) - ev[0].at; assert.ok(h.onGround && air > 1.5, 'in the air ' + air.toFixed(2) + ' s (a jump alone is 0.74)');
+  assert.strictEqual(h.stamina, 2, 'one stamina'); // (2.4 s: none has come back yet)
+  ({ W, h } = airHero('myra')); airRun(W, h, 0.3); h.stamina = 3;
+  ev = airRun(W, h, 1.2, (i) => { h.ctl.jump = i === 0 || i === 15 || i === 40; h.ctl.jumpHeld = (i >= 15 && i < 33) || i === 40; });
+  assert.strictEqual(airK(ev, 'hover').length, 1, 'once per airtime: a third press does not hang again'); const rel = airK(ev, 'hoverend')[0]; assert.strictEqual(rel.why, 'release');
+  assert.ok(Math.abs(rel.at - airK(ev, 'hover')[0].at - 0.3) < 0.04, 'letting go drops her at once');
+  ({ W, h } = airHero('myra')); airRun(W, h, 0.3); h.stamina = 3; let vx = 0;
+  airRun(W, h, 1.2, (i) => { h.ctl.jump = i === 0; h.ctl.jumpHeld = true; h.ctl.mx = i > 25 ? 1 : 0; if (h.hoverT > 0) vx = h.vx; }); assert.ok(vx > 3, 'drifts with the stick while hanging: ' + vx.toFixed(1) + ' m/s');
+  airRun(W, h, 1.5, () => { h.ctl.mx = 0; h.ctl.jumpHeld = false; }); assert.ok(h.onGround);
+  ev = airRun(W, h, 2, (i) => { h.ctl.jump = i === 0; h.ctl.jumpHeld = true; }); assert.strictEqual(airK(ev, 'hover').length, 1, 'and again after landing');
+  ({ W, h } = airHero('myra')); h.stamina = 0; ev = airRun(W, h, 1.5, (i) => { h.ctl.jump = i === 0; h.ctl.jumpHeld = true; }); assert.strictEqual(airK(ev, 'hover').length, 0, 'no stamina, no hover');
+});
+test('air (0.25): a hero row without `air` jumps exactly as before 0.25', () => {
+  const { W, h } = airHero('anna'); h.def = Object.assign({}, h.def); delete h.def.air; airRun(W, h, 0.3); h.stamina = 3; let y = 0, vy2 = null;
+  const ev = airRun(W, h, 2, (i) => { h.ctl.jump = i === 0 || i === 20 || i === 40; h.ctl.jumpHeld = true; y = Math.max(y, h.y); if (i === 21) vy2 = h.vy; });
+  const j = airK(ev, 'jump'); assert.strictEqual(j.length, 2); assert.ok(j[1].dbl && j[1].n === undefined, 'the old second jump event'); assert.strictEqual(airK(ev, 'hover').length, 0, 'held jump does nothing');
+  assert.ok(Math.abs(vy2 - (9.2 - C.GRAV / 60)) < 1e-9, 'second jump at 9.2 m/s'); assert.strictEqual(h.stamina, 2, 'for one stamina');
+  const k = airHero('dora'); k.h.def = Object.assign({}, k.h.def); delete k.h.def.air; airRun(k.W, k.h, 0.3); let t1 = null; const e1 = airRun(k.W, k.h, 1, (i, t) => { k.h.ctl.jump = i === 0; if (i > 0 && t1 == null && k.h.onGround) t1 = t; });
+  assert.ok(Math.abs(t1 - e1[0].at - 2 * 9.6 / C.GRAV) < 0.04, 'one jump is 0.74 s in the air: ' + (t1 - e1[0].at).toFixed(3));
+});
+test('air (0.25): bots use the moves: double-jumpers jump again now and then, a bot Myra Belle hangs', () => {
+  const got = { anna: 0, skein: 0, myra: 0 };
+  for (const id in got) for (const seed of [3, 4]) { const W = world({ heroPick: LL.HEROES.findIndex(d => d.id === id), seed: seed }); const ev = run(W, 240, keepAlive);
+    got[id] += ev.filter(e => e.u && e.u.def && e.u.def.id === id && ((e.k === 'jump' && e.dbl) || e.k === 'hover')).length; }
+  assert.ok(got.anna >= 2 && got.skein >= 2 && got.myra >= 2, 'second jumps and hovers by bots in 8 minutes: ' + JSON.stringify(got));
+});
+test('air poses (0.25): the rig\'s air clocks: take-off, the top, the fall, a second jump, the hover, the landing', () => {
+  const M = require(path.join(__dirname, '..', 'js', 'motion.js')), m = M.create(), u = { x: 0, z: 0, yaw: 0, onGround: true, vy: 0, jumps: 0, def: { id: 'skein' }, lastShotT: -99 };
+  const f = (n, fn) => { let a, mx = {}; for (let i = 0; i < n; i++) { if (fn) fn(i); a = M.pose(m, u, 1 / 60, i / 60, false).airs; for (const k of ['tko', 'rise', 'apex', 'fall', 'dbl', 'hov']) mx[k] = Math.max(mx[k] || 0, a[k]); } return { a, mx }; };
+  let r = f(10); assert.strictEqual(r.mx.tko + r.mx.rise + r.mx.apex + r.mx.fall + r.mx.hov, 0, 'on the ground: no air');
+  u.onGround = false; u.vy = 9.6; u.jumps = 1; r = f(6, () => { u.vy -= C.GRAV / 60; }); assert.ok(r.mx.tko > 0.8 && r.a.rise > 0.5, 'a take-off, then the rise');
+  r = f(20, () => { u.vy -= C.GRAV / 60; }); assert.ok(r.a.tko < 0.05 && r.mx.apex > 0.8, 'the take-off is over by the top: ' + r.a.tko.toFixed(2) + ', ' + r.mx.apex.toFixed(2));
+  const n0 = m.A.n; u.vy = 9.2; u.jumps = 2; r = f(1); assert.strictEqual(m.A.n, n0 + 1, 'a second jump is seen'); r = f(16); assert.ok(r.mx.dbl > 0.9, 'its envelope peaks');
+  r = f(30, () => { u.vy = -9; }); assert.ok(r.a.dbl === 0 && r.a.dblP === 1 && r.a.fall > 0.9, 'it ends; falling');
+  u.hoverT = 1; r = f(15, () => { u.vy = -1.5; }); assert.ok(r.a.hov > 0.9, 'the hover blends in in a quarter second: ' + r.a.hov.toFixed(2));
+  u.hoverT = 0; r = f(30); assert.ok(r.a.hov < 0.05, 'and out');
+  u.onGround = true; u.vy = 0; u.jumps = 0; r = f(3); assert.strictEqual(r.a.tko + r.a.rise + r.a.apex + r.a.fall + r.a.dbl, 0, 'landed');
+  const k = M.create(); u.onGround = false; u.vy = 4; M.pose(k, u, 1 / 60, 0, false); assert.ok(k.A.tk > 1, 'a knock up (4 m/s) is not a take-off');
+});
 /* 0.23 WARDROBE. The unlock rules are pure functions of the saved settings; js/wardrobe.js loads under Node without a page. */
 const WD = (require(path.join(__dirname, '..', 'js', 'wardrobe.js')), LL.wardrobe);
 // what main.js does at boot: its own fields from the save, then the wardrobe's (defaults, saved values, repair)
