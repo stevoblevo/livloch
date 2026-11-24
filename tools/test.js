@@ -282,9 +282,11 @@ test('air (0.25): a hero row without `air` jumps exactly as before 0.25', () => 
 });
 test('air (0.25): bots use the moves: double-jumpers jump again now and then, a bot Myra Belle hangs', () => {
   const got = { anna: 0, skein: 0, myra: 0 };
-  for (const id in got) for (const seed of [3, 4]) { const W = world({ heroPick: LL.HEROES.findIndex(d => d.id === id), seed: seed }); const ev = run(W, 240, keepAlive);
+  /* Bots choose by Math.random (the sim is not yet seeded, issue #27), so this counts over four seeds and asks that each move
+     is used at all, plus a total: with two seeds and a floor of 2 each it failed about one run in eight (lead, 0.25). */
+  for (const id in got) for (const seed of [3, 4, 5, 6]) { const W = world({ heroPick: LL.HEROES.findIndex(d => d.id === id), seed: seed }); const ev = run(W, 240, keepAlive);
     got[id] += ev.filter(e => e.u && e.u.def && e.u.def.id === id && ((e.k === 'jump' && e.dbl) || e.k === 'hover')).length; }
-  assert.ok(got.anna >= 2 && got.skein >= 2 && got.myra >= 2, 'second jumps and hovers by bots in 8 minutes: ' + JSON.stringify(got));
+  assert.ok(got.anna >= 1 && got.skein >= 1 && got.myra >= 1 && got.anna + got.skein + got.myra >= 6, 'second jumps and hovers by bots over four 4-minute runs each: ' + JSON.stringify(got));
 });
 test('air poses (0.25): the rig\'s air clocks: take-off, the top, the fall, a second jump, the hover, the landing', () => {
   const M = require(path.join(__dirname, '..', 'js', 'motion.js')), m = M.create(), u = { x: 0, z: 0, yaw: 0, onGround: true, vy: 0, jumps: 0, def: { id: 'skein' }, lastShotT: -99 };
