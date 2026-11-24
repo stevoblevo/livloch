@@ -86,13 +86,18 @@ UI.init = function (handlers) {
   };
   bind('oSens', 'sens'); bind('oVol', 'vol'); bind('oMusic', 'music'); bind('oSfx', 'sfx'); bind('oMute', 'mute', 'c'); bind('oMicro', 'micro', 'c'); bind('oInv', 'invert', 'c'); bind('oAssist', 'assist', 'c'); bind('oLow', 'low', 'c'); bind('oPet', 'pet', 'c'); bind('oH3d', 'heroes3d', 'c'); /* 0.24 heroes3d */ UI.petStatus();
   $('oAuto').addEventListener('input', function () { cfg.autoFire = $('oAuto').checked; H.save(); });
+  muteHome(UI.screen); viewTag(); // 0.28 face
 };
 /* The mute buttons (one on the title and menus, one in the match HUD) and the Settings box show the same state. */
 UI.muteShow = function (m) {
   document.querySelectorAll('.mute').forEach(function (b) { b.setAttribute('aria-pressed', String(!!m)); b.setAttribute('aria-label', m ? 'Sound is off. Turn sound on (M)' : 'Sound is on. Mute (M)'); b.title = m ? 'Sound off · M' : 'Mute · M'; });
   const o = document.getElementById('oMute'); if (o) o.checked = !!m;
 };
-UI.lookChips = function () { const k = LL.cfg.look; document.querySelectorAll('[data-look]').forEach(b => { if (b.tagName === 'BUTTON') b.setAttribute('aria-pressed', String(b.getAttribute('data-look') === k)); }); const L = LL.gfx.LOOKS[k]; $('lookLine').textContent = L ? 'Look: ' + L.name + ', from ' + L.kit + '.' : ''; };
+/* 0.28 face: the view's name in the HUD's bottom right corner, numbered like the plates ("XV // SKEPTIC NOIR"). */
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+function viewTag(id) { const el = $('viewTag'); if (!el) return; const k = id || (W && W.lens) || LL.cfg.look, L = LL.gfx.LOOKS[k], i = C.LENSES.indexOf(k); el.textContent = L ? (i >= 0 ? ROMAN[i] + ' // ' : '') + L.name : ''; }
+UI.viewTag = viewTag;
+UI.lookChips = function () { viewTag(); const k = LL.cfg.look; document.querySelectorAll('[data-look]').forEach(b => { if (b.tagName === 'BUTTON') b.setAttribute('aria-pressed', String(b.getAttribute('data-look') === k)); }); const L = LL.gfx.LOOKS[k]; $('lookLine').textContent = L ? 'Look: ' + L.name + ', from ' + L.kit + '.' : ''; };
 /* ---------- the cabinet: easter eggs ---------- */
 UI.unlock = function (id) {
   const c = LL.cfg; if (!c.unl) c.unl = {}; if (c.unl[id]) return; const e = LL.CABINET.find(x => x.id === id); if (!e) return;
@@ -154,10 +159,13 @@ UI.error = function (msg) { const e = $('err'); e.hidden = false; e.textContent 
 function show(name) {
   UI.screen = name;
   ['title', 'shop', 'pause', 'over', 'cab'].forEach(function (s) { $(s).hidden = s !== name; });
+  muteHome(name);
   if (name === 'over') $('over').scrollTop = 0;
   if (name && LL.input.device !== 'touch') { const b = name === 'over' && !$('calls').hidden ? $('calls').querySelector('.d-filter') : $(name).querySelector('.btn.primary, .btn'); if (b) try { b.focus({ preventScroll: true }); } catch (e) {} }
   else if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
 }
+/* 0.28 face: on the title the mute button scrolls with the heading, clear of the hero cards; elsewhere it sits over the screen */
+function muteHome(name) { const m = $('bMute'), host = name === 'title' ? $('title') : $('app'); if (m && host && m.parentNode !== host) { if (name === 'title') host.insertBefore(m, host.firstChild); else $('hud').after(m); } }
 UI.show = function (name) { show(name); }; // 0.23 wardrobe: js/wardrobe.js opens its own screen (#ward) through this
 UI.showTitle = function () { $('hud').hidden = true; document.body.classList.remove('lean'); show('title'); UI.record(); if (UI.modeLine) UI.modeLine(); };
 
@@ -196,6 +204,7 @@ UI.startHUD = function (w) {
   for (let i = 0; i < 3; i++) { const b = $('ab' + i); b.querySelector('span').textContent = d.ab[i].name; b.title = d.ab[i].name + ': ' + d.ab[i].desc; }
   $('gunN').textContent = d.gun.name;
   ammoBuild(d); // 0.26 shots: a row of icons in the gun's shape
+  viewTag(W.lens); $('lvN').textContent = String(p.level); // 0.28 face
   $('feed').innerHTML = ''; $('dead').hidden = true; lastSouls = -1; hurt = 0;
   nums.forEach(n => { n.life = 0; n.el.style.opacity = 0; });
   document.body.classList.toggle('lean', !!W.lean); dreamSeen = []; dreamQ = []; dreamT = 0; wasMercy = false; $('dreamCard').hidden = true; $('lFast').hidden = !W.dream; $('lFast').textContent = '1×'; $('calls').hidden = true;
@@ -296,7 +305,7 @@ UI.fx = function (e) {
       else if (e.p) feed('<b style="color:' + fi.css + '">' + fi.name + '</b> · ' + fi.line + ', ' + e.t + ' s');
       break; }
     case 'fruitripe': if (e.lens) feed(e.lens === W.lens ? 'The <b>' + C.FRUIT_INFO[e.kind].name + '</b> is ripe' : 'Something ripened that this light does not show'); break;
-    case 'lens': feed('View: <b>' + (LL.gfx.LOOKS[e.id] ? LL.gfx.LOOKS[e.id].name : e.id) + '</b>'); break;
+    case 'lens': viewTag(e.id); feed('View: <b>' + (LL.gfx.LOOKS[e.id] ? LL.gfx.LOOKS[e.id].name : e.id) + '</b>'); break;
     case 'moodmiss': feed('Not that view. ' + e.left + (e.left === 1 ? ' try left' : ' tries left')); break;
     case 'moodlost': feed('The mood slipped away'); break;
     case 'redwarn': UI.banner(C.MOODS[e.mood].line, 'Red rain in thirty seconds. One view answers this. Three tries (' + (LL.input.device === 'kbm' ? 'V' : 'the View button') + ')', 9); break;
@@ -464,7 +473,7 @@ UI.frame = function (dt, w, view, info) {
   ammoRow(p); // 0.26 shots
   const st = $('stam'); if (st.children.length !== p.st.stam) { st.innerHTML = ''; for (let i = 0; i < p.st.stam; i++) st.appendChild(document.createElement('i')); }
   for (let i = 0; i < st.children.length; i++) st.children[i].className = i < p.stamina ? 'on' : '';
-  const s = Math.floor(p.souls); $('soulN').textContent = s; $('lvl').textContent = 'Lv ' + p.level;
+  const s = Math.floor(p.souls); $('soulN').textContent = s; $('lvl').textContent = 'Lv ' + p.level; { const ln = $('lvN'), lt = String(p.level); if (ln.textContent !== lt) ln.textContent = lt; } // 0.28 face
   let can = false; for (let i = 0; i < LL.ITEMS.length; i++) if (p.items.indexOf(i) < 0 && s >= LL.ITEMS[i].cost) { can = true; break; }
   $('souls').classList.toggle('can', can);
   $('clock').textContent = U.fmtTime(W.t) + (W.lens === 'rain' && W.red <= 0 ? ' · rain ' + U.fmtTime(Math.max(0, W.redNext - W.t)) : ''); $('k0').textContent = W.fallen ? W.lights : W.kills[0];

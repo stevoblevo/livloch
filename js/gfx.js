@@ -1812,6 +1812,7 @@ R.frame = function (dt, view) {
     camera.lookAt(cp.x + sx + cp.dx * 50, cp.y + sy + cp.dy * 50, cp.z + cp.dz * 50);
     if (kick > 0.01) camera.rotateZ(kick * 0.006 * kickSide);
     camera.fov = (R.portrait ? 82 : 64) * (1 - view.zoom * 0.3) * (1 + fovKick * 0.07) * (1 + kick * 0.006);
+    if (LL.face) LL.face.cam(camera, pl, dt); // 0.28 face: the walk in settles the camera from a crane above the hero
     heroM.forEach(m => { if (m.unit === pl && cp.dist < 1.4) m.visible = false; });
   }
   camera.updateProjectionMatrix(); camera.updateMatrixWorld();
