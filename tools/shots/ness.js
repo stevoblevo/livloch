@@ -52,8 +52,8 @@ const FRAMES = { surface: 300, chomp: 170, dodge: 150, flood: 700, still: 8 };
         if (f > 70 && !p.held && p.onGround) v.yaw += (Math.atan2(n.x - p.x, n.z - p.z) - v.yaw) * 0.12;
       } else if (sc === 'dodge') {
         if (f < 20) ph = 'out of reach'; else if (f < 58 && !ch) { ph = 'walking into reach'; mx = fx(); mz = fz(); if (f === 20) n.chompT = 0.9; }
-        else if (ch && ch.ph === 'tell') { ph = ch.locked ? 'the tell, spot locked' : 'the tell'; if (ch.t <= 0.3 && p.onGround) { jump = true; mx = -fx(); mz = -fz(); } else if (!p.onGround) { mx = -fx(); mz = -fz(); } }
-        else if (n.openT > 0) { ph = 'missed: its head lies open'; fire = true; aim = [n.biteX, 1, n.biteZ]; if (!p.onGround) { mx = -fx(); mz = -fz(); } }
+        else if (ch && ch.ph === 'tell') { ph = ch.locked ? 'the tell, spot locked' : 'the tell'; if (ch.t <= 0.3 && p.onGround) jump = true; }
+        else if (n.openT > 0) { ph = 'missed: its head lies open'; fire = true; aim = [n.x, 3, n.z]; if (p.onGround) { mx = -Math.cos(v.yaw) * 0.8; mz = Math.sin(v.yaw) * 0.8; } v.pitch += (-0.1 - v.pitch) * 0.1; }
         else ph = 'it recovers';
       } else if (sc === 'flood') {
         const F = W.flood; if (f === 8) S._t.flood('shot');

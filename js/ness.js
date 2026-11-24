@@ -7,7 +7,7 @@
      could not lunge. So the Ness is a body: long neck, small head, humps, flippers. It is folded paper like the rest
      of the valley, after the concept plates (art/concepts/08 and 09): jade panels cut in diamonds and leaded in gold,
      a pale belly, a cold bright eye, and a small lantern it carries on a stalk over its brow, the valley's own light.
-   - ONE MESH, posed on the CPU. 566 triangles, one draw call: a tube of NR rings along a spine (the neck is a curve
+   - ONE MESH, posed on the CPU. 592 triangles, one draw call: a tube of NR rings along a spine (the neck is a curve
      from the body to wherever the head is; the body is a chain that trails the way it swam, coiled in the loch), plus
      rigid pieces set by a matrix each (head, jaw, the lantern, four flippers). No skeleton: every frame writes the
      positions (about 1,700 vertices). Flat shading comes from screen derivatives, so no normals are written. Gold
@@ -138,7 +138,7 @@ function nessMat(LK) {
   m.userData.lk = m.userData.bl = m.userData.solid = true;
   return m;
 }
-const GLOW_V = 'attribute float aS; attribute vec3 aC; uniform float uPx; varying vec3 vC; void main(){ vC = aC; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = min(aS * uPx / max(-mv.z, 0.5), 420.0); }';
+const GLOW_V = 'attribute float aS; attribute vec3 aC; uniform float uPx; varying vec3 vC; void main(){ vC = aC; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = min(aS * uPx / max(-mv.z, 0.5), 130.0); }';
 const GLOW_F = 'uniform sampler2D uT; uniform float uK; varying vec3 vC; void main(){ vec4 t = texture2D(uT, gl_PointCoord); gl_FragColor = vec4(vC * t.rgb * uK, t.a * uK); }';
 
 /* ---------- the flood ---------- */
@@ -262,7 +262,7 @@ NS.fx = function (e, W) {
     case 'nesstell': st.lock = 0; if (!red) X.emit(st.hx, st.hy, st.hz, 10, 0x9ff5e0, 3, 0.5, 1, 2); break;
     case 'nesslock': st.lock = 1; X.ring(e.tx, wy + 0.05, e.tz, S.NESS.BITE_R, S.NESS.BITE_R * 0.4, 0xfff0b0, 0.3); break;
     case 'nesschomp': st.lunge = 0; st.lx0 = e.tx; st.lz0 = e.tz;
-      X.ring(e.tx, wy + 0.05, e.tz, 0.6, S.NESS.BITE_R * 1.9, e.hit ? 0xfff0b0 : 0x9fe8ff, 0.5); X.emit(e.tx, wy + 0.4, e.tz, red || e.p ? 14 : 46, 0x8fcfc4, e.p ? 5 : 8, 0.6, 4);
+      X.ring(e.tx, wy + 0.05, e.tz, 0.6, S.NESS.BITE_R * 1.9, e.hit ? 0xa88a50 : 0x4f9f98, 0.5); X.emit(e.tx, wy + 0.4, e.tz, red || e.p ? 14 : 46, 0x8fcfc4, e.p ? 5 : 8, 0.6, 4);
       if (!red) for (let k = 0; k < 8; k++) { const a = k / 8 * 6.283; X.puff(e.tx + Math.cos(a) * 1.2, wy + 0.2, e.tz + Math.sin(a) * 1.2, Math.cos(a) * 3.5, 1.4, Math.sin(a) * 3.5, 0.7, 2.2, 0.6, 0.4); }
       if (!red) X.shake(e.p ? 0.9 : (X.near(e.tx, e.tz) < 45 ? 0.45 : 0)); break;
     case 'nessrelease': st.toss = 0; X.emit(e.x, e.y + 0.8, e.z, red ? 8 : 26, 0xbfeee0, 6, 0.6, 3); break;
