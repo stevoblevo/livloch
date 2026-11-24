@@ -43,7 +43,7 @@ test('a guardian robbed of its light is dark 120 s and loses 25% health; capture
 });
 test('a hollow returns to its thread after the respawn delay', () => {
   for (const d of [0, 1, 2]) { const W = world({ difficulty: d }); run(W, 55, keepAlive); const big = W.troopers.filter(u => u.alive && u.big && u.lane0 === 1); assert.strictEqual(big.length, 1, 'one hollow on the middle thread');
-    S._t.damage(big[0], 1e7, null, 'unit'); const want = [30, 24, 18][d], t0 = W.t; let back = -1; run(W, want + 4, w => { keepAlive(w); if (back < 0 && w.troopers.some(u => u.alive && u.big && u.lane0 === 1)) back = w.t - t0; });
+    S._t.damage(big[0], 1e7, null, 'unit'); const want = C.DIFF[d].hollowBack, t0 = W.t; let back = -1; run(W, want + 4, w => { keepAlive(w); if (back < 0 && w.troopers.some(u => u.alive && u.big && u.lane0 === 1)) back = w.t - t0; });
     assert.ok(back > want - 1.5 && back < want + 1.5, 'difficulty ' + d + ': back after ' + back.toFixed(1) + ' s, want ' + want); }
 });
 test('red rain starts every 300 s, lasts 60 s, and is warned 30 s ahead', () => {
@@ -76,10 +76,10 @@ test('rare fruit can be eaten only through its own view', () => {
 test('a mood solved by wearing the fitting view thins the red rain; three wrong views lose it', () => {
   const upTo = (W, t) => run(W, t - W.t, keepAlive), extras = W => W.troopers.filter(u => u.big && u.extra).length; // count only the rain's own hollows, not the regular ones coming back
   let W = world(); upTo(W, 271); assert.ok(W.mood && !W.mood.done, 'a mood is set at the warning'); assert.notStrictEqual(W.mood.lens, W.lens, 'never the view already worn');
-  S.setLens(W.mood.lens); assert.ok(W.mood.solved && W.thin); let ev = upTo(W, 301); assert.ok(ev.some(e => e.k === 'red' && e.thin)); assert.strictEqual(extras(W), 0, 'a thin rain brings no extra hollows');
+  S.setLens(W.mood.lens); assert.ok(W.mood.solved && W.thin); let ev = upTo(W, 301); assert.ok(ev.some(e => e.k === 'red' && e.thin)); assert.strictEqual(extras(W), C.DIFF[1].thinHollows, 'a thin rain brings only C.DIFF thinHollows');
   upTo(W, 362); assert.strictEqual(W.thin, false, 'the next rain starts fresh');
   W = world(); upTo(W, 271); const wrong = C.LENSES.filter(l => l !== W.mood.lens && l !== W.lens); S.setLens(wrong[0]); S.setLens(wrong[1]); assert.ok(!W.mood.done, 'two misses are allowed'); S.setLens(wrong[2]); assert.ok(W.mood.done && !W.mood.solved, 'the third miss loses it');
-  S.setLens(W.mood.lens); assert.strictEqual(W.thin, false, 'too late'); upTo(W, 300.5); assert.ok(extras(W) >= 1, 'full rain: extra hollows arrive');
+  S.setLens(W.mood.lens); assert.strictEqual(W.thin, false, 'too late'); upTo(W, 300.5); assert.ok(extras(W) >= 1 && C.DIFF[1].rainHollows > C.DIFF[1].thinHollows, 'full rain: extra hollows arrive, more than a thin rain brings');
   W = world(); upTo(W, 305); assert.strictEqual(W.thin, false, 'bots never change the view, so their rain is never thin');
 });
 test('bots do not camp on rare fruit they cannot reach', () => {

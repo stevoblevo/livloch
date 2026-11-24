@@ -37,7 +37,7 @@ if (document.body.dataset.look === 'origami') { /* */ } // and on this
 | # | File | Global | What it is | Reads | Writes |
 |---|---|---|---|---|---|
 | 0 | three.min.js (cdnjs) | `THREE` | Three.js r128 | | |
-| 1 | [`js/core.js`](../js/core.js) | `LL`, `LL.C`, `LL.U` | Constants, the three threads (`LL.lanes`, `lanePoint`, `laneNearest`), heroes, items, fruit, views (`C.LENSES`), moods, goals, stars, the Cabinet, the concept plates. Data, not rules | nothing | nothing after load |
+| 1 | [`js/core.js`](../js/core.js) | `LL`, `LL.C`, `LL.U` | Constants, the three threads (`LL.lanes`, `lanePoint`, `laneNearest`), heroes, items, fruit, views (`C.LENSES`), moods, the difficulty table (`C.DIFF`, since 0.27), goals, stars, the Cabinet, the concept plates. Data, not rules | nothing | nothing after load |
 | 2 | [`js/sim.js`](../js/sim.js) | `LL.sim` (`S`) | The whole match, headless: heroes, troopers, structures, the Hush (hollows, thieves, red rain), souls and orbs, the Ness, creases and the fold, fruit, moods, Echo, Dreamwalk, goals, stars. Bots and the player drive heroes through the same `hero.ctl` | `LL` | `W` |
 | 3 | [`js/motion.js`](../js/motion.js) | `LL.paperMotion` | How a painted body moves: stride by distance walked, aim, landing squash, lean, four damped springs for follow-through. Also a Node module, so tests can load it | a unit | its own rig object |
 | 4 | [`js/props.js`](../js/props.js) | `LL.props` | Hush towers, troopers on both sides, hollows, the light a thief carries, rocks. Built in code, instanced | the unit it is handed | Three.js objects |

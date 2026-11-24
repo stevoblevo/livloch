@@ -26,8 +26,8 @@
               closer behind the wave; shoots its own soul orbs to secure them; hollows and buildings first among targets;
               Echo in a fight; fishes the Ness from outside its reach when the lane is quiet, for the Greatness, and jumps
               its bite.
-     2 The world keeps time. Hunts the small ones (thieves) within 45 m before they reach the Hush third of the valley; walks to ripe little
-              fruit within 30 m; presses the building with its troopers while its thread's hollow is down; falls back
+     2 The world keeps time. Hunts the small ones (thieves) within 45 m (20 m while its thread is busy) before they reach the Hush third
+              of the valley; walks to ripe little fruit within 30 m between waves; presses the building with its troopers while its thread's hollow is down; falls back
               to its own house during a full red rain.
      3 Looking is an action. Answers the mood with the right view about five seconds after the warning; wears
               Rainwake through the rain; fetches a ripe big fruit within 55 m through its view, then back to snow.
@@ -92,10 +92,12 @@ function policy(W, L, seed) {
     LL.lanePoint(lane, rel(0, lane, standS), P); let gx = P.x - P.dz * st.lat, gz = P.z + P.dx * st.lat, job = 'lane';
     // errands, in order of what a lesson says matters
     const free = !st.retreat && hpF > 0.45;
-    if (has(2) && !has('t') && !st.retreat) { let bt = null, bd = 45; for (const t of W.thieves) if (t.alive && t.z < 40) { const d = hyp(t.x - p.x, t.z - p.z); if (d < bd) { bd = d; bt = t; } } if (bt) { gx = bt.x; gz = bt.z; job = 'thief'; st.tgt = bt; } }
+    let near = 0; for (const u of W.troopers) if (u.alive && u.team === 1 && hyp(u.x - p.x, u.z - p.z) < 35) near += u.big ? 3 : 1;
+    const quiet = near < 3; // lesson 2's errands wait for a quiet thread: the time to fetch is between waves
+    if (has(2) && !has('t') && !st.retreat) { let bt = null, bd = quiet ? 45 : 20; for (const t of W.thieves) if (t.alive && t.z < 40) { const d = hyp(t.x - p.x, t.z - p.z); if (d < bd) { bd = d; bt = t; } } if (bt) { gx = bt.x; gz = bt.z; job = 'thief'; st.tgt = bt; } }
     st.wantLens = null;
     if (job === 'lane' && free && has(3) && !has('b') && !(m && !m.done) && !(W.red > 0)) { for (const f of W.fruit) if (f.ripe && f.lens && hyp(f.x - p.x, f.z - p.z) < 55) { st.wantLens = f.lens; S.setLens(f.lens); gx = f.x; gz = f.z; job = 'fruit'; break; } }
-    if (job === 'lane' && !st.retreat && has(2) && !has('f')) { for (const f of W.fruit) if (f.ripe && !f.lens && hyp(f.x - p.x, f.z - p.z) < 30 && (f.k !== 'hips' || hpF < 0.8)) { gx = f.x; gz = f.z; job = 'fruit'; break; } }
+    if (job === 'lane' && !st.retreat && quiet && has(2) && !has('f')) { for (const f of W.fruit) if (f.ripe && !f.lens && hyp(f.x - p.x, f.z - p.z) < 30 && (f.k !== 'hips' || hpF < 0.8)) { gx = f.x; gz = f.z; job = 'fruit'; break; } }
     if (job === 'lane' && free && has(4)) {
       for (let i = 0; i < W.creases.length; i++) {
         const k = W.creases[i]; if (k.t > 0 || k.cd > 0) continue;

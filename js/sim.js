@@ -1805,7 +1805,7 @@ function stepOrbs(dt) {
     if (o.t > 3.2) {
       let g = null, bd = 30;
       for (let j = 0; j < W.heroes.length; j++) { const h = W.heroes[j]; if (h.alive && h.team === o.team) { const d = hyp(h.x - o.x, h.z - o.z); if (d < bd) { bd = d; g = h; } } }
-      if (g) { give(g, o.val * 0.7); fx({ k: 'soul', kind: 'drift', val: o.val * 0.7, x: o.x, y: o.y, z: o.z, p: g.isPlayer, team: o.team }); }
+      if (g) { const k = C.DIFF[W.diff].orbDrift; give(g, o.val * k); fx({ k: 'soul', kind: 'drift', val: o.val * k, x: o.x, y: o.y, z: o.z, p: g.isPlayer, team: o.team }); }
       os.splice(i, 1);
     }
   }

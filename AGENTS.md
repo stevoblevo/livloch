@@ -43,6 +43,7 @@ Every script, source picture and decision lives in this repository, not in a tem
 | `for f in js/*.js tools/*.js; do node --check $f; done` | syntax only |
 | `node tools/test.js` | rule regressions and the motion rig: no Hush heroes, Last Breath once per life, Mercy threshold, theft refund, guardian blackout timing, hollow respawn, red-rain cycle, fruit, view-bound fruit, moods, Ever Fallen, Lean Back, Echo, Dreamwalk, goals, First Rain, the fox unlock, the wardrobe's unlock rules and old saves, model independent of the renderer |
 | `node tools/soak.js [n] [first seed]` | bot-only win rates per difficulty, one reproducible line per seed (length, result, structures standing, a fingerprint of the event stream) |
+| `node tools/tune.js [seeds] [first seed]` | the balance table: a scripted player (not a bot, not a person) that follows any of the five lessons, per difficulty, long match and First Rain: win rate, length, how it was lost, stars. `--set 1.wave=5` tries a number from the difficulty table `C.DIFF` (`js/core.js`) without editing it. Outcomes swing a lot from seed to seed: read 24 or more seeds a row |
 | `node tools/timeline.js [difficulty] [seed]` | one bot match as a timeline |
 | `node tools/redrain.js [n]` | red-rain experiment variants, bots only |
 | `node tools/evidence.js` | headless Chrome frames and an offline audio measurement into `docs/evidence/`; needs `playwright`, a Chrome binary (`CHROME`), and a local `three.min.js` r128 (`THREE_JS`) |

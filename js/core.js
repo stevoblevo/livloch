@@ -89,11 +89,12 @@ var C = LL.C = {
      rainHollows extra hollows a full rain brings, one per thread up to three; thinHollows: a thin rain
      hollowHp, hollowDmg  a hollow's health and blow at 0:00 (both grow each minute); hollowBack: seconds before a
                  fallen hollow returns to its thread
-     thiefEvery  seconds between small ones (Mercy and Ever Fallen scale it) */
+     thiefEvery  seconds between small ones (Mercy and Ever Fallen scale it)
+     orbDrift    what share of a soul orb nobody shot drifts to the nearest hero of its side anyway (shot, it is all of it) */
 C.DIFF = [
-  { build: 1.2, towerH: 1, wave: 4, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 1500, hollowDmg: 55, hollowBack: 30, thiefEvery: 85 },
-  { build: 1.5, towerH: 1.25, wave: 4, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 2100, hollowDmg: 72, hollowBack: 24, thiefEvery: 62 },
-  { build: 1.8, towerH: 1.5, wave: 5, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 2700, hollowDmg: 90, hollowBack: 18, thiefEvery: 44 }
+  { build: 1.2, towerH: 1, wave: 4, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 1500, hollowDmg: 55, hollowBack: 30, thiefEvery: 85, orbDrift: 0.7 },
+  { build: 1.5, towerH: 1.25, wave: 4, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 2100, hollowDmg: 72, hollowBack: 24, thiefEvery: 62, orbDrift: 0.7 },
+  { build: 1.8, towerH: 1.5, wave: 5, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 2700, hollowDmg: 90, hollowBack: 18, thiefEvery: 44, orbDrift: 0.7 }
 ];
 
 LL.lanes = C.LANE_X.map(function (lx) {
