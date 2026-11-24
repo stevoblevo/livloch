@@ -31,7 +31,7 @@ body[data-look="origami"] .wcard[aria-pressed="true"] { background: rgba(184, 49
 #wardOver .wNewRow { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin: 6px 0; }
 #wardOver .wNew { display: flex; flex-direction: column; gap: 2px; padding: 8px; border: 1px solid var(--gold); border-radius: 3px; background: rgba(var(--wash), 0.5); }
 #wardOver .wNew canvas { margin-bottom: 4px; }
-#wardOver .wNew .btn { align-self: flex-start; margin-top: auto; }
+#wardOver .wNew .chip { align-self: flex-start; margin-top: auto; } /* a chip, not a .btn: the end screen's first .btn (Again) keeps the focus */
 #wardOver .wNext { display: grid; grid-template-columns: minmax(0, 120px) minmax(0, 1fr); gap: 14px; align-items: center; margin-top: 10px; }
 #wardOver canvas { width: 100%; height: auto; display: block; border: 1px solid var(--gold); border-radius: 3px; }
 #wardOver .wNext canvas { border-color: var(--line); border-style: dashed; }
@@ -39,7 +39,6 @@ body[data-look="origami"] .wcard[aria-pressed="true"] { background: rgba(184, 49
 #wardOver .wNext b { display: inline; font-size: 20px; }
 #wardOver .wNext small { display: block; font-family: var(--f-sc); letter-spacing: 0.12em; color: var(--gold); font-size: 12px; }
 #wardOver p { margin: 2px 0 8px; color: var(--paper-dim); line-height: 1.35; font-size: 14px; }
-#wardOver .btn[aria-pressed="true"] { border-color: var(--ember); }
 
 @media (max-width: 760px) {
   .wTop { grid-template-columns: minmax(0, 1fr); }

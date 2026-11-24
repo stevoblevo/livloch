@@ -601,7 +601,7 @@ WD.fx = function (e, W) {
   const cfg = cfgNow(); if (!cfg || !W || !PROG[e.k]) return;
   if (W !== curW) { curW = W; known = WD.known(cfg); gained = []; said = 0; }
   if ((W.auto && !W.lean) || W.dream) { if (e.k === 'over') overBox(false); return; } // only a person earns things, as with the Cabinet
-  const ch = WD.count(cfg, e, W), n0 = gained.length; WD.settle(cfg, known, gained);
+  const ch = WD.count(cfg, e, W), n0 = gained.length; if (!cfg.all) WD.settle(cfg, known, gained); // the hidden switch opens everything; that is not earning it
   if (ch || gained.length > n0) save();
   if (e.k !== 'over') { for (; said < gained.length; said++) { const it = gained[said], on = WD.worn(cfg, it.slot) === it; if (LL.ui && LL.ui.feed) LL.ui.feed('<b>New in the wardrobe</b> · ' + esc(it.name) + (on ? ', on you now' : '')); } }
   else { overBox(true); WD.badge(); }
@@ -616,7 +616,7 @@ function overBox(on) {
   let h = '';
   if (gained.length) {
     h += '<h3>New in the wardrobe</h3>';
-    h += '<div class="wNewRow">'; gained.slice(0, 3).forEach(function (it) { h += '<div class="wNew"><canvas width="240" height="140"></canvas><span class="sl">' + esc(SLOT[it.slot].name) + '</span><b>' + esc(it.name) + '</b><p>' + esc(it.line) + '</p><button class="btn small" data-wear="' + it.id + '"></button></div>'; }); h += '</div>';
+    h += '<div class="wNewRow">'; gained.slice(0, 3).forEach(function (it) { h += '<div class="wNew"><canvas width="240" height="140"></canvas><span class="sl">' + esc(SLOT[it.slot].name) + '</span><b>' + esc(it.name) + '</b><p>' + esc(it.line) + '</p><button class="chip" data-wear="' + it.id + '"></button></div>'; }); h += '</div>';
     if (gained.length > 3) h += '<p class="sub">And ' + (gained.length - 3) + ' more in the wardrobe, on the title.</p>';
   }
   const nx = WD.next(cfg, 1)[0];
