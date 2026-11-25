@@ -239,6 +239,7 @@ function sysOf(e) {
     case 'dream': return e.sys; case 'echo': return 'echo';
     case 'lastbreath': case 'nessup': case 'nessdown': case 'redwarn': case 'moodmiss': case 'moodsolved': case 'red': case 'fold': case 'fishing': case 'fray': case 'gutter': case 'structdown': return e.k;
     case 'nesschomp': return e.hit && e.u ? 'nesschomp' : null; case 'flood': return 'flood'; // 0.26 ness
+    case 'arrive': return e.u && e.u.team === 0 && e.n ? 'arrive' : null; case 'mended': return 'ember'; case 'slack': return 'slack'; // 0.28 play
   }
   return null;
 }
@@ -313,10 +314,20 @@ UI.fx = function (e) {
     case 'redend': feed('The rain thins'); break;
     case 'lastbreath': if (e.u === pl) feed('Last breath'); break;
     case 'fold':
-      if (e.p) UI.banner('The valley folds.', 'Your ' + C.LANE_NAME[e.from] + ' troopers cross to the ' + C.LANE_NAME[e.to] + ' for ' + C.FOLD_T + ' seconds', 5);
+      if (e.p) UI.banner('The valley folds.', 'Your ' + C.LANE_NAME[e.from] + ' troopers cross to the ' + C.LANE_NAME[e.to] + ' for ' + C.FOLD_T + ' seconds. The thread they left is shut to the Hush', 5); // 0.28 play: the second sentence
       feed('<b class="t' + e.team + '">' + C.TEAM_NAME[e.team] + '</b> folded the valley');
       break;
     case 'foldend': if (e.p) feed('The crease lets go'); break;
+    /* 0.28 play: arrival, the fold's catch, a light from home, the slack thread. Said when they happen, never before. */
+    case 'arrive': if (e.p && e.n) { if (!W.arriveHint) { W.arriveHint = true; UI.banner('You arrive with the thread.', 'A long ride lands hard. The Hush ahead of you staggers', 3.5); } else feed('<b>Arrival</b> · ' + e.n + ' staggered'); LL.input.rumble(0.5, 120); } break;
+    case 'caught': if (W.caughtHint !== W.creases[e.i].n) { W.caughtHint = W.creases[e.i].n; feed('The crease has caught the small ones on the ' + C.LANE_NAME[W.creases[e.i].from]); } break;
+    case 'pinned': feed('A <b>hollow</b> is pinned in the crease'); break;
+    case 'unpinned': if (e.u.alive) feed('The crease lets the <b>hollow</b> go'); break;
+    case 'ember': if (e.p) UI.banner('You leave with a light.', 'Walk it to one of your houses that is hurt or dark. One light, one house', 5); else feed(hname(e.u) + ' carries a light from home'); break;
+    case 'mended': if (e.p) UI.banner('The ' + C.LANE_NAME[e.s.lane] + ' ' + e.s.kind + ' takes the light.', (e.relit ? 'Lit again, mended' : 'Mended by ' + Math.round(e.amt)) + ', and burning bright for ' + C.EMBER.bright + ' seconds', 3.5); else feed(hname(e.u) + ' mended the ' + C.LANE_NAME[e.s.lane] + ' ' + e.s.kind); break;
+    case 'slackwarn': UI.banner('The ' + C.LANE_NAME[e.lane] + ' is going slack.', 'In ' + e.in + ' seconds nothing on it will be protected, theirs or yours', 5); break;
+    case 'slack': UI.banner('The ' + C.LANE_NAME[e.lane] + ' has gone slack.', 'Its houses cannot fire and stand open until one falls, or ' + e.t + ' seconds pass. The thread carries you all the way' + (C.dif(W).slackHollows ? '. A hollow is coming down it' : ''), 6); feed('The <b>' + C.LANE_NAME[e.lane] + '</b> is slack'); break;
+    case 'slackend': if (e.fell === 1 && e.broke) UI.banner('The ' + C.LANE_NAME[e.lane] + ' pulls tight.', 'Their house fell first. The hollow they sent down it is gone', 4); else feed('The ' + C.LANE_NAME[e.lane] + ' pulls tight'); break;
     case 'death': if (e.kind === 'trooper' && e.by && e.by === W.player) { const hm = $('hitm'); hm.className = ''; void hm.offsetWidth; hm.className = 'pop'; } // 0.23: your trooper kills tick the crosshair
       if (e.kind === 'stray' && Math.hypot(e.x - C.CREASE_X[0], e.z) < 14 && !W.creaseHint) { W.creaseHint = true; feed('The ground under it is creased'); } break;
     case 'nessup': UI.banner('Something large is in the loch.', 'Kill the Ness for the Greatness: ' + C.GREAT_T + ' seconds of harder hits for your whole side', 6); feed('The <b>Ness</b> has surfaced'); break;

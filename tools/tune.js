@@ -8,6 +8,7 @@
          node tools/tune.js 8 1 --lessons 0,2,135   which lesson sets to run: digits name the lessons, 0 none
          node tools/tune.js 8 1 --lines        also print one line per match
          node tools/tune.js 8 1 --jobs 1       how many worker processes (default: one per CPU)
+         node tools/tune.js 8 1 --c SLACK.mul=1.5,FOLD_T=30   try numbers in C (core.js) without editing it; --set does C.DIFF
 
    WHAT IT IS. A scripted player for the human's hero, not a bot: the player's hero runs with useAI off, exactly as in a
    person's match (so the two teammates are the usual bots with their human-match handicap, botMul 0.78, and take the
@@ -31,15 +32,28 @@
               to its own house during a full red rain.
      3 Looking is an action. Answers the mood with the right view about five seconds after the warning; wears
               Rainwake through the rain; fetches a ripe big fruit within 55 m through its view, then back to snow.
-     4 Distance is not fixed. Rides threads (to the front, and home to heal); kills the west stray when its crease is
-              guarded and folds the lane next to it into its own; the Ness crease too once the Ness is down.
+     4 Distance is not fixed. Rides threads (to the front, where a long ride lands as an arrival, and home to heal);
+              kills the west stray when its crease is guarded and folds the next thread into its own, which shuts that
+              thread to the Hush for 45 s; the Ness crease too once the Ness is down. Keeps the crease for the red rain
+              when one is less than two minutes off, and folds 15 s into it, when the rain's hollows are on their way.
      5 You cannot keep everything lit. Stops running to every house under attack: leaves its thread only for an inner
-              house or the patron; walks home at 35%
-              health instead of 12% and comes back mended.
+              house or the patron. When a thread goes slack it leaves its own thread dark, rides the slack thread to
+              the far side's open house and takes it. A light from home (it still walks home only at 12%) goes to the
+              house that needs it most, not the first one passed.
+              (0.28: until 0.28 lesson 5 also walked home at 35%. Going home early, or by choice when its thread was
+              quiet, and carrying every light out, measured at no gain or a loss at 40 seeds on Cruel, even with the
+              light worth half a house: time off the thread costs more than a mended house returns. See
+              docs/evidence/play-0.28-notes.txt.)
+
+   Letters after the digits switch one habit off (or, in capitals, an experiment on), to measure it alone: s no ride to
+   the slack thread's open house, h a light goes to the first house passed, n the crease is not kept for the rain,
+   a no arrivals; F keeps the crease for the slack thread and folds its own thread into it, R gives up the slack
+   house when its own is in danger, v runs to guardian fires as lessons 0 to 4 do. The 0.27 letters are in the code.
 
    WHAT IT MEASURES. Per difficulty and lessons known: the long match's win rate, median length, how losses came (by the
    gutter after 20:00, or overrun), structures lost each side, the player's deaths and what killed it, the longest
-   stretch with no building falling; First Rain's mean stars, how often every house stood, and how often 3+ stars.
+   stretch with no building falling and when the first one fell; arrivals landed, lights carried into houses and small
+   Hush caught by a fold; First Rain's mean stars, how often every house stood, and how often 3+ stars.
    WHAT IT CANNOT. It is a policy, not a person: it never misreads the screen, never panics, never discovers a lesson
    halfway. Read the rows as the slope between lessons, not as what a person will feel. Simulator output only. */
 const path = require('path'), cp = require('child_process'), os = require('os');
@@ -59,7 +73,7 @@ function policy(W, L, seed) {
     for (const s of W.structs) if (s.team === 0) { if (st.hp[s.id] != null && s.hp < st.hp[s.id] - 1) st.hurtAt[s.id] = W.t; st.hp[s.id] = s.hp; }
     if ((st.buyT -= 0.2) <= 0) { st.buyT = 30; const b = p.def.build; for (let i = 0; i < b.length; i++) if (p.items.indexOf(b[i]) < 0) { if (p.souls >= LL.ITEMS[b[i]].cost) S.buy(p, b[i]); break; } }
     // retreat
-    const low = has(5) ? 0.35 : 0.12;
+    const low = 0.12;
     if (st.retreat) { if (hpF > 0.9) st.retreat = false; } else if (hpF < low) st.retreat = true;
     // views (lesson 3)
     const m = W.mood;
@@ -76,9 +90,17 @@ function policy(W, L, seed) {
       if (W.t > 600 && has(1) && has('j')) { const b = W.heroes.find(h => h !== p && h.alive); if (b) st.pick = b.ai.lane; }
     }
     st.lane = st.pick;
+    const K = W.slack, slackOn = K.t > 0, slackSoon = K.warned || slackOn;
+    for (const k of W.creases) if (k.t > 0 && k.team === 0 && k.from === st.lane) st.lane = k.to; // whoever folds its own thread away goes with its troopers
+    // lesson 5: a slack thread carries to the far side's open house. It leaves its own thread dark for fifty seconds and takes that house
+    let raid = null;
+    if (has(5) && !has('s') && slackOn && hpF > 0.35) { const e = enemyNext(K.lane); const mine = W.st[0][st.pick], mh = mine.outer.alive ? mine.outer : mine.inner, risk = has('R') && K.lane !== st.pick && st.lane === st.pick && mh.alive && (mh.hp < mh.maxHp * 0.5 || W.troopers.some(u => u.alive && u.team === 1 && u.big && u.lane === st.pick && hyp(u.x - mh.x, u.z - mh.z) < 30)); if (S.slack(e) && S.vuln(e) && !risk) { st.lane = K.lane; raid = e; } }
     let fire = null; // a house of ours being hit
-    for (const s of W.structs) if (s.team === 0 && s.alive && st.hurtAt[s.id] > W.t - 2) { if (!has(5) || s.kind !== 'guardian') { if (!fire || s.kind !== 'guardian') fire = s; } }
-    if (fire && fire.lane !== st.lane) st.lane = fire.lane;
+    for (const s of W.structs) if (s.team === 0 && s.alive && st.hurtAt[s.id] > W.t - 2) { if (!has(5) || has('v') || s.kind !== 'guardian') { if (!fire || s.kind !== 'guardian') fire = s; } }
+    if (fire && fire.lane !== st.lane && !raid) st.lane = fire.lane;
+    // lesson 5: a light from home goes to the house that needs it most, and the hero's thread waits
+    let mend = null;
+    if (has(5) && !has('h') && p.ember && !st.retreat && !raid) { let bv = 0; for (const s of W.structs) { if (s.team !== 0 || !s.alive || s.kind === 'patron' || !S.vuln(s) || !(s.dark || s.hp <= s.maxHp * C.EMBER.under)) continue; let hol = 0; for (const u of W.troopers) if (u.alive && u.team === 1 && u.big && u.lane === s.lane && hyp(u.x - s.x, u.z - s.z) < 60) hol++; const v = (1 - s.hp / s.maxHp) + (s.dark ? 0.5 : 0) + (st.hurtAt[s.id] > W.t - 6 ? 0.5 : 0) + hol * 0.6 + (s.lane === st.pick ? 0.15 : 0); if (v > bv) { bv = v; mend = s; } } if (mend) st.lane = mend.lane; }
     const lane = st.lane, Ln = lanes[lane];
     LL.laneNearest(lane, p.x, p.z, Q); const myS = rel(0, lane, Q.s), onLane = Q.d < 6;
     // where to stand
@@ -86,10 +108,12 @@ function policy(W, L, seed) {
     const tw = enemyNext(lane), twS = tw === W.patron[en] ? Ln.len + 6 : rel(0, lane, tw.s);
     let pushing = false; for (const u of W.troopers) if (u.alive && u.team === 0 && hyp(u.x - tw.x, u.z - tw.z) < tw.range - 2) { pushing = true; break; }
     const window = has(2) && !has('k') && W.hollowT[lane] > 0 && pushing;
-    standS = Math.min(standS, pushing ? twS - (window ? 10 : 15) : twS - tw.range + (has(5) ? -4 : 3));
+    standS = Math.min(standS, pushing ? twS - (window ? 10 : 15) : twS - tw.range + 3);
+    if ((raid || (has(2) && !has('k'))) && S.slack(tw) && S.vuln(tw) && hpF > 0.35) standS = twS - 14;
+    if (raid && !onLane && standS - myS > 50 && S.zipEnd(0, lane) - myS > 30) { LL.lanePoint(lane, Q.s, P); st.join = true; } else st.join = false; // lesson 4: get onto the slack thread first, then ride it // lesson 2: a slack house cannot fire; this is the moment to stand under it
     if (has(2) && !has('k') && W.red > 0 && !W.thin) { const g = W.st[0][lane]; const own = g.outer.alive ? g.outer : g.inner; if (own.alive) standS = Math.min(standS, rel(0, lane, own.s) + 4); }
     standS = U.clamp(standS, 8, Ln.len - 16);
-    LL.lanePoint(lane, rel(0, lane, standS), P); let gx = P.x - P.dz * st.lat, gz = P.z + P.dx * st.lat, job = 'lane';
+    if (!st.join) LL.lanePoint(lane, rel(0, lane, standS), P); let gx = P.x - P.dz * (st.join ? 0 : st.lat), gz = P.z + P.dx * (st.join ? 0 : st.lat), job = 'lane'; const laneX = gx, laneZ = gz;
     // errands, in order of what a lesson says matters
     const free = !st.retreat && hpF > 0.45;
     let near = 0; for (const u of W.troopers) if (u.alive && u.team === 1 && hyp(u.x - p.x, u.z - p.z) < 35) near += u.big ? 3 : 1;
@@ -99,14 +123,16 @@ function policy(W, L, seed) {
     if (job === 'lane' && free && has(3) && !has('b') && !(m && !m.done) && !(W.red > 0)) { for (const f of W.fruit) if (f.ripe && f.lens && hyp(f.x - p.x, f.z - p.z) < 55) { st.wantLens = f.lens; S.setLens(f.lens); gx = f.x; gz = f.z; job = 'fruit'; break; } }
     if (job === 'lane' && !st.retreat && quiet && has(2) && !has('f')) { for (const f of W.fruit) if (f.ripe && !f.lens && hyp(f.x - p.x, f.z - p.z) < 30 && (f.k !== 'hips' || hpF < 0.8)) { gx = f.x; gz = f.z; job = 'fruit'; break; } }
     if (job === 'lane' && free && has(4)) {
+      // lesson 4: the fold. The next thread into its own, which shuts that thread to the Hush; kept for the rain when one is near, and folded once the rain's hollows are on their way
+      const home = st.pick;
       for (let i = 0; i < W.creases.length; i++) {
-        const k = W.creases[i]; if (k.t > 0 || k.cd > 0) continue;
-        if (Math.abs(lane - (i === 0 ? 0 : 2)) > 1) continue;
-        const from = lane === k.b ? k.a : k.b, own = W.st[0][from], ownS = own.outer.alive ? own.outer : own.inner;
-        if (W.troopers.some(u => u.alive && u.team === 1 && u.big && u.lane === from && u.z < 10) || !ownS.alive || ownS.hp < ownS.maxHp * 0.6 || W.front[0][lane] < twS - 40) continue;
-        if (k.guard.alive) { if (i === 0 && hyp(k.x - p.x, k.z - p.z) < 60 && W.t > 40) { gx = k.guard.x; gz = k.guard.z; job = 'stray'; st.tgt = k.guard; } break; }
+        const k = W.creases[i]; if (k.t > 0 || k.cd > 0 || (home !== k.a && home !== k.b)) continue;
+        let from = home === k.b ? k.a : k.b, to = home; const sv = has(5) && has('F') && !W.short && !W.fray; if (sv && slackSoon && K.lane === from) { from = home; to = K.lane; } const own = W.st[0][from], ownS = own.outer.alive ? own.outer : own.inner;
+        if (W.troopers.some(u => u.alive && u.team === 1 && u.big && u.lane === from && u.z <= -13) || !ownS.alive || ownS.hp < ownS.maxHp * 0.4) continue;
+        if (k.guard.alive) { if (i === 0 && hyp(k.x - p.x, k.z - p.z) < 60 && W.t > 40) { gx = k.guard.x; gz = k.guard.z; job = 'stray'; st.tgt = k.guard; } continue; }
+        if (sv ? (!slackOn && K.next - W.t < 110 && !(slackSoon && from !== home)) : (!has('n') && !W.fallen && !W.short && (W.red <= 0 ? W.redNext - W.t < 110 : W.red > C.RED_T - 15))) continue;
         gx = k.x; gz = k.z; job = 'fold';
-        if (S.creaseFor(p) === i) { const into = lane === k.b ? k.b : k.a, side = C.LANE_X[into] - k.x; c.ax = p.x + Math.sign(side || 1) * 10; c.az = p.z; c.ay = 1.5; if (wasFold === i) S.fold(p, i); else st.fold = i; }
+        if (S.creaseFor(p) === i) { const side = C.LANE_X[to] - k.x; c.ax = p.x + Math.sign(side || 1) * 10; c.az = p.z; c.ay = 1.5; if (wasFold === i) S.fold(p, i); else st.fold = i; }
         break;
       }
     }
@@ -115,11 +141,21 @@ function policy(W, L, seed) {
       let busy = false; for (const u of W.troopers) if (u.alive && u.team === 1 && u.big && hyp(u.x - p.x, u.z - p.z) < 25) busy = true;
       if (!busy) { gx = ns.out ? ns.x - 14 : C.LOCH.x; gz = ns.out ? ns.z - 14 : C.LOCH.z - (NESS.REACH + 3.5); job = 'ness'; }
     }
+    if (raid && job !== 'fold') { gx = laneX; gz = laneZ; job = 'lane'; st.wantLens = null; } // the open house comes before every errand
+    if (mend && job !== 'thief' && !raid) { LL.lanePoint(lane, Math.max(4, mend.s - 5), P); gx = P.x; gz = P.z; job = 'mend'; }
     if (st.retreat) { const sp = S.spawnPos(0, p.slot); gx = sp.x; gz = sp.z; job = 'home'; }
     st.gx = gx; st.gz = gz; st.job = job;
     // threads (lesson 4)
     if (has(4)) {
-      if (p.zip) { const ts = rel(0, p.zip.lane, p.zip.s); if (job !== 'home' && job !== 'lane') c.zip = true; else if (job === 'lane' && (p.zip.dir < 0 || p.zip.lane !== lane || ts >= standS - 5)) c.zip = true; }
+      if (p.zip) { const ts = rel(0, p.zip.lane, p.zip.s);
+        if (job === 'mend') { if (p.zip.dir < 0 || p.zip.lane !== lane || ts >= mend.s - 8) c.zip = true; }
+        else if (job !== 'home' && job !== 'lane') c.zip = true;
+        else if (job === 'lane') { // an arrival: a long ride lets go among the small Hush, not behind its own troopers
+          let among = 0; if (ts - p.zip.s0 >= C.ARRIVE.min && !has('a')) for (const u of W.troopers) if (u.alive && u.team === 1 && !u.big && hyp(u.x - p.x, u.z - p.z) < C.ARRIVE.r - 1) among++;
+          const far = raid ? standS - 2 : ts - p.zip.s0 >= C.ARRIVE.min - 6 && !has('a') ? W.front[0][lane] + 4 : standS - 5;
+          if (p.zip.dir < 0 || p.zip.lane !== lane || (among >= 2 && !raid) || ts >= far) c.zip = true; }
+      }
+      else if (job === 'mend') { if (onLane && S.canZip(p) === lane && mend.s - myS > 40) { c.zip = true; c.zipDir = 1; } }
       else if (onLane && S.canZip(p) === lane) { if (job === 'lane' && standS - myS > 40 && S.zipEnd(0, lane) - myS > 25) { c.zip = true; c.zipDir = 1; } else if (job === 'home' && myS > 30) { c.zip = true; c.zipDir = -1; } }
     }
     // target
@@ -127,10 +163,10 @@ function policy(W, L, seed) {
       const range = p.def.gun.range * 0.92; let best = null, bs = -1e9;
       for (const u of W.units) {
         if (!u.alive || u.team !== en) continue; const d = hyp(u.x - p.x, u.z - p.z) - u.r; if (d > range) continue;
-        if (u.struct && (!S.vuln(u) || (!u.pressed && !W.fray))) continue;
+        if (u.struct && (!S.vuln(u) || (!u.pressed && !W.fray && !S.slack(u)))) continue;
         if (!(u.kind === 'trooper' || u.kind === 'thief' || u.struct)) continue;
         let sc = -d;
-        if (has(1) && !has('p')) sc += u.big ? 40 : u.struct ? 25 : u.kind === 'thief' ? 50 : (1 - u.hp / u.maxHp) * 15;
+        if (has(1) && !has('p')) sc += u.big ? 40 : u.struct ? ((has(2) || raid) && S.slack(u) ? 60 : 25) : u.kind === 'thief' ? 50 : (1 - u.hp / u.maxHp) * 15;
         if (sc > bs) { bs = sc; best = u; }
       }
       if (!best && ns.alive && (job === 'ness' || (ns.out && hyp(ns.x - p.x, ns.z - p.z) < range) || (ns.hp < ns.maxHp * 0.98 && hyp(ns.x - p.x, ns.z - p.z) < range && has(1)))) best = ns;
@@ -168,7 +204,7 @@ function policy(W, L, seed) {
       if (t && st.job !== 'home') { const tx = t.x - p.x, tz = t.z - p.z, tdd = hyp(tx, tz) || 1, sg = Math.sin(st.strafe * 1.5 + st.ph) > 0 ? 1 : -1; mx += -tz / tdd * 0.6 * sg; mz += tx / tdd * 0.6 * sg; if (t.big && tdd < 9) { mx -= tx / tdd * 0.8; mz -= tz / tdd * 0.8; } }
       const ns = W.ness; if (ns.alive && ns.rise >= 0.5 && !p.zip) { const kx = p.x - ns.x, kz = p.z - ns.z, kd = hyp(kx, kz), keep = ns.out ? 12 : NESS.REACH + 1; if (kd < keep && kd > 0.01 && (st.job === 'ness' || st.job === 'fold')) { mx += kx / kd * 1.2; mz += kz / kd * 1.2; } }
       for (const b of W.structs) { // every level has learned that a Hush building shoots whoever stands under it alone
-        if (b.team !== 1 || !b.alive || b.dark || st.covered[b.id]) continue; const kx = p.x - b.x, kz = p.z - b.z, kd = hyp(kx, kz);
+        if (b.team !== 1 || !b.alive || b.dark || S.slack(b) || st.covered[b.id]) continue; const kx = p.x - b.x, kz = p.z - b.z, kd = hyp(kx, kz);
         if (kd < b.range + 1.5 && kd > 0.01) { mx += kx / kd * 1.5; mz += kz / kd * 1.5; } }
       const mm = hyp(mx, mz); if (mm > 1) { mx /= mm; mz /= mm; } c.mx = mx; c.mz = mz;
       let aim = null;
@@ -188,21 +224,24 @@ function policy(W, L, seed) {
 function play(diff, mode, L, seed) {
   const heroPick = seed % LL.HEROES.length;
   const W = S.newWorld({ heroPick: heroPick, difficulty: diff, seed: seed * 7 + diff, mode: mode, auto: false });
-  const pol = policy(W, L, seed), p = W.player, o = { deaths: 0, by: {}, rLost: 0, hLost: 0, firstR: -1, firstH: -1, lastDown: 0, gap: 0, moods: 0, folds: 0, ness: 0, thefts: 0, chomps: 0, floods: 0 };
+  const pol = policy(W, L, seed), p = W.player, o = { deaths: 0, by: {}, rLost: 0, hLost: 0, firstR: -1, firstH: -1, lastDown: 0, gap: 0, moods: 0, folds: 0, ness: 0, thefts: 0, chomps: 0, floods: 0, falls: [], gapAt: 0, arrivals: 0, mends: 0, caught: 0 };
   while (!W.over && W.t < 1500) {
     pol.step(1 / 40); S.step(1 / 40);
     for (const e of W.fx) {
       if (e.k === 'herokill' && e.victim === p) { o.deaths++; const s = e.src, k = !s ? 'fountain' : s.kind === 'trooper' ? (s.big ? 'hollow' : 'trooper') : s.struct ? 'tower' : s.kind === 'ness' || (s.owner && s.owner.kind === 'ness') ? 'ness' : s.owner && s.owner.struct ? 'tower' : (s.kind || 'other'); o.by[k] = (o.by[k] || 0) + 1; }
-      else if (e.k === 'structdown') { if (e.u.team === 0) { o.rLost++; if (o.firstR < 0) o.firstR = W.t; } else { o.hLost++; if (o.firstH < 0) o.firstH = W.t; } o.gap = Math.max(o.gap, W.t - o.lastDown); o.lastDown = W.t; }
+      else if (e.k === 'structdown') { if (e.u.team === 0) { o.rLost++; if (o.firstR < 0) o.firstR = W.t; } else { o.hLost++; if (o.firstH < 0) o.firstH = W.t; } o.falls.push((e.u.team === 0 ? 'R' : 'H') + Math.round(W.t) + (e.u.kind === 'patron' ? 'p' : 'wme'[e.u.lane])); if (W.t - o.lastDown > o.gap) { o.gap = W.t - o.lastDown; o.gapAt = o.lastDown; } o.lastDown = W.t; }
       else if (e.k === 'fold' && e.p) o.folds++;
       else if (e.k === 'nessdown' && e.team === 0) o.ness++;
       else if (e.k === 'theft' || e.k === 'snuff') o.thefts++;
       else if (e.k === 'nesschomp' && e.p) o.chomps++;
       else if (e.k === 'floodwarn') o.floods++;
+      else if (e.k === 'arrive' && e.p && e.n) o.arrivals++;
+      else if (e.k === 'mended' && e.p) o.mends++;
+      else if (e.k === 'caught') o.caught++;
     }
     W.fx.length = 0;
   }
-  o.gap = Math.max(o.gap, W.t - o.lastDown);
+  if (W.t - o.lastDown > o.gap) { o.gap = W.t - o.lastDown; o.gapAt = o.lastDown; }
   o.t = W.t; o.win = W.winner === 0; o.moods = W.moodsSolved; o.hero = LL.HEROES[heroPick].id;
   if (W.stars) { o.stars = LL.STARS.filter(x => W.stars[x.id]).length; o.houses = !!W.stars.houses; o.starSet = LL.STARS.filter(x => W.stars[x.id]).map(x => ({ houses: 'H', mood: 'M', guard: 'T', ness: 'N', goals: 'G' })[x.id]).join(''); }
   o.how = o.win ? 'won' : (W.t >= 1200 ? 'gutter' : 'overrun');
@@ -210,7 +249,8 @@ function play(diff, mode, L, seed) {
 }
 
 /* --set row.key=value,...: try numbers in C.DIFF without editing core.js. row is 0, 1, 2 or * for every row. */
-function apply(set) {
+function apply(set, cset) {
+  if (cset) for (const kv of cset.split(',')) { const m = /^(\w+)(?:\.(\w+))?=(-?[\d.]+)$/.exec(kv); if (!m || !(m[1] in C) || (m[2] && !(m[2] in C[m[1]]))) throw new Error('bad --c ' + kv); if (m[2]) C[m[1]][m[2]] = +m[3]; else C[m[1]] = +m[3]; }
   if (!set) return; for (const kv of set.split(',')) { const m = /^([0-2*])\.(\w+)=(-?[\d.]+)$/.exec(kv); if (!m) throw new Error('bad --set ' + kv);
     for (let d = 0; d < 3; d++) if (m[1] === '*' || +m[1] === d) { if (!(m[2] in C.DIFF[d])) throw new Error('no C.DIFF key ' + m[2]); C.DIFF[d][m[2]] = +m[3]; } }
 }
@@ -224,7 +264,7 @@ function report(a, res) {
   const D = ['Gentle', 'Even', 'Cruel'];
   for (const mode of a.modes) {
     console.log('\n' + (mode === 'match' ? 'LONG MATCH' : 'FIRST RAIN') + ', ' + a.n + ' seeds from ' + a.first + ' (scripted player; simulator output, not human play)');
-    if (mode === 'match') console.log('diff    lessons  win   margin  median  lost by gutter/overrun  structs lost R-H  player deaths (by)          longest quiet  folds moods ness');
+    if (mode === 'match') console.log('diff    lessons  win   margin  median  lost by gutter/overrun  structs lost R-H  player deaths (by)          longest quiet  first fall  folds moods ness  arrivals lights caught');
     else console.log('diff    lessons  stars  3+    houses  structs lost R-H  player deaths  moods ness  star sets');
     for (const diff of a.diffs) for (const L of a.lessons) {
       const rs = res.filter(x => x.diff === diff && x.mode === mode && x.L === L).map(x => x.o), n = rs.length; if (!n) continue;
@@ -235,8 +275,8 @@ function report(a, res) {
       if (mode === 'match') {
         const w = rs.filter(x => x.win).length;
         console.log(D[diff].padEnd(7), name.padEnd(8), pct(w, n).padStart(4), avg(x => x.hLost - x.rLost).toFixed(1).padStart(7), U.fmtTime(med(rs.map(x => x.t))).padStart(7), ('  ' + rs.filter(x => x.how === 'gutter').length + '/' + rs.filter(x => x.how === 'overrun').length).padEnd(24),
-          (avg(x => x.rLost).toFixed(1) + '-' + avg(x => x.hLost).toFixed(1)).padEnd(17), (avg(x => x.deaths).toFixed(1) + ' (' + byS + ')').padEnd(28), U.fmtTime(med(rs.map(x => x.gap))).padStart(6) + '      ',
-          avg(x => x.folds).toFixed(1).padStart(4), avg(x => x.moods).toFixed(1).padStart(5), avg(x => x.ness).toFixed(1).padStart(4));
+          (avg(x => x.rLost).toFixed(1) + '-' + avg(x => x.hLost).toFixed(1)).padEnd(17), (avg(x => x.deaths).toFixed(1) + ' (' + byS + ')').padEnd(28), U.fmtTime(med(rs.map(x => x.gap))).padStart(6) + '      ', U.fmtTime(med(rs.map(x => Math.min(x.firstR < 0 ? 1e9 : x.firstR, x.firstH < 0 ? 1e9 : x.firstH)))).padStart(6) + '    ',
+          avg(x => x.folds).toFixed(1).padStart(4), avg(x => x.moods).toFixed(1).padStart(5), avg(x => x.ness).toFixed(1).padStart(4), avg(x => x.arrivals).toFixed(1).padStart(8), avg(x => x.mends).toFixed(1).padStart(6), avg(x => x.caught).toFixed(0).padStart(6));
       } else {
         const sets = {}; rs.forEach(x => { sets[x.starSet || '-'] = (sets[x.starSet || '-'] || 0) + 1; });
         console.log(D[diff].padEnd(7), name.padEnd(8), avg(x => x.stars || 0).toFixed(1).padStart(5), pct(rs.filter(x => x.stars >= 3).length, n).padStart(5), pct(rs.filter(x => x.houses).length, n).padStart(7),
@@ -245,14 +285,14 @@ function report(a, res) {
       }
     }
   }
-  if (a.lines) for (const x of res) console.log([['G', 'E', 'C'][x.diff], x.mode, 'L' + x.L, 'seed', x.seed, x.o.hero, U.fmtTime(x.o.t), x.o.how, 'R-H', x.o.rLost + '-' + x.o.hLost, 'deaths', x.o.deaths, 'floods', x.o.floods, 'chomps', x.o.chomps, 'ness', x.o.ness, x.o.stars != null ? 'stars ' + x.o.stars + ' ' + x.o.starSet : ''].join(' '));
+  if (a.lines) for (const x of res) console.log([['G', 'E', 'C'][x.diff], x.mode, 'L' + x.L, 'seed', x.seed, x.o.hero, U.fmtTime(x.o.t), x.o.how, 'R-H', x.o.rLost + '-' + x.o.hLost, 'deaths', x.o.deaths, 'falls', x.o.falls.join(' '), 'quiet', U.fmtTime(x.o.gap) + '@' + U.fmtTime(x.o.gapAt), 'floods', x.o.floods, 'chomps', x.o.chomps, 'ness', x.o.ness, x.o.stars != null ? 'stars ' + x.o.stars + ' ' + x.o.starSet : ''].join(' '));
 }
 
 function args() {
-  const v = process.argv.slice(2), a = { n: 8, first: 1, diffs: [0, 1, 2], modes: ['match', 'short'], lessons: ['0', '1', '12', '123', '1234', '12345'], lines: false, jobs: os.cpus().length, set: '' };
+  const v = process.argv.slice(2), a = { n: 8, first: 1, diffs: [0, 1, 2], modes: ['match', 'short'], lessons: ['0', '1', '12', '123', '1234', '12345'], lines: false, jobs: os.cpus().length, set: '', c: '' };
   const pos = []; for (let i = 0; i < v.length; i++) {
     if (v[i] === '--mode') a.modes = [v[++i]]; else if (v[i] === '--diff') a.diffs = v[++i].split(',').map(Number);
-    else if (v[i] === '--set') a.set = v[++i];
+    else if (v[i] === '--set') a.set = v[++i]; else if (v[i] === '--c') a.c = v[++i];
     else if (v[i] === '--lessons') a.lessons = v[++i].split(','); else if (v[i] === '--lines') a.lines = true; else if (v[i] === '--jobs') a.jobs = +v[++i];
     else pos.push(v[i]);
   }
@@ -260,17 +300,17 @@ function args() {
   return a;
 }
 if (process.argv[2] === '--worker') {
-  process.on('message', (msg) => { const list = msg.list; apply(msg.set); const out = list.map(j => Object.assign(j, { o: play(j.diff, j.mode, j.L, j.seed) })); process.send(out, () => process.exit(0)); }); // exit only once the results are sent: a large message is dropped by an early exit
+  process.on('message', (msg) => { const list = msg.list; apply(msg.set, msg.c); const out = list.map(j => Object.assign(j, { o: play(j.diff, j.mode, j.L, j.seed) })); process.send(out, () => process.exit(0)); }); // exit only once the results are sent: a large message is dropped by an early exit
 } else if (require.main === module) {
   const a = args(), all = jobs(a), k = Math.max(1, Math.min(a.jobs, all.length)), res = []; let left = k;
   const t0 = Date.now();
-  if (a.set) console.log('C.DIFF with --set ' + a.set);
-  if (k === 1) { apply(a.set); for (const j of all) res.push(Object.assign(j, { o: play(j.diff, j.mode, j.L, j.seed) })); report(a, res); }
+  if (a.set) console.log('C.DIFF with --set ' + a.set); if (a.c) console.log('C with --c ' + a.c);
+  if (k === 1) { apply(a.set, a.c); for (const j of all) res.push(Object.assign(j, { o: play(j.diff, j.mode, j.L, j.seed) })); report(a, res); }
   else for (let w = 0; w < k; w++) {
     const ch = cp.fork(__filename, ['--worker']);
     ch.on('exit', (code) => { if (code) { console.error('a worker failed, code ' + code); process.exit(1); } });
     ch.on('message', (out) => { res.push(...out); if (--left === 0) { res.sort((p, q) => p.diff - q.diff || (p.mode < q.mode ? -1 : p.mode > q.mode ? 1 : 0) || (p.L < q.L ? -1 : p.L > q.L ? 1 : 0) || p.seed - q.seed); report(a, res); console.log('\n' + all.length + ' matches in ' + Math.round((Date.now() - t0) / 1000) + ' s'); } });
-    ch.send({ list: all.filter((_, i) => i % k === w), set: a.set });
+    ch.send({ list: all.filter((_, i) => i % k === w), set: a.set, c: a.c });
   }
 }
 module.exports = { policy: policy, play: play };
