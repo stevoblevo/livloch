@@ -846,8 +846,15 @@ R.frame = function (dt, view) {
     const h = W.player;
     petM.visible = !!(R.petEnabled && h && h.alive && (!W.auto || W.lean));
     if (petM.visible) {
-      const tx = h.x - Math.sin(h.yaw) * 1.9 + Math.cos(h.yaw) * 1.4;
-      const tz = h.z - Math.cos(h.yaw) * 1.9 - Math.sin(h.yaw) * 1.4;
+      // Portrait (phone) follow camera has a much narrower horizontal field,
+      // so the desktop follow offset (1.9 back, 1.4 to the side) pushes the
+      // fox mostly off the left edge — see docs/evidence/fox-tether-phone.jpg.
+      // Pull it in closer and nearer the hero on portrait only; desktop is
+      // untouched. Presentation only: no sim state is read or changed here.
+      const back = R.portrait ? 1.3 : 1.9, lat = R.portrait ? 0.5 : 1.4;
+      petM.scale.setScalar(R.portrait ? 0.58 : 0.74);
+      const tx = h.x - Math.sin(h.yaw) * back + Math.cos(h.yaw) * lat;
+      const tz = h.z - Math.cos(h.yaw) * back - Math.sin(h.yaw) * lat;
       if (!petM.userData.arrived) { petM.position.set(tx, 0, tz); petM.userData.arrived = true; }
       petM.position.x += (tx - petM.position.x) * Math.min(1, dt * 7);
       petM.position.z += (tz - petM.position.z) * Math.min(1, dt * 7);

@@ -4,7 +4,7 @@ fox-tether-snow.jpg | fox beside the player, thread to the laden thief at (3,3);
 fox-tether-ink.jpg | same scene, Inkblot Noir look
 fox-tether-memory.jpg | same scene, Memory look
 fox-idle-snow.jpg | fox present with no laden thief: no thread should be drawn
-fps (SwiftShader, idle scene): pet on median 300 ms mean 308.38 ms; pet off median 283.2 ms mean 262.39 ms
+fps (SwiftShader, idle scene): pet on median 300.1 ms mean 318.66 ms; pet off median 283.3 ms mean 274.5 ms
 fox-settings-on.jpg | pause > Settings with the fox unlocked: checkbox enabled and checked
 after toggle off: {"pet":false,"enabled":false,"saved":false}
 fox-off-snow.jpg | fox toggled off in Settings: no fox beside the player
