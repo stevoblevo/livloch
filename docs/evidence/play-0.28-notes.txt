@@ -35,7 +35,8 @@ WHAT IT MEASURED (play-0.28-after.txt, 48 seeds a row)
           Five does keep more houses and take more (structures lost 4.2-3.6 against 4.7-3.0, margin -0.6 against
           -1.7) but that did not become wins.
   Target: on Even the slope 0 -> 1 -> 2 stays.                             HELD, FLATTER. 56/63/75 (was 38/60/69).
-          Even with no lessons rose 18 points: houses that take a bot's light, bots shooting slack houses in range.
+          Even with no lessons rose 18 points. Why is not measured (candidates: a bot's light in a house, bots
+          shooting slack houses in range, the first slack thread usually being the player's own middle one).
           One attempt to bring it back (hollowHp 3300, orbDrift 0.3) gave 46/60/35 and was dropped as erratic.
   Target: median longest quiet <= 3:00.                                    NOT MET, CLOSER. Cruel 3:13 to 3:39 (was
           4:14 to 4:42), Even 3:16 to 4:10 (was 3:53 to 5:34), Gentle 2:35 to 3:27. The first building now falls at
@@ -72,5 +73,12 @@ WHAT STILL LOOKS WEAK
   - Even is easier than 0.27 for a player who knows nothing (56%).
   - Nothing of these rules is drawn in the world or has a sound: they are said in banners and the feed only.
   - tools/test.js: the eight bot-only matches with the Ness now end with two of eight seeing no chomp tell (29 tells
-    over the eight, was 36); the per-match check for a tell became a total. Bots lose more of those matches than a
-    person's side would: the slack thread costs a side that does not answer it.
+    over the eight, was 36); the per-match check for a tell became a total. tools/soak.js (bot-only win rates)
+    was not rerun: expect it to have moved.
+
+FRAMES (tools/shots/play28.js; headless SwiftShader; they show the words appear, nothing else)
+  play-0.28-slackwarn.jpg, -slack.jpg  the two banners, play camera, 2:10 and 2:30.
+  play-0.28-light.jpg                  "You leave with a light." at the fountain.
+  play-0.28-fold.jpg                   the feed: a hollow pinned, the small ones caught. The script removes the stray
+                                       without a death, so its body is still drawn over the hero, and a level-up banner
+                                       has replaced the fold's: an artifact of the capture, not of play.
