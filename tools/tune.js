@@ -87,9 +87,9 @@ function policy(W, L, seed) {
     for (const k of W.creases) if (k.t > 0 && k.team === 0 && k.from === st.lane) st.lane = k.to; // whoever folds its own thread away goes with its troopers
     // lesson 5: a slack thread carries to the far side's open house. It leaves its own thread dark for fifty seconds and takes that house
     let raid = null;
-    if (has(5) && !has('s') && slackOn && hpF > 0.35) { const e = enemyNext(K.lane); if (S.slack(e) && S.vuln(e)) { st.lane = K.lane; raid = e; } }
+    if (has(5) && !has('s') && slackOn && hpF > 0.35) { const e = enemyNext(K.lane); const mine = W.st[0][st.pick], mh = mine.outer.alive ? mine.outer : mine.inner, risk = has('R') && K.lane !== st.pick && st.lane === st.pick && mh.alive && (mh.hp < mh.maxHp * 0.5 || W.troopers.some(u => u.alive && u.team === 1 && u.big && u.lane === st.pick && hyp(u.x - mh.x, u.z - mh.z) < 30)); if (S.slack(e) && S.vuln(e) && !risk) { st.lane = K.lane; raid = e; } }
     let fire = null; // a house of ours being hit
-    for (const s of W.structs) if (s.team === 0 && s.alive && st.hurtAt[s.id] > W.t - 2) { if (!has(5) || s.kind !== 'guardian') { if (!fire || s.kind !== 'guardian') fire = s; } }
+    for (const s of W.structs) if (s.team === 0 && s.alive && st.hurtAt[s.id] > W.t - 2) { if (!has(5) || has('v') || s.kind !== 'guardian') { if (!fire || s.kind !== 'guardian') fire = s; } }
     if (fire && fire.lane !== st.lane && !raid) st.lane = fire.lane;
     // lesson 5: a light from home goes to the house that needs it most, and the hero's thread waits
     let mend = null;
@@ -120,10 +120,10 @@ function policy(W, L, seed) {
       const home = st.pick;
       for (let i = 0; i < W.creases.length; i++) {
         const k = W.creases[i]; if (k.t > 0 || k.cd > 0 || (home !== k.a && home !== k.b)) continue;
-        const from = home === k.b ? k.a : k.b, to = home, own = W.st[0][from], ownS = own.outer.alive ? own.outer : own.inner;
+        let from = home === k.b ? k.a : k.b, to = home; const sv = has(5) && has('F') && !W.short && !W.fray; if (sv && slackSoon && K.lane === from) { from = home; to = K.lane; } const own = W.st[0][from], ownS = own.outer.alive ? own.outer : own.inner;
         if (W.troopers.some(u => u.alive && u.team === 1 && u.big && u.lane === from && u.z <= -13) || !ownS.alive || ownS.hp < ownS.maxHp * 0.4) continue;
         if (k.guard.alive) { if (i === 0 && hyp(k.x - p.x, k.z - p.z) < 60 && W.t > 40) { gx = k.guard.x; gz = k.guard.z; job = 'stray'; st.tgt = k.guard; } continue; }
-        if (!has('n') && !W.fallen && !W.short && (W.red <= 0 ? W.redNext - W.t < 110 : W.red > C.RED_T - 15)) continue;
+        if (sv ? (!slackOn && K.next - W.t < 110 && !(slackSoon && from !== home)) : (!has('n') && !W.fallen && !W.short && (W.red <= 0 ? W.redNext - W.t < 110 : W.red > C.RED_T - 15))) continue;
         gx = k.x; gz = k.z; job = 'fold';
         if (S.creaseFor(p) === i) { const side = C.LANE_X[to] - k.x; c.ax = p.x + Math.sign(side || 1) * 10; c.az = p.z; c.ay = 1.5; if (wasFold === i) S.fold(p, i); else st.fold = i; }
         break;
@@ -134,7 +134,7 @@ function policy(W, L, seed) {
       let busy = false; for (const u of W.troopers) if (u.alive && u.team === 1 && u.big && hyp(u.x - p.x, u.z - p.z) < 25) busy = true;
       if (!busy) { gx = ns.out ? ns.x - 14 : C.LOCH.x; gz = ns.out ? ns.z - 14 : C.LOCH.z - (NESS.REACH + 3.5); job = 'ness'; }
     }
-    if (raid) { gx = laneX; gz = laneZ; job = 'lane'; st.wantLens = null; } // the open house comes before every errand
+    if (raid && job !== 'fold') { gx = laneX; gz = laneZ; job = 'lane'; st.wantLens = null; } // the open house comes before every errand
     if (mend && job !== 'thief' && !raid) { LL.lanePoint(lane, Math.max(4, mend.s - 5), P); gx = P.x; gz = P.z; job = 'mend'; }
     if (st.retreat) { const sp = S.spawnPos(0, p.slot); gx = sp.x; gz = sp.z; job = 'home'; }
     st.gx = gx; st.gz = gz; st.job = job;

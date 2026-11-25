@@ -707,9 +707,11 @@ test('whole bot matches with the Ness: floods end, nobody stays in the jaws, bot
     }
     assert.ok(ok, 'seed ' + seed + ': every number stays finite'); assert.ok(W.over, 'seed ' + seed + ': the match ends (' + W.t.toFixed(0) + ' s)'); over++;
     assert.ok(!W.ness.out || W.flood, 'seed ' + seed + ': the Ness is only out of the loch in a flood');
-    assert.ok(floods > b[0] && tells > b[1] && fishing > b[2] && downs > b[3], 'seed ' + seed + ': a flood, a hero picked, a fishing trip and the Ness landed in every match');
+    assert.ok(floods > b[0] && fishing > b[2] && downs > b[3], 'seed ' + seed + ': a flood, a fishing trip and the Ness landed in every match'); // 0.28 play: a hero picked is counted over the eight, below; the new rules moved the draws and two of the eight now pass without a tell
   }
-  /* measured at 0.27 over these eight: 15 floods, 36 tells, 17 bitten, 19 dodged, 39 rides in a flood, 16 fishing, 13 downs */
+  /* measured at 0.27 over these eight: 15 floods, 36 tells, 17 bitten, 19 dodged, 39 rides in a flood, 16 fishing, 13 downs
+     measured at 0.28 (play: the slack thread, the fold's catch, lights) over the same eight: 12 floods, 29 tells, 11 bitten,
+     17 dodged, 39 rides in a flood, 20 fishing, 9 downs */
   assert.ok(longest < 25, 'the longest flood: ' + longest.toFixed(1) + ' s');
   assert.ok(tells >= 24, 'heroes are picked: ' + tells); assert.ok(bitten >= 8 && dodged >= 8, 'bots dodge some bites and take some: ' + dodged + ' dodged, ' + bitten + ' bitten');
   assert.ok(zips >= 20, 'bots take the threads in a flood: ' + zips); assert.ok(fishing >= 12, 'bots still go fishing: ' + fishing); assert.ok(downs >= 8, 'and still land the Ness: ' + downs);
@@ -800,6 +802,9 @@ test('0.28 play: halfway between rains one thread goes slack: its houses stop fi
   W.st[1][gone].outer.alive = false; W.st[1][gone].inner.alive = false; // the thread with the most lost, but one side has no house left on it
   ev = run(W, D.every, hold2); const s1 = ev.find(e => e.k === 'slack'); assert.ok(s1 && Math.abs(s1.at - (D.first + D.every)) < 0.1, 'again one rain later'); assert.strictEqual(s1.lane, worn, 'the most worn thread goes slack, and a thread where one side has no house comes last');
   { const Z = world({ auto: false }), zh = Z.player, far = Z.st[1][1].outer; Z.slack.lane = 1; Z.slack.t = 30; assert.ok(Math.abs(S.zipEnd(0, 1) - LL.lanes[1].len * D.ride[0]) < 0.01, 'a slack thread carries to the far guardian'); assert.ok(S.zipEnd(0, 0) < LL.lanes[0].len * 0.5, 'the others end where they did'); far.alive = false; assert.ok(Math.abs(S.zipEnd(0, 1) - LL.lanes[1].len * D.ride[1]) < 0.01, 'and on to the warden once the guardian is down'); Z.slack.t = 0; assert.ok(S.zipEnd(0, 1) < LL.lanes[1].len * 0.7, 'pulled tight, it ends where it did'); }
+  { const Z = world({ auto: false, difficulty: 1 }); run(Z, D.first + 1, hold); const ln = Z.slack.lane, lean = Z.troopers.filter(u => u.alive && u.lean === Z.slack.n); assert.strictEqual(lean.length, C.DIFF[1].slackHollows, 'the leaning hollow is marked');
+    S._t.kill(Z.st[1][ln].outer, null, null); const e2 = Z.fx.find(e => e.k === 'slackend'); assert.ok(e2 && e2.fell === 1 && e2.broke === lean.length, 'a Hush house falls: the thread pulls tight and the lean breaks'); assert.ok(!(Z.slack.t > 0) && lean.every(u => !u.alive) && !S.slack(Z.st[0][ln].outer), 'the Reign house on it is its own again');
+    const Y = world({ auto: false, difficulty: 1 }); run(Y, D.first + 1, hold); const ly = Y.slack.lane, lean2 = Y.troopers.filter(u => u.alive && u.lean === Y.slack.n); S._t.kill(Y.st[0][ly].outer, null, null); assert.ok(!(Y.slack.t > 0) && Y.fx.some(e => e.k === 'slackend' && e.fell === 0 && e.broke === 0), 'a Reign house falls: tight again'); assert.ok(lean2.every(u => u.alive), 'and the hollow keeps coming'); }
   for (const mode of ['short', 'fallen']) { const X = world({ mode: mode }); ev = run(X, D.first + 5, hold); assert.ok(!ev.some(e => e.k === 'slackwarn' || e.k === 'slack'), 'no slack thread in ' + mode); }
   const G = world({ difficulty: 0, auto: false }); ev = run(G, D.first + 1, hold); assert.strictEqual(ev.filter(e => e.k === 'hollow' && e.extra).length, C.DIFF[0].slackHollows, 'Gentle: the Hush does not lean');
 });

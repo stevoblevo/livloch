@@ -773,6 +773,7 @@ function kill(t, src, hero) {
     fx({ k: 'nessdown', team: hero ? hero.team : -1, hero: hero, x: t.x, z: t.z });
   } else if (t.kind === 'guardian' || t.kind === 'warden') {
     const b = t.kind === 'guardian' ? 350 : 600;
+    if (W.slack.t > 0 && W.slack.lane === t.lane) { W.slack.t = 0; let n = 0; if (t.team === 1) for (let i = 0; i < W.troopers.length; i++) { const u = W.troopers[i]; if (u.alive && u.lean === W.slack.n) { u.alive = false; n++; fx({ k: 'death', u: u, x: u.x, y: u.y, z: u.z, team: 1, kind: 'trooper', by: null, creased: true }); } } fx({ k: 'slackend', lane: t.lane, fell: t.team, broke: n }); } // 0.28 play: one house falls and the slack thread pulls tight
     for (let i = 0; i < W.heroes.length; i++) if (W.heroes[i].team !== t.team) give(W.heroes[i], b);
     fx({ k: 'structdown', u: t, bounty: b });
   } else if (t.kind === 'patron') {
@@ -1314,6 +1315,9 @@ function emberStep(h, inFount, mended) {
    fifty seconds that thread is where a house falls, theirs or yours, and two other threads are not being watched.
    A slack thread also carries farther: while it is slack a rider goes all the way to the far side's open house
    (zipEnd, C.SLACK.ride), past the fight in the middle, and lands there as an arrival.
+   The first house to fall on a slack thread pulls it tight at once (kill): the houses left on it fire and are
+   protected again; and if it was a Hush house, the hollow the Hush sent down that thread crumples where it stands
+   (the lean breaks). So a slack thread is a race for one house, and a Reign that takes theirs first has saved its own.
    Which thread: the most worn one, the thread whose houses, both sides' together, have lost the most (a thread where
    one side has no house left comes last; W.rng breaks a tie, so the first is anyone's). The tide goes where the war
    already is, so what is won or lost on a slack thread adds up instead of being spread over three. */
@@ -1333,7 +1337,7 @@ function slackStep(dt) {
     K.warned = false; K.next += D.every; K.t = D.t; K.n++;
     for (let i = 0; i < W.structs.length; i++) { const s = W.structs[i]; if (s.alive && isSlack(s)) s.tgt = null; }
     fx({ k: 'slack', lane: K.lane, t: D.t, n: K.n });
-    for (let i = 0; i < C.dif(W).slackHollows; i++) spawnHollow(K.lane, true);
+    for (let i = 0; i < C.dif(W).slackHollows; i++) { spawnHollow(K.lane, true); W.troopers[W.troopers.length - 1].lean = K.n; }
   }
 }
 function heroStep(h, dt) {
