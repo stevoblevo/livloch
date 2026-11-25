@@ -8,6 +8,7 @@
          node tools/tune.js 8 1 --lessons 0,2,135   which lesson sets to run: digits name the lessons, 0 none
          node tools/tune.js 8 1 --lines        also print one line per match
          node tools/tune.js 8 1 --jobs 1       how many worker processes (default: one per CPU)
+         node tools/tune.js 8 1 --c SLACK.mul=1.5,FOLD_T=30   try numbers in C (core.js) without editing it; --set does C.DIFF
 
    WHAT IT IS. A scripted player for the human's hero, not a bot: the player's hero runs with useAI off, exactly as in a
    person's match (so the two teammates are the usual bots with their human-match handicap, botMul 0.78, and take the
@@ -44,9 +45,15 @@
               light worth half a house: time off the thread costs more than a mended house returns. See
               docs/evidence/play-0.28-notes.txt.)
 
+   Letters after the digits switch one habit off (or, in capitals, an experiment on), to measure it alone: s no ride to
+   the slack thread's open house, h a light goes to the first house passed, n the crease is not kept for the rain,
+   a no arrivals; F keeps the crease for the slack thread and folds its own thread into it, R gives up the slack
+   house when its own is in danger, v runs to guardian fires as lessons 0 to 4 do. The 0.27 letters are in the code.
+
    WHAT IT MEASURES. Per difficulty and lessons known: the long match's win rate, median length, how losses came (by the
    gutter after 20:00, or overrun), structures lost each side, the player's deaths and what killed it, the longest
-   stretch with no building falling; First Rain's mean stars, how often every house stood, and how often 3+ stars.
+   stretch with no building falling and when the first one fell; arrivals landed, lights carried into houses and small
+   Hush caught by a fold; First Rain's mean stars, how often every house stood, and how often 3+ stars.
    WHAT IT CANNOT. It is a policy, not a person: it never misreads the screen, never panics, never discovers a lesson
    halfway. Read the rows as the slope between lessons, not as what a person will feel. Simulator output only. */
 const path = require('path'), cp = require('child_process'), os = require('os');
