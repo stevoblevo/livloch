@@ -2,6 +2,20 @@
 
 Every version of Livloch, newest first. Each one from 0.4 on is a `release/X.Y` branch that never moves, and the published ones stay playable at [stevoblevo.github.io/livloch/versions/](https://stevoblevo.github.io/livloch/versions/). The reasons behind each step are in [`docs/PLAN.md`](docs/PLAN.md); where each was published is in [`docs/IMPORT.md`](docs/IMPORT.md).
 
+## 0.28
+**The painting opens into the valley, lessons 4 and 5 pay, and the HUD looks like the game.**
+
+- **Title:** the title painting dissolves into the live valley. Walk in swings the camera down behind your hero and the HUD fades in, with the music carried through. The painting stays under reduced motion, Lighter graphics or a slow machine (#36).
+- **HUD redrawn from the plates:** lantern ability slots lit in the hero's colour, a gold-framed map, a level medallion, the view's name, tints per look, and a new layout for phones on their side. The phone mute button no longer covers the hero cards.
+- **New rules:**
+  - **Arrival:** a long ride toward the front lands as a blow.
+  - **The fold catches:** a folded thread is shut to the Hush, crumples small ones and pins a hollow.
+  - **A light from home:** a hero mended at the fountain carries a light that relights and speeds a hurt house.
+  - **The slack thread:** three times a match, the most worn thread goes slack, its houses stop firing and a rider can take the far house.
+- **Balance:** knowing to ride and fold the threads (lesson 4) is now worth a win on Cruel (52% to 69%). Quiet stretches are about a minute shorter. Gentle buildings are a little tougher.
+- **Readability:** bigger, clearer faces at play distance; the owl now reads on the back of Anna's shield; the Ness's hold swings the camera out so you see the hero between the teeth; the camera follows high boosts and lifts smoothly.
+- **World:** the moon sits in the air with a soft limb, halo and mist (#30); Origami blossoms are pink paper, not grey (#33); fruit bushes, strays and fold cranes are built 3D props (#39), using fewer draw calls; Ink hollows read as hatched tones, not black cut-outs.
+
 ## 0.27
 **Tuned, and the same seed plays the same match.**
 
