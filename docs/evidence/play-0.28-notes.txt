@@ -1,0 +1,76 @@
+0.28 play: lessons 4 and 5, and the dead stretches. What was built, why, and what it measured.
+Everything here is simulator output from tools/tune.js (a scripted player, not a person, not a bot match).
+A row of 48 seeds has a standard error of about 7 points of win rate; a difference between two rows about 10.
+Differences under 15 points between two rows are not findings.
+
+WHAT 0.27 LEFT (play-0.28-before.txt, 48 seeds)
+  Cruel  lessons 123 44%, 1234 52%, 12345 38%.  Even none/1/12: 38/60/69%.
+  Median longest stretch with no building falling: Cruel 4:14 to 4:42, Even 3:53 to 5:34.
+  A tool written for this (what harmed each house, by source and by phase; not committed, the event field it reads is:
+  'hit' events now carry src) showed three things on Cruel:
+   1. Small Hush troopers, not hollows, do most of the harm to Reign houses (about 12,000 of 23,000 a match), in the
+      calm between rains. A thread without a hero on it loses its guardian in about half a minute.
+   2. Hush houses are brought down by heroes (25,000 of 28,000), spread over three threads. A win needs 23,000 on one
+      thread and the patron, so harm that is spread does not win.
+   3. The quiet stretches were the opening (nothing falls before the first rain's hollows arrive, about 5:45) and the
+      wait between rains.
+
+THE RULES (sim.js "0.28 play"; numbers in core.js)
+  Arrival        a ride of 45 m toward the front lands as a blow and a stagger around the landing and 24 m ahead.
+  The fold       the thread folded away is shut to the Hush for the 45 s: small ones crumple in the crease, a hollow
+                 is pinned there and loses 4% of its health a second. Before, folding left that thread open and
+                 measured at nothing.
+  A light        the fountain mends 40% of a hero in one visit: it leaves with a light; on foot by a hurt or dark
+                 house of its side the house is lit, mended 30%, and fires twice as fast for 30 s.
+  The slack thread  at 2:30, 7:30, 12:30 (halfway between rains, said 20 s ahead) the most worn thread goes slack for
+                 up to 50 s: houses of both sides on it stop firing, lose their protection and take double harm; on
+                 Even and Cruel the Hush sends a hollow down it; the thread carries a rider to the far side's open
+                 house. The first house to fall pulls it tight; if it was a Hush house the leaning hollow crumples.
+  Gentle's Hush buildings 1.2 -> 1.35 (the fold and the slack thread had Gentle matches ending near 8:30); First Rain
+  keeps 1.2. No other number in C.DIFF moved.
+
+WHAT IT MEASURED (play-0.28-after.txt, 48 seeds a row)
+  Target: on Cruel four lessons clearly beat three (+15 to 20).            MET.      40% -> 69% (+29).
+  Target: on Cruel five beat four.                                         NOT MET.  65% against 69%: no difference.
+          Five does keep more houses and take more (structures lost 4.2-3.6 against 4.7-3.0, margin -0.6 against
+          -1.7) but that did not become wins.
+  Target: on Even the slope 0 -> 1 -> 2 stays.                             HELD, FLATTER. 56/63/75 (was 38/60/69).
+          Even with no lessons rose 18 points: houses that take a bot's light, bots shooting slack houses in range.
+          One attempt to bring it back (hollowHp 3300, orbDrift 0.3) gave 46/60/35 and was dropped as erratic.
+  Target: median longest quiet <= 3:00.                                    NOT MET, CLOSER. Cruel 3:13 to 3:39 (was
+          4:14 to 4:42), Even 3:16 to 4:10 (was 3:53 to 5:34), Gentle 2:35 to 3:27. The first building now falls at
+          about 3:00 (Cruel, Even low lessons) or 2:00 (Even, lessons 4 and 5) instead of after the first rain.
+  Target: median match >= 9:00.                                            MET but for Gentle 1234 at 8:51.
+  Target: Gentle stays easy.                                               MET. 100% every row.
+  Target: First Rain as kind as 0.27 (Even, no lessons, houses >= 90%).    MET. 96% (was 100%); most rows kinder.
+  Not addressed: the mood still decides a great deal (Even 75% -> 96% on lesson 3, Cruel 2% -> 40%).
+
+WHAT THE SCRIPTED PLAYER DOES NOW (tools/tune.js header)
+  Lesson 4: rides, lands arrivals, folds the next thread into its own (kept for the rain when one is near).
+  Lesson 5: stops running to guardian fires; rides the slack thread to the far house; walks a light to the house that
+            needs it most.
+  Dropped from lesson 5: walking home at 35% instead of 12%.
+
+WHAT WAS TRIED AND DID NOT WORK (40 or 48 seeds on Cruel unless said; runs not kept, numbers from the session)
+  - Going home early or by choice to fetch lights (lesson 5 as 0.27 had it, and a version that went only when its
+    thread was quiet), with the light worth 20%, 35% and 50% of a house: 35 to 55%, never above lesson 4. Time off
+    the thread costs more than a mended house returns. The light is real and readable but it is not a reason to go
+    home; it pays whoever had to go anyway.
+  - A slack thread on a random lane: lesson 4 and 5 equal to lesson 3 (43/35 to 43% against 45%). Harm was spread.
+    Choosing the most worn thread is what made the slack thread count.
+  - A slack thread without the Hush's hollow: nothing falls on it, the quiet stays near 5:00.
+  - Slack harm 1.5 instead of 2, and no race (the thread stays slack 50 s whoever falls): lesson 5 48% against 60%.
+  - Lesson 5 folding its own thread into the slack one before it leaves (F): 54 to 65%, no better.
+  - Lesson 5 giving up the slack house when its own is in danger (R): 52%.
+  - Keeping the crease for the rain (lesson 4): 73% with, 71% without. Kept in the policy; not a finding.
+  - Arrivals are rare in the scripted player (0.1 to 0.7 a match): it rides only when coming back from home.
+    Their worth is unmeasured.
+
+WHAT STILL LOOKS WEAK
+  - Lesson 5 is not worth a win on Cruel. The honest reading is that in this model a hero's time on a thread is
+    worth more than anything it can choose to do elsewhere, and nothing built here changed that enough.
+  - Even is easier than 0.27 for a player who knows nothing (56%).
+  - Nothing of these rules is drawn in the world or has a sound: they are said in banners and the feed only.
+  - tools/test.js: the eight bot-only matches with the Ness now end with two of eight seeing no chomp tell (29 tells
+    over the eight, was 36); the per-match check for a tell became a total. Bots lose more of those matches than a
+    person's side would: the slack thread costs a side that does not answer it.
