@@ -2,6 +2,9 @@
 
 Every version of Livloch, newest first. Each one from 0.4 on is a `release/X.Y` branch that never moves, and the published ones stay playable at [stevoblevo.github.io/livloch/versions/](https://stevoblevo.github.io/livloch/versions/). The reasons behind each step are in [`docs/PLAN.md`](docs/PLAN.md); where each was published is in [`docs/IMPORT.md`](docs/IMPORT.md).
 
+## 0.28.1
+**The valley behind the title actually comes alive.** In 0.28 the title gave up on the live valley for the whole session if its first 1.2 s were slow, if the tab opened in the background, or if frames ran below 22 fps. Many machines tripped one of those, so they saw only a still painting. Now a hidden tab doesn't count. The painting waits up to 9 s for any ten frames at about 18 fps or better, then fades. It only gives up if the shown valley runs below about 9 fps, and every return to the title tries again. `tools/face-sim.js` replays five frame patterns. 0.28 went live only at a steady 60 fps; 0.28.1 goes live in four of the five and keeps the painting only at 8 fps.
+
 ## 0.28
 **The painting opens into the valley, lessons 4 and 5 pay, and the HUD looks like the game.**
 
