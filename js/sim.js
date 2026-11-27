@@ -682,7 +682,7 @@ function damage(t, amt, src, kind, crit) {
   const hero = src ? (src.kind === 'hero' ? src : (src.owner && src.owner.kind === 'hero' ? src.owner : null)) : null;
   if (t.struct) {
     if (!S.vuln(t)) { if (W.t - t.immuneFx > 0.6 && !W.fallen) { t.immuneFx = W.t; fx({ k: 'immune', u: t, p: hero && hero.isPlayer }); } return 0; }
-    if (W.fray) amt *= 1.4; else if (isSlack(t)) amt *= C.SLACK.mul; else if (!t.pressed) amt *= 0.3; // 0.28 play: a slack thread's houses stand unprotected
+    if (W.fray) amt *= 1.4; else if (isSlack(t)) amt *= t.blindT > 0 ? Math.max(C.EMBER.blindMul, W.slack.t > 0 && W.slack.lane === t.lane ? C.SLACK.mul : 0) : C.SLACK.mul; else if (!t.pressed) amt *= 0.3; // 0.28 play: a slack thread's houses stand unprotected (0.29 play: and a blinded house)
     if (t.brightT > 0) amt *= C.EMBER.guard; // 0.29 play: a kept house holds
     if (src && src.team < 2 && W.great[src.team] > 0) amt *= 1.4;
     if (kind === 'ab') amt *= 0.5;
@@ -1308,6 +1308,9 @@ function emberStep(h, inFount, mended, dt) {
     if (!(s.dark || s.hp <= s.maxHp * E.under) || hyp(s.x - h.x, s.z - h.z) > E.r + s.r) continue;
     if (!best || (best.kind === 'patron' && s.kind !== 'patron')) best = s;
   }
+  if (!best) { // 0.29 play: carried all the way to one of their houses, the light goes in there instead and blinds it
+    for (let i = 0; i < W.structs.length; i++) { const s = W.structs[i]; if (s.team === h.team || !s.alive || s.kind === 'patron' || s.blindT > 0 || !S.vuln(s) || hyp(s.x - h.x, s.z - h.z) > E.r + s.r) continue; s.blindT = E.blind; s.tgt = null; h.ember = false; h.blinds = (h.blinds || 0) + 1; fx({ k: 'blinded', u: h, s: s, t: E.blind, p: h.isPlayer }); return; }
+  }
   if (!best || (best.kind === 'patron' && any)) return;
   const relit = !!best.dark, hp0 = best.hp;
   if (relit) { best.dark = false; best.darkT = 0; for (let i = 0; i < W.thieves.length; i++) if (W.thieves[i].carry === best) W.thieves[i].carry = null; }
@@ -1326,7 +1329,7 @@ function emberStep(h, inFount, mended, dt) {
    Which thread: the most worn one, the thread whose houses, both sides' together, have lost the most (a thread where
    one side has no house left comes last; W.rng breaks a tie, so the first is anyone's). The tide goes where the war
    already is, so what is won or lost on a slack thread adds up instead of being spread over three. */
-function isSlack(s) { const K = W.slack; return K.t > 0 && s.struct && s.kind !== 'patron' && s.lane === K.lane && !(s.brightT > 0); } // 0.29 play: a kept house is never slack
+function isSlack(s) { const K = W.slack; return s.blindT > 0 || (K.t > 0 && s.struct && s.kind !== 'patron' && s.lane === K.lane && !(s.brightT > 0)); } // 0.29 play: a kept house is never slack; a blinded one stands as a slack one does
 S.slack = isSlack;
 function slackStep(dt) {
   const K = W.slack, D = C.SLACK; if (W.short || W.fallen) return;
@@ -1810,6 +1813,7 @@ function trooperStep(u, dt) {
 }
 function structStep(s, dt) {
   if (W.fallen && s.team === 0 && !s.dark && s.kind !== 'patron') { s.litT -= dt * (W.lens === 'memory' ? 0.5 : 1); if (s.litT <= 0) { s.dark = true; s.darkT = 0; fx({ k: 'snuff', u: s, faded: true }); } }
+  if (s.blindT > 0) { s.blindT -= dt; if (s.blindT <= 0) { s.blindT = 0; fx({ k: 'blindend', u: s }); } } // 0.29 play
   if (isSlack(s)) { s.tgt = null; return; } // 0.28 play: on a slack thread no house fires
   if (s.dark) { if (s.darkT > 0) { s.darkT -= dt * (W.lens === 'memory' && s.team === 0 ? 2 : 1); if (s.darkT <= 0) { s.dark = false; fx({ k: 'relit', u: s }); } } s.tgt = null; return; }
   s.atkT -= dt * (s.brightT > 0 ? C.EMBER.fire : 1); s.scanT -= dt; if (s.brightT > 0) { s.brightT -= dt; if (s.brightT <= 0) fx({ k: 'brightend', u: s }); } // 0.28 play: a house that has just taken a light burns bright

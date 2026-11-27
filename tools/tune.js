@@ -77,10 +77,12 @@ function policy(W, L, seed) {
     if (st.retreat) { if (hpF > 0.9) st.retreat = false; } else if (hpF < low) st.retreat = true;
     // lesson 5 (0.29): home is somewhere to go by choice. Before a red rain, and when a thread is about to go slack, it rides home for a light and keeps one house with it
     const K = W.slack, slackOn = K.t > 0, slackSoon = K.warned || slackOn;
-    { const rainDue = W.red <= 0 && W.redNext - W.t < 14 && !W.short, tideDue = K.warned && C.dif(W).slackHollows > 0 && W.st[0][K.lane].inner.alive;
-      if (st.had && !p.ember) st.keep = null; st.had = !!p.ember;
+    { const rainDue = has('I') && W.red <= 0 && W.redNext - W.t < 14 && !W.short, tideDue = has('U') && K.warned && C.dif(W).slackHollows > 0 && W.st[0][K.lane].inner.alive;
+      const tw0 = enemyNext(st.pick); let near0 = 0; for (const u of W.troopers) if (u.alive && u.team === 1 && hyp(u.x - p.x, u.z - p.z) < 35) near0 += u.big ? 3 : 1;
+      const siegeDue = !has('z') && tw0.kind !== 'patron' && S.vuln(tw0) && !(tw0.blindT > 0) && !S.slack(tw0) && near0 < 4 && !(W.red > 0 && !W.thin) && !slackOn && !W.fray;
+      if (st.had && !p.ember) { st.keep = null; st.fetchAt = W.t + 15; } st.had = !!p.ember;
       if (st.fetch) { if (p.ember || st.retreat || W.t > st.fetchT0 + 30) st.fetch = false; }
-      else if (has(5) && !has('g') && C.EMBER.wait < 100 && !p.ember && !st.retreat && hpF > 0.4 && W.t > st.fetchAt && ((rainDue && !has('i')) || (tideDue && !has('u')))) { st.fetch = true; st.fetchT0 = W.t; st.fetchAt = W.t + 45; st.keep = rainDue ? 'rain' : 'tide'; } }
+      else if (has(5) && !has('g') && C.EMBER.wait < 100 && !p.ember && !st.retreat && hpF > 0.5 && W.t > st.fetchAt && (rainDue || tideDue || siegeDue)) { st.fetch = true; st.fetchT0 = W.t; st.fetchAt = W.t + 40; st.keep = rainDue ? 'rain' : tideDue ? 'tide' : 'siege'; } }
     // views (lesson 3)
     const m = W.mood;
     if (has(3)) {
@@ -105,7 +107,8 @@ function policy(W, L, seed) {
     if (fire && fire.lane !== st.lane && !raid) st.lane = fire.lane;
     // lesson 5: a light from home goes to the house that needs it most, and the hero's thread waits
     let mend = null;
-    if (has(5) && !has('h') && p.ember && !st.retreat) { let bv = 0; for (const s of W.structs) { if (s.team !== 0 || !s.alive || s.kind === 'patron' || !S.vuln(s) || !(s.dark || s.hp <= s.maxHp * C.EMBER.under)) continue; let hol = 0; for (const u of W.troopers) if (u.alive && u.team === 1 && u.big && u.lane === s.lane && hyp(u.x - s.x, u.z - s.z) < 60) hol++; const v = (1 - s.hp / s.maxHp) + (s.dark ? 0.5 : 0) + (st.hurtAt[s.id] > W.t - 6 ? 0.5 : 0) + hol * 0.6 + (s.lane === st.pick ? 0.15 : 0) + (s.brightT > 0 ? -3 : 0) + (st.keep === 'tide' && s.lane === K.lane ? 4 : 0) + (st.keep === 'rain' && s.lane === st.pick ? 2 : 0) + (st.keep && s.kind === 'guardian' ? 0.3 : 0); if (v > bv) { bv = v; mend = s; } } if (mend) { st.lane = mend.lane; raid = null; } }
+    let siege = null; if (has(5) && p.ember && st.keep === 'siege' && !st.retreat) { const e = enemyNext(st.pick); if (e.kind !== 'patron' && S.vuln(e) && !(e.blindT > 0)) siege = e; else st.keep = null; }
+    if (has(5) && !has('h') && p.ember && !st.retreat && !siege) { let bv = 0; for (const s of W.structs) { if (s.team !== 0 || !s.alive || s.kind === 'patron' || !S.vuln(s) || !(s.dark || s.hp <= s.maxHp * C.EMBER.under)) continue; let hol = 0; for (const u of W.troopers) if (u.alive && u.team === 1 && u.big && u.lane === s.lane && hyp(u.x - s.x, u.z - s.z) < 60) hol++; const v = (1 - s.hp / s.maxHp) + (s.dark ? 0.5 : 0) + (st.hurtAt[s.id] > W.t - 6 ? 0.5 : 0) + hol * 0.6 + (s.lane === st.pick ? 0.15 : 0) + (s.brightT > 0 ? -3 : 0) + (st.keep === 'tide' && s.lane === K.lane ? 4 : 0) + (st.keep === 'rain' && s.lane === st.pick ? 2 : 0) + (st.keep && s.kind === 'guardian' ? 0.3 : 0); if (v > bv) { bv = v; mend = s; } } if (mend) { st.lane = mend.lane; raid = null; } }
     const lane = st.lane, Ln = lanes[lane];
     LL.laneNearest(lane, p.x, p.z, Q); const myS = rel(0, lane, Q.s), onLane = Q.d < 6;
     // where to stand
@@ -148,15 +151,17 @@ function policy(W, L, seed) {
     }
     if (raid && job !== 'fold') { gx = laneX; gz = laneZ; job = 'lane'; st.wantLens = null; } // the open house comes before every errand
     if (mend && job !== 'thief' && !raid) { LL.lanePoint(lane, Math.max(4, mend.s - 5), P); gx = P.x; gz = P.z; job = 'mend'; }
+    if (siege) { LL.lanePoint(lane, rel(0, lane, twS - 7), P); gx = P.x; gz = P.z; job = 'siege'; }
     if (st.retreat || (st.fetch && !raid)) { gx = p.x >= 0 ? 8 : -8; gz = -C.SPAWN_Z + 8; job = 'home'; } // 0.29: a point in the fountain beside the patron, not behind it (until 0.29 a rider coming home down the middle thread walked into its own patron and stood there)
     // lesson 4: a long way is ridden. Off its thread and far from where it is going, it walks to the nearest thread first
     st.via = -1;
-    if (has(4) && !p.zip && (job === 'home' || job === 'mend') && S.canZip(p) < 0) { const far = job === 'home' ? p.z > -70 : (mend.s - myS > 40 && hyp(gx - p.x, gz - p.z) > 45); if (far) { const nl = job === 'home' ? LL.nearestLane(p.x, p.z) : lane; LL.laneNearest(nl, p.x, p.z, Q); if (Q.d > 5) { LL.lanePoint(nl, Math.max(Q.s, 4), P); gx = P.x; gz = P.z; st.via = nl; } } }
+    if (has(4) && !p.zip && (job === 'home' || job === 'mend' || job === 'siege') && S.canZip(p) < 0) { const far = job === 'home' ? p.z > -70 : ((job === 'siege' ? twS - 7 : mend.s) - myS > 40 && hyp(gx - p.x, gz - p.z) > 45); if (far) { const nl = job === 'home' ? LL.nearestLane(p.x, p.z) : lane; LL.laneNearest(nl, p.x, p.z, Q); if (Q.d > 5) { LL.lanePoint(nl, Math.max(Q.s, 4), P); gx = P.x; gz = P.z; st.via = nl; } } }
     st.gx = gx; st.gz = gz; st.job = job;
     // threads (lesson 4)
     if (has(4)) {
       if (p.zip) { const ts = rel(0, p.zip.lane, p.zip.s);
         if (job === 'mend') { if (p.zip.dir < 0 || p.zip.lane !== lane || ts >= mend.s - 8) c.zip = true; }
+        else if (job === 'siege') { if (p.zip.dir < 0 || p.zip.lane !== lane || ts >= twS - 10) c.zip = true; }
         else if (job === 'home' ? p.zip.dir > 0 : job !== 'lane') c.zip = true;
         else if (job === 'lane') { // an arrival: a long ride lets go among the small Hush, not behind its own troopers
           let among = 0; if (ts - p.zip.s0 >= C.ARRIVE.min && !has('a')) for (const u of W.troopers) if (u.alive && u.team === 1 && !u.big && hyp(u.x - p.x, u.z - p.z) < C.ARRIVE.r - 1) among++;
@@ -164,6 +169,7 @@ function policy(W, L, seed) {
           if (p.zip.dir < 0 || p.zip.lane !== lane || (among >= 2 && !raid) || ts >= far) c.zip = true; }
       }
       else if (job === 'mend') { if (onLane && S.canZip(p) === lane && mend.s - myS > 40) { c.zip = true; c.zipDir = 1; } }
+      else if (job === 'siege') { if (onLane && S.canZip(p) === lane && twS - myS > 40 && S.zipEnd(0, lane) - myS > 25) { c.zip = true; c.zipDir = 1; } }
       else if (job === 'home') { const zl = S.canZip(p); if (zl >= 0) { LL.laneNearest(zl, p.x, p.z, Q); if (Q.s > 30) { c.zip = true; c.zipDir = -1; } } }
       else if (onLane && S.canZip(p) === lane) { if (job === 'lane' && standS - myS > 40 && S.zipEnd(0, lane) - myS > 25) { c.zip = true; c.zipDir = 1; } }
     }
@@ -213,7 +219,7 @@ function policy(W, L, seed) {
       if (t && st.job !== 'home') { const tx = t.x - p.x, tz = t.z - p.z, tdd = hyp(tx, tz) || 1, sg = Math.sin(st.strafe * 1.5 + st.ph) > 0 ? 1 : -1; mx += -tz / tdd * 0.6 * sg; mz += tx / tdd * 0.6 * sg; if (t.big && tdd < 9) { mx -= tx / tdd * 0.8; mz -= tz / tdd * 0.8; } }
       const ns = W.ness; if (ns.alive && ns.rise >= 0.5 && !p.zip) { const kx = p.x - ns.x, kz = p.z - ns.z, kd = hyp(kx, kz), keep = ns.out ? 12 : NESS.REACH + 1; if (kd < keep && kd > 0.01 && (st.job === 'ness' || st.job === 'fold')) { mx += kx / kd * 1.2; mz += kz / kd * 1.2; } }
       for (const b of W.structs) { // every level has learned that a Hush building shoots whoever stands under it alone
-        if (b.team !== 1 || !b.alive || b.dark || S.slack(b) || st.covered[b.id]) continue; const kx = p.x - b.x, kz = p.z - b.z, kd = hyp(kx, kz);
+        if (b.team !== 1 || !b.alive || b.dark || S.slack(b) || st.covered[b.id] || st.job === 'siege') continue; const kx = p.x - b.x, kz = p.z - b.z, kd = hyp(kx, kz);
         if (kd < b.range + 1.5 && kd > 0.01) { mx += kx / kd * 1.5; mz += kz / kd * 1.5; } }
       const mm = hyp(mx, mz); if (mm > 1) { mx /= mm; mz /= mm; } c.mx = mx; c.mz = mz;
       let aim = null;
@@ -233,7 +239,7 @@ function policy(W, L, seed) {
 function play(diff, mode, L, seed) {
   const heroPick = seed % LL.HEROES.length;
   const W = S.newWorld({ heroPick: heroPick, difficulty: diff, seed: seed * 7 + diff, mode: mode, auto: false });
-  const pol = policy(W, L, seed), p = W.player, o = { deaths: 0, by: {}, rLost: 0, hLost: 0, firstR: -1, firstH: -1, lastDown: 0, gap: 0, moods: 0, folds: 0, ness: 0, thefts: 0, chomps: 0, floods: 0, falls: [], gapAt: 0, arrivals: 0, mends: 0, caught: 0 };
+  const pol = policy(W, L, seed), p = W.player, o = { deaths: 0, by: {}, rLost: 0, hLost: 0, firstR: -1, firstH: -1, lastDown: 0, gap: 0, moods: 0, folds: 0, ness: 0, thefts: 0, chomps: 0, floods: 0, falls: [], gapAt: 0, arrivals: 0, mends: 0, caught: 0, blinds: 0 };
   while (!W.over && W.t < 1500) {
     pol.step(1 / 40); S.step(1 / 40);
     for (const e of W.fx) {
@@ -247,7 +253,8 @@ function play(diff, mode, L, seed) {
       else if (e.k === 'arrive' && e.p && e.n) o.arrivals++;
       else if (e.k === 'mended' && e.p) o.mends++;
       else if (e.k === 'caught') o.caught++;
-      if (process.env.DBG && (((e.k === 'ember' || e.k === 'mended') && e.p) || e.k === 'slackwarn' || e.k === 'slack' || e.k === 'slackend' || e.k === 'red' || e.k === 'redwarn' || e.k === 'structdown')) console.log(U.fmtTime(W.t), e.k, e.s ? e.s.kind + e.s.lane : '', e.lane != null ? 'lane' + e.lane : '', e.u && e.u.struct ? e.u.kind + e.u.lane + 't' + e.u.team : '', e.fell != null ? 'fell' + e.fell : '');
+      else if (e.k === 'blinded' && e.p) o.blinds++;
+      if (process.env.DBG && (((e.k === 'ember' || e.k === 'mended' || e.k === 'blinded') && e.p) || e.k === 'slackwarn' || e.k === 'slack' || e.k === 'slackend' || e.k === 'red' || e.k === 'redwarn' || e.k === 'structdown')) console.log(U.fmtTime(W.t), e.k, e.s ? e.s.kind + e.s.lane : '', e.lane != null ? 'lane' + e.lane : '', e.u && e.u.struct ? e.u.kind + e.u.lane + 't' + e.u.team : '', e.fell != null ? 'fell' + e.fell : '');
     }
     W.fx.length = 0;
   }
@@ -274,7 +281,7 @@ function report(a, res) {
   const D = ['Gentle', 'Even', 'Cruel'];
   for (const mode of a.modes) {
     console.log('\n' + (mode === 'match' ? 'LONG MATCH' : 'FIRST RAIN') + ', ' + a.n + ' seeds from ' + a.first + ' (scripted player; simulator output, not human play)');
-    if (mode === 'match') console.log('diff    lessons  win   margin  median  lost by gutter/overrun  structs lost R-H  player deaths (by)          longest quiet  first fall  folds moods ness  arrivals lights caught');
+    if (mode === 'match') console.log('diff    lessons  win   margin  median  lost by gutter/overrun  structs lost R-H  player deaths (by)          longest quiet  first fall  folds moods ness  arrivals lights caught blinded');
     else console.log('diff    lessons  stars  3+    houses  structs lost R-H  player deaths  moods ness  star sets');
     for (const diff of a.diffs) for (const L of a.lessons) {
       const rs = res.filter(x => x.diff === diff && x.mode === mode && x.L === L).map(x => x.o), n = rs.length; if (!n) continue;
@@ -286,7 +293,7 @@ function report(a, res) {
         const w = rs.filter(x => x.win).length;
         console.log(D[diff].padEnd(7), name.padEnd(8), pct(w, n).padStart(4), avg(x => x.hLost - x.rLost).toFixed(1).padStart(7), U.fmtTime(med(rs.map(x => x.t))).padStart(7), ('  ' + rs.filter(x => x.how === 'gutter').length + '/' + rs.filter(x => x.how === 'overrun').length).padEnd(24),
           (avg(x => x.rLost).toFixed(1) + '-' + avg(x => x.hLost).toFixed(1)).padEnd(17), (avg(x => x.deaths).toFixed(1) + ' (' + byS + ')').padEnd(28), U.fmtTime(med(rs.map(x => x.gap))).padStart(6) + '      ', U.fmtTime(med(rs.map(x => Math.min(x.firstR < 0 ? 1e9 : x.firstR, x.firstH < 0 ? 1e9 : x.firstH)))).padStart(6) + '    ',
-          avg(x => x.folds).toFixed(1).padStart(4), avg(x => x.moods).toFixed(1).padStart(5), avg(x => x.ness).toFixed(1).padStart(4), avg(x => x.arrivals).toFixed(1).padStart(8), avg(x => x.mends).toFixed(1).padStart(6), avg(x => x.caught).toFixed(0).padStart(6));
+          avg(x => x.folds).toFixed(1).padStart(4), avg(x => x.moods).toFixed(1).padStart(5), avg(x => x.ness).toFixed(1).padStart(4), avg(x => x.arrivals).toFixed(1).padStart(8), avg(x => x.mends).toFixed(1).padStart(6), avg(x => x.caught).toFixed(0).padStart(6), avg(x => x.blinds).toFixed(1).padStart(7));
       } else {
         const sets = {}; rs.forEach(x => { sets[x.starSet || '-'] = (sets[x.starSet || '-'] || 0) + 1; });
         console.log(D[diff].padEnd(7), name.padEnd(8), avg(x => x.stars || 0).toFixed(1).padStart(5), pct(rs.filter(x => x.stars >= 3).length, n).padStart(5), pct(rs.filter(x => x.houses).length, n).padStart(7),
