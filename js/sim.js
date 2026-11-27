@@ -683,6 +683,7 @@ function damage(t, amt, src, kind, crit) {
   if (t.struct) {
     if (!S.vuln(t)) { if (W.t - t.immuneFx > 0.6 && !W.fallen) { t.immuneFx = W.t; fx({ k: 'immune', u: t, p: hero && hero.isPlayer }); } return 0; }
     if (W.fray) amt *= 1.4; else if (isSlack(t)) amt *= C.SLACK.mul; else if (!t.pressed) amt *= 0.3; // 0.28 play: a slack thread's houses stand unprotected
+    if (t.brightT > 0) amt *= C.EMBER.guard; // 0.29 play: a kept house holds
     if (src && src.team < 2 && W.great[src.team] > 0) amt *= 1.4;
     if (kind === 'ab') amt *= 0.5;
   }
@@ -1291,10 +1292,14 @@ function arrive(h) {
   return true;
 }
 /* The fountain has mended this much of the hero in one visit: it leaves with a light. Called from heroStep. */
-function emberStep(h, inFount, mended) {
+function emberStep(h, inFount, mended, dt) {
   if (W.fallen) return; const E = C.EMBER;
-  if (!inFount) h.mendAcc = 0;
-  else if (!h.ember) { h.mendAcc = (h.mendAcc || 0) + mended; if (h.mendAcc >= E.need * h.maxHp) { h.ember = true; h.mendAcc = 0; fx({ k: 'ember', u: h, p: h.isPlayer }); } }
+  if (!inFount) { h.mendAcc = 0; h.homeT = 0; }
+  else if (!h.ember) {
+    h.mendAcc = (h.mendAcc || 0) + mended; h.homeT = (h.homeT || 0) + dt; // 0.29 play: homeT, a light can be fetched by waiting for it
+    const mendedEnough = h.mendAcc >= E.need * h.maxHp;
+    if (mendedEnough || (h.homeT >= E.wait && W.t > E.wait + 1)) { h.ember = true; h.mendAcc = 0; h.homeT = 0; fx({ k: 'ember', u: h, p: h.isPlayer, waited: !mendedEnough }); }
+  }
   if (!h.ember || h.zip || inFount) return;
   let best = null, any = false;
   for (let i = 0; i < W.structs.length; i++) {
@@ -1321,12 +1326,13 @@ function emberStep(h, inFount, mended) {
    Which thread: the most worn one, the thread whose houses, both sides' together, have lost the most (a thread where
    one side has no house left comes last; W.rng breaks a tie, so the first is anyone's). The tide goes where the war
    already is, so what is won or lost on a slack thread adds up instead of being spread over three. */
-function isSlack(s) { const K = W.slack; return K.t > 0 && s.struct && s.kind !== 'patron' && s.lane === K.lane; }
+function isSlack(s) { const K = W.slack; return K.t > 0 && s.struct && s.kind !== 'patron' && s.lane === K.lane && !(s.brightT > 0); } // 0.29 play: a kept house is never slack
 S.slack = isSlack;
 function slackStep(dt) {
   const K = W.slack, D = C.SLACK; if (W.short || W.fallen) return;
   if (K.t > 0) { K.t -= dt; if (K.t <= 0 || W.fray) { K.t = 0; fx({ k: 'slackend', lane: K.lane }); } return; }
   if (W.fray) return;
+  while (!K.warned && (W.redNext - C.RED_WARN < K.next + D.t && K.next - D.warn < W.redNext + C.RED_T + D.clear)) K.next += D.every; // 0.29 play: a tide never overlaps a rain or its warning; it waits for the next turn
   if (!K.warned && W.t >= K.next - D.warn) {
     K.warned = true; let l = -1, bw = -1e9; const o = Math.floor(W.rng() * 3);
     for (let i = 0; i < 3; i++) { const ln = (o + i) % 3; let w = 0, sides = 0; for (let t = 0; t < 2; t++) { const st = W.st[t][ln]; w += (st.outer.alive ? 1 - st.outer.hp / st.outer.maxHp : 1) + (st.inner.alive ? 1 - st.inner.hp / st.inner.maxHp : 1); if (st.inner.alive) sides++; }
@@ -1353,7 +1359,7 @@ function heroStep(h, dt) {
   h.incomeAcc += dt * 1.5; if (h.incomeAcc >= 1) { const n = Math.floor(h.incomeAcc); h.incomeAcc -= n; give(h, n); }
   const sgn = h.team === 0 ? -1 : 1;
   const fd = hyp(h.x, h.z - sgn * C.SPAWN_Z);
-  { const hp0 = h.hp; if (fd < C.FOUNT_R) heal(h, h.maxHp * 0.14 * dt); emberStep(h, fd < C.FOUNT_R, h.hp - hp0); } // 0.28 play: mending at home pays
+  { const hp0 = h.hp; if (fd < C.FOUNT_R) heal(h, h.maxHp * 0.14 * dt); emberStep(h, fd < C.FOUNT_R, h.hp - hp0, dt); } // 0.28 play: mending at home pays
   if (hyp(h.x, h.z + sgn * C.SPAWN_Z) < C.FOUNT_R) damage(h, 160 * dt, null, 'dot');
   if (!h.alive) return;
   const sp = d.speed * st.speed * (h.slowT > 0 ? 1 - h.slowAmt : 1) * (h.zestT > 0 ? 1.3 : 1);
@@ -1702,7 +1708,7 @@ function pickMark() {
   if (rich && W.rng() < 0.6) return rich;
   if (W.tune.cap && W.structs.some(s => s.team === 0 && s.alive && s.dark)) return rich;
   const l0 = Math.floor(W.rng() * 3);
-  for (let k = 0; k < 3; k++) { const st = W.st[0][(l0 + k) % 3]; const s = st.outer.alive ? st.outer : (st.inner.alive ? st.inner : null); if (s && !s.dark) return s; }
+  for (let k = 0; k < 3; k++) { const st = W.st[0][(l0 + k) % 3]; const s = st.outer.alive ? st.outer : (st.inner.alive ? st.inner : null); if (s && !s.dark && !(s.brightT > 0)) return s; } // 0.29 play: a small one cannot take the light of a kept house
   return rich;
 }
 function anyReignHero() { const hs = W.heroes.filter(h => h.team === 0 && h.alive); return hs.length ? hs[Math.floor(W.rng() * hs.length)] : null; }
