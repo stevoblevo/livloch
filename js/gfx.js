@@ -22,7 +22,7 @@ let T, renderer, scene, camera, W = null, glowTex, time = 0;
 let dummy, tmpC, v1, v2, v3;
 let world, dyn, sky, stars;
 let tr = [null, null], hushEyes, trHat, barBg, barFill, projMesh, orbMesh, parts, staticGlow;
-let nessM = null, nessY = -11, creaseM = [], cueDash = null, cueRings = [], fruitM = [], groundTex = null, petM = null, petThread = null, fovKick = 0, pivotY = null, camBtS = 1;
+let fruitFoliage = null, nessM = null, nessY = -11, creaseM = [], cueDash = null, cueRings = [], fruitM = [], groundTex = null, petM = null, petThread = null, fovKick = 0, pivotY = null, camBtS = 1;
 let pivotV = 0, holdK = 0, holdSide = 1; // 0.28 look: the follow height's speed; how far the camera has swung out to show a hero held by the Ness, and to which side
 R.petEnabled = false;
 R.reduced = false; try { R.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
@@ -131,7 +131,7 @@ function applyLook() {
     const m = o.material; if (!m || !m.userData) return;
     if (!m.userData.bl) {
       m.userData.bl = true;
-      if (!LK.add && m.blending === T.AdditiveBlending) { m.blending = T.NormalBlending; m.transparent = true; m.opacity = m.opacity * 0.85; }
+      if (!LK.add && m.blending === T.AdditiveBlending) { m.blending = T.NormalBlending; m.transparent = true; m.opacity = m.opacity * (m.userData.halo ? 0.45 : 0.85); }
       if (LK.wire && m.isMeshLambertMaterial && !m.userData.solid) m.wireframe = true;
       if (LK.emis != null && m.emissiveIntensity) m.emissiveIntensity *= LK.emis;
       m.needsUpdate = true;
@@ -451,10 +451,19 @@ function hm(col, em) { const m = new T.MeshLambertMaterial({ color: col, emissiv
      ness     1 cell:  side view, facing left    the Ness
      pines    3 cells: three trees               scenery
      rocks    3 cells: three rocks               scenery
+     fruit    6 cells: lemon, rose hips, Verde Limon, big lemon, big rose hips, big Verde Limon   the leaves and stem of the bush (the fruit and its glow stay built, in the fruit's own colour)   // 0.29 world
+     stray    2 cells: front, back               the strays
+     crane    2 cells: wings up, wings down      the fold crane
+     (fruit, stray and crane have paper: true, so they stand in only for Origami, Knight Night and Lighter graphics; the 3D props stay for the full views. always: true puts them in every look)
      backdrop one wide painting (jpg)            the far ridge and sky line, wrapped round the valley
    To switch one on, add a line:  FLATS.house = { src: 'art/flats/house.png', cells: 3 };  See art/flats/README.md. */
 const FLATS = R.FLATS = {};
 FLATS.house = { src: 'art/flats/house.png', cells: 3 };
+FLATS.fruit = { src: 'art/flats/fruit.png', cells: 6, paper: true }; // 0.29 world: stand-in paintings, drawn by tools/flats-standins.py
+FLATS.stray = { src: 'art/flats/stray.png', cells: 2, paper: true };
+FLATS.crane = { src: 'art/flats/crane.png', cells: 2, paper: true };
+function paperUse(name) { const F = FLATS[name]; return !!F && !R.noPaper && (F.always || !F.paper || R.low || LK === LOOKS.origami || LK === LOOKS.knight); } // 0.29 world
+const FRUIT_CELL = { lemon: 0, hips: 1, lime: 2, biglemon: 3, bighips: 4, biglime: 5 };
 /* The far ridge: painted for the Lantern Ford study by the owner's other agent (art/ford-ridge.webp there, described as an original generated backdrop). */
 FLATS.backdrop = { src: 'art/backdrop-ridge.webp', cells: 1 };
 R.info = function () { // for the frame-rate report
@@ -860,7 +869,9 @@ function structModel(s) {
 }
 function strayModel(s) {
   const g = LL.props.stray(T, { glowSprite: glowSprite }); // 0.28 world: a built creature (js/props.js), one mesh and one sprite
-  g.unit = s; dyn.add(g); return g;
+  g.unit = s; dyn.add(g);
+  flatLoad('stray', function (t, F) { const m = new T.Mesh(cellGeo(F.cells, 0), flatMat(t)), h = 3.7, w = h * flatAspect(t, F.cells); m.scale.set(w, h, 1); m.visible = false; g.add(m); g.flat = m; g.cellGeo = [m.geometry, cellGeo(F.cells, 1)]; g.built = g.children[0]; }); // 0.29 world
+  return g;
 }
 function nessModel() {
   const g = new T.Group(), skin = new T.MeshLambertMaterial({ color: 0x27b89e, emissive: 0x128a76, emissiveIntensity: 0.75 }), pale = new T.MeshLambertMaterial({ color: 0xc8f2e0, emissive: 0x6fd8c0, emissiveIntensity: 0.3 });
@@ -898,7 +909,8 @@ function buildCreaseArt() {
     const ridge = new T.Mesh(rg, new T.MeshLambertMaterial({ color: 0xe9e2d0, side: T.DoubleSide, transparent: true, opacity: 0.62, depthWrite: false })); own(ridge); ridge.visible = false; ridge.frustumCulled = false; dyn.add(ridge);
     // a paper crane marks a crease that is ready
     const crane = LL.props.crane(T, { glowSprite: glowSprite }); crane.position.set(cx, 2.4, 0); crane.visible = false; dyn.add(crane); // 0.28 world: a folded paper crane (js/props.js)
-    creaseM.push({ ridge: ridge, crane: crane, f: 0, cx: cx });
+    const cmx = { ridge: ridge, crane: crane, f: 0, cx: cx }; creaseM.push(cmx);
+    flatLoad('crane', function (t, F) { const h = 2.2, w = h * flatAspect(t, F.cells); cmx.flats = [0, 1].map(function (c) { const m = new T.Mesh(cellGeo(F.cells, c), flatMat(t)); m.scale.set(w, h, 1); m.position.y = -0.7; m.visible = false; crane.add(m); return m; }); cmx.built = crane.children.slice(0, 3); }); // 0.29 world
   });
 }
 /* Fruit. Colours are the fruit's own in every look, because the colour is how you tell them apart:
@@ -907,11 +919,12 @@ function buildFruitArt() {
   fruitM.forEach(function (m) { dyn.remove(m); }); fruitM = [];
   dyn.children.filter(function (o) { return o.userData.fruitFol; }).forEach(function (o) { dyn.remove(o); }); // 0.28 world: the bushes are one mesh, built in js/props.js
   const FB = LL.props.fruitBushes(T, W.fruit.map(function (f) { const info = C.FRUIT_INFO[f.k]; return { x: f.x, z: f.z, k: f.k, big: !!info.big, col: info.col }; }), { glowSprite: glowSprite });
-  dyn.add(FB.foliage);
+  dyn.add(FB.foliage); fruitFoliage = FB.foliage; const mineF = [];
   W.fruit.forEach(function (f, i) {
     const info = C.FRUIT_INFO[f.k], g = FB.fruit[i];
-    g.position.set(f.x, 0, f.z); g.unit = f; g.big = !!info.big; dyn.add(g); fruitM.push(g);
+    g.position.set(f.x, 0, f.z); g.unit = f; g.big = !!info.big; dyn.add(g); fruitM.push(g); mineF.push(g);
   });
+  flatLoad('fruit', function (t, F) { mineF.forEach(function (g) { const h = g.big ? 3.4 : 2.0, m = new T.Mesh(cellGeo(F.cells, FRUIT_CELL[g.unit.k] || 0), flatMat(t)); m.scale.set(h * flatAspect(t, F.cells), h, 1); m.visible = false; g.add(m); g.flat = m; }); }); // 0.29 world: painted bush, the fruit stays built
 }
 /* Inkblot cues. They draw what the model already knows (a thief's route, which structures can be hurt). They change nothing. */
 function buildCues() {
@@ -1679,7 +1692,8 @@ R.frame = function (dt, view) {
   }
   for (i = 0; i < strayM.length; i++) {
     const m = strayM[i], s = m.unit; m.visible = s.alive;
-    if (s.alive) { m.position.set(s.x, Math.sin(time * 2 + i) * 0.12, s.z); m.rotation.y = s.yaw; const sc = s.flash > 0 ? 1.1 : 1; m.scale.set(sc, sc, sc); }
+    if (s.alive) { m.position.set(s.x, Math.sin(time * 2 + i) * 0.12, s.z); m.rotation.y = s.yaw; const sc = s.flash > 0 ? 1.1 : 1; m.scale.set(sc, sc, sc);
+      if (m.flat) { const pu = paperUse('stray'), tc = Math.atan2(camPos.x - s.x, camPos.z - s.z); let d = tc - s.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); m.built.visible = !pu; m.flat.visible = pu; m.flat.geometry = m.cellGeo[Math.abs(d) < 1.57 ? 0 : 1]; m.flat.rotation.y = tc - s.yaw; } } // 0.29 world
   }
   {
     const n = W.ness, tgt = n.alive ? (n.rise - 1) * 8 : -11;
@@ -1698,6 +1712,7 @@ R.frame = function (dt, view) {
     const m = fruitM[i], f = m.unit, here = !f.lens || f.lens === W.lens, s = f.ripe && here ? 1 : (f.lens ? 0.001 : 0.22);
     if (f.ripe && !here && !R.reduced && Math.random() < dt * 2.5) emit(f.x + (Math.random() - 0.5) * 1.5, 0.3 + Math.random() * 2.5, f.z + (Math.random() - 0.5) * 1.5, 1, 0xf4e8d6, 0.3, 1.1, 0.8, 0); // something is here, in another light
     m.fr.scale.x += (s - m.fr.scale.x) * Math.min(1, dt * 5); m.fr.scale.y = m.fr.scale.z = m.fr.scale.x;
+    { const pu = paperUse('fruit'); if (m.flat) { m.flat.visible = pu; m.flat.rotation.y = Math.atan2(camPos.x - f.x, camPos.z - f.z); } if (i === 0 && fruitFoliage) fruitFoliage.visible = !(pu && m.flat); } // 0.29 world
     m.glow.visible = f.ripe && here; m.fr.rotation.y += dt * 0.9; m.fr.position.y = (m.big ? 3.1 : 1.9) + (f.ripe && !R.reduced ? Math.sin(time * 2.2 + i) * 0.14 : 0);
   }
   for (i = 0; i < creaseM.length; i++) {
@@ -1707,6 +1722,7 @@ R.frame = function (dt, view) {
     if (cm.ridge.visible) { const p = cm.ridge.geometry.attributes.position, H = cm.f * 9; [1, 2, 4, 6, 9, 11].forEach(function (v) { p.setY(v, H); }); p.needsUpdate = true; cm.ridge.geometry.computeVertexNormals(); }
     const ready = c.t <= 0 && c.cd <= 0 && !c.guard.alive;
     cm.crane.visible = ready;
+    if (cm.flats) { const pu = paperUse('crane'), up = Math.sin(time * 6) > 0; cm.built.forEach(function (o) { o.visible = !pu; }); cm.flats[0].visible = pu && up; cm.flats[1].visible = pu && !up; cm.flats[0].rotation.y = cm.flats[1].rotation.y = Math.atan2(camPos.x - cm.cx, camPos.z) - cm.crane.rotation.y; } // 0.29 world
     if (ready) { cm.crane.rotation.y += dt * 0.8; cm.crane.position.y = 2.4 + Math.sin(time * 1.7 + i) * 0.25; const fl = Math.sin(time * 6) * 0.5; cm.crane.wl.rotation.z = fl; cm.crane.wr.rotation.z = -fl; }
   }
   for (i = 0; i < knotPool.length; i++) {
