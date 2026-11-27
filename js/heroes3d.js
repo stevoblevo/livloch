@@ -28,6 +28,12 @@
    - Looks: colours are authored for the night valley and kept (the view's own drawing pass does the rest, as it did for
      the painted cards); each view sets the lift, saturation, a tint and the rim colour (LOOKP). Hypermetapunk gets a neon
      rim in the side's colour.
+   - 0.29 look, from the play camera: skin has form (its own hue deepened away from the key light, a warm rim, cheeks in
+     the head's colour) and the mouths are filled shapes, so faces read at 5 to 10 m (SKK per view); cloth over a shoulder or
+     beside an arm follows that arm (shoulderW, armSideW) and arms keep out of skirts and coats (armClear), so a raised arm
+     no longer comes out through cloth; Myra's hover tips her forward with her legs trailing and kicking behind, below a
+     wider flare; Anna's shield sits further out and turns back against her chest's yaw; one idle fidget per hero (FIDGET);
+     a deeper landing squash.
    - Presentation only: reads the unit and the pose it is handed, never writes either. Reduced motion: a still figure
      that still turns and aims.
    - Hooks, all marked "0.24 heroes3d": gfx.js heroModel (a figure in place of the paper), the hero loop (stride, pose,
@@ -179,12 +185,12 @@ function atlas() {
     g.fillStyle = '#1a0f12'; g.beginPath(); g.ellipse(x, y + ry * 0.18, rx * 0.5, ry * 0.55, 0, 0, TAU); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(x - rx * 0.3, y - ry * 0.3, rx * 0.28, 0, TAU); g.fill();
     if (lash) { g.strokeStyle = lash; g.lineWidth = 4.2; g.beginPath(); g.ellipse(x, y - ry * 0.05, rx * 1.12, ry * 1.1, 0, Math.PI * 1.15, Math.PI * 1.85); g.stroke(); } };
   const blush = function (g, x, y, r, c) { const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, c); gr.addColorStop(1, 'rgba(255,120,120,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); };
-  /* 0.29 look: the mouth is an open smile, filled, half as wide again as the 0.28 line, with a lighter lower lip: at 5 to
+  /* 0.29 look: the mouth is an open smile, filled, twice as wide as the 0.28 line, darkest inside: at 5 to
      10 m a line two pixels thick mipmaps away, a filled shape stays a mouth. Same place, same colour, same smile. */
-  const smile = function (g, x, y0, w, c, lw) { const y = y0 - 4, W2 = w * 1.75, D = W2 * (0.62 + 0.04 * (lw || 3));
+  const smile = function (g, x, y0, w, c, lw) { const y = y0 - 6, W2 = w * 2.0, D = W2 * (0.7 + 0.04 * (lw || 3));
     g.fillStyle = c; g.strokeStyle = c; g.lineWidth = 2.4; g.lineJoin = 'round';
     g.beginPath(); g.moveTo(x - W2, y); g.quadraticCurveTo(x, y + W2 * 0.28, x + W2, y); g.quadraticCurveTo(x, y + D * 1.6, x - W2, y); g.closePath(); g.fill(); g.stroke();
-    g.fillStyle = 'rgba(240,120,120,0.9)'; g.beginPath(); g.ellipse(x, y + D * 0.55, W2 * 0.42, D * 0.18, 0, 0, TAU); g.fill(); };
+    g.fillStyle = 'rgba(40,10,14,0.55)'; g.beginPath(); g.ellipse(x, y + D * 0.42, W2 * 0.6, D * 0.3, 0, 0, TAU); g.fill(); };
   // 1 Dora's face: brown eyes, soft brows, a small smile
   at(1, function (g) { eye(g, 36, 62, 13, 16, '#5a2e1a', '#2a160f'); eye(g, 92, 62, 13, 16, '#5a2e1a', '#2a160f'); g.strokeStyle = '#4a2c20'; g.lineWidth = 3 * LW; g.lineCap = 'round'; g.beginPath(); g.moveTo(24, 38); g.quadraticCurveTo(36, 32, 48, 38); g.moveTo(80, 38); g.quadraticCurveTo(92, 32, 104, 38); g.stroke();
     blush(g, 20, 84, 13, 'rgba(240,110,100,0.6)'); blush(g, 108, 84, 13, 'rgba(240,110,100,0.6)'); smile(g, 64, 98, 10, '#8a3a2a', 3); });
@@ -288,7 +294,7 @@ function heroMat(lp) {
         'outgoingLight += diffuseColor.rgb * uKey * max(dot(normal, normalize(vec3(-0.75, 0.5, 0.45))), 0.0);', // a key light from the camera's upper left, so a back seen from behind still has form
         // 0.29 look: skin keeps its hue and gets form (see SKK)
         'float skw = vSk * uSkK; if (skw > 0.001) { float wr = dot(normal, normalize(vec3(-0.75, 0.5, 0.45))) * 0.5 + 0.5; vec3 dc = max(diffuseColor.rgb, vec3(0.04));',
-        '  vec3 sk = mix(dc * dc * 1.05, dc * vec3(1.07, 1.0, 0.95), smoothstep(0.25, 0.9, wr)); outgoingLight = mix(outgoingLight, outgoingLight * sk / dc, skw); }',
+        '  vec3 sk = mix(dc * dc * 0.98, dc * vec3(1.1, 1.0, 0.93), smoothstep(0.25, 0.9, wr)); outgoingLight = mix(outgoingLight, outgoingLight * sk / dc, skw); }',
         'if (!gl_FrontFacing) outgoingLight *= 0.62;', // the inside of cloth and hats
         'outgoingLight *= mix(0.58, 1.0, smoothstep(0.0, 0.17, vH));', // contact darkness toward the ground
         'vec3 hv = normalize(vViewPosition); float fr = 1.0 - clamp(abs(dot(normal, hv)), 0.0, 1.0);',
@@ -339,10 +345,10 @@ function arms(B, P, o) {
 /* 0.29 look: the head and neck are skin (o.sk, default 1), and the cheeks are coloured into the head itself (o.cheek, how
    much o.cheekK), low and to the sides of the face, so they still read when the face's drawn blush is mipmapped away. */
 function headBall(B, P, o) {
-  const skn = o.sk == null ? 1 : o.sk, ck = o.cheek != null ? o.cheek : 0xe0705a, cK = o.cheekK == null ? 0.42 : o.cheekK;
+  const skn = o.sk == null ? 1 : o.sk, ck = o.cheek != null ? o.cheek : 0xe0705a, cK = o.cheekK == null ? 0.5 : o.cheekK;
   B.add(capG([0, P.neck + 0.02, 0], [0, P.head + 0.04, 0.0], o.neckR || 0.06, o.neckR || 0.06, 8, 2), null, o.skin, [['neck', 0.6], ['head', 0.4]], { sk: skn });
   const S = o.shape || [1, 0.96, 0.95];
-  const cheeks = function (lx, ly, lz) { const d = Math.min(Math.hypot(lx - 0.52, ly + 0.28, lz - 0.78), Math.hypot(lx + 0.52, ly + 0.28, lz - 0.78)); return mix3(o.skin, ck, cK * Math.exp(-d * d / 0.045)); };
+  const cheeks = function (lx, ly, lz) { const d = Math.min(Math.hypot(lx - 0.52, ly + 0.28, lz - 0.78), Math.hypot(lx + 0.52, ly + 0.28, lz - 0.78)); return mix3(o.skin, ck, cK * Math.exp(-d * d / 0.06)); };
   B.add(new T.SphereGeometry(1, 14, 10), M(0, P.headC, 0.01, 0, 0, 0, P.headR * S[0], P.headR * S[1], P.headR * S[2]), cheeks, 'head', { sk: skn });
   if (o.face != null) B.add(facePatch(o.fw || 1.5, o.fh || 1.0, o.fd || 0.12), M(0, P.headC, 0.01, 0, 0, 0, P.headR * S[0], P.headR * S[1], P.headR * S[2]), 0xffffff, 'head', { uv: cellUV(o.face), em: 0.1 }); // 0.28 look: a little light of its own, so a face in the shade still reads
 }
@@ -879,8 +885,12 @@ function airFoot(fig, K, k, side, fw, legL, air, t, red) {
     y += ((k ? -0.08 : 0.66) - y) * e; z += ((k ? -0.38 : 0.36) - z) * e; p += ((k ? -0.15 : 0.35) - p) * e; }
   if (K.tuckE > 0) { const e = K.tuckE, l = red ? 0 : Math.sin(K.flip * 1.5 + k * 2.1) * 0.08; // knees in, loosely
     y += (0.64 + l - y) * e; z += (0.32 - l - z) * e; p += (0.5 - p) * e; x += (side * fw * 1.5 - x) * e; }
-  if (K.hov > 0.001) { const e = K.hov, ph = (red ? 0 : t * 3.4) + k * Math.PI, kick = Math.max(0, Math.sin(ph)); // dangling, kicking slowly
-    y += (0.08 + 0.18 * kick - y) * e; z += (0.12 * Math.sin(ph) + (k ? -0.05 : 0.05) - z) * e; p += (0.6 + 0.2 * kick - p) * e; x += (side * fw * 0.85 - x) * e; }
+  /* 0.29 look: the hover. Dangling straight down, her legs hung inside the bell and only the boot toes showed from behind. Now
+     the body tips forward into the hover (airRoot) and the legs trail back and up behind her, knees bent, kicking in turn
+     like a swimmer's flutter, soles toward the camera, so from behind the play camera sees shins and boots below the
+     back of the skirt, which flares. Reduced motion: the same shape, still. */
+  if (K.hov > 0.001) { const e = K.hov, ph = (red ? 0 : t * 4.2) + k * Math.PI, kick = 0.5 + 0.5 * Math.sin(ph);
+    y += (0.2 + 0.2 * kick - y) * e; z += (-0.55 - 0.22 * kick - z) * e; p += (1.1 + 0.25 * kick - p) * e; x += (side * fw * 1.1 - x) * e; }
   AF.x += (x - AF.x) * air; AF.y += (fig.P.ankle + legL * y - AF.y) * air; AF.z += (z * legL - AF.z) * air; AF.p += (p - AF.p) * air;
 }
 /* Arm angles in the air (as the arm loop's p: + back, - forward and up; ab: out from the side; el: elbow bend), then the
@@ -901,10 +911,12 @@ function airArm(fig, K, k, side, air, red) {
 function airRoot(fig, K, dt, red) {
   const S = fig.S, P = fig.P, r = fig.root, A = K.A;
   let rx = K.flip + 0.22 * K.hopE - 0.08 * A.tko, rz = K.groll || 0, dy = 0; // 0.26 guard: K.groll, Rook's barrel roll (guardPrep)
-  if (K.hov > 0.001 && !red) { const e = K.hov; rx += clamp(S.vz * 0.035, -0.12, 0.2) * e; rz -= clamp(S.vx * 0.04, -0.2, 0.2) * e; dy += 0.03 * Math.sin((S.wph || 0) - 0.6) * e; }
+  /* 0.29 look: tipped forward into the hover (0.3 rad), so the legs trailing behind show below the back of the skirt */
+  if (K.hov > 0.001) { const e = K.hov; rx += 0.3 * e; if (!red) { rx += clamp(S.vz * 0.035, -0.12, 0.2) * e; rz -= clamp(S.vx * 0.04, -0.2, 0.2) * e; dy += 0.03 * Math.sin((S.wph || 0) - 0.6) * e; } }
   if (rx || rz) { const cy = P.pelv + 0.12, v = V('apv').set(0, cy, 0); r.rotation.set(rx, 0, rz); v.applyEuler(r.rotation); r.position.x -= v.x; r.position.y += cy - v.y; r.position.z -= v.z; }
   r.position.y += dy;
-  const fT = red ? 0 : 0.14 * K.hov + 0.05 * K.hov * Math.sin((S.wph || 0) + 1.2) + 0.35 * K.tuckE + 0.12 * K.hopE + 0.1 * K.land;
+  /* 0.29 look: the hover's flare 0.26 (was 0.14), and in reduced motion a still flare */
+  const fT = red ? 0.2 * K.hov : 0.26 * K.hov + 0.06 * K.hov * Math.sin((S.wph || 0) + 1.2) + 0.35 * K.tuckE + 0.12 * K.hopE + 0.1 * K.land;
   if (S.afl == null) { S.afl = 0; S.aflv = S.aflv || 0; } spring(S, 'afl', 'aflv', fT, 70, 7, dt);
 }
 /* A second jump whips the braid: its links are given a speed down and to one side (alternating), growing to the tip. */
@@ -917,6 +929,8 @@ function airAfter(fig, K, dt, red, air, dash, mix) {
     b.hat.position.y = b.hat.userData.rest.y + S.hatY; b.hat.rotation.x += S.hatY * 1.2; }
   if (K.tuckE > 0 && b.hairL) { const e = K.tuckE * 0.9; b.hairL.rotation.z += e; b.hairR.rotation.z -= e; b.hairB.rotation.x += e * 0.8; }
   if (b.curl && K.hov > 0.001 && !red) b.curl.rotation.x += 0.35 * Math.sin((S.wph || 0) - 1.4) * K.hov;
+  /* 0.29 look: the head stays up while the body tips into the hover */
+  if (K.hov > 0.001) b.head.rotation.x -= 0.24 * K.hov;
   if (b.wingL) { // folded, they flutter as before; hovering they open wider and beat fast: swept back and forth, tips up and down
     const hv = red ? 0 : K.hov, f = red ? 0 : (air > 0.3 || dash > 0.3 ? 15 : 3 + 8 * mix) * (1 - hv) + 33 * hv, amp = red ? 0 : (0.12 + 0.3 * Math.max(mix, air)) * (1 - hv);
     S.wph = (S.wph || 0) + dt * f; const sn = Math.sin(S.wph), fl = sn * amp, sweep = hv * (0.45 + 0.4 * sn), lift = hv * 0.55 * Math.sin(S.wph + 1.2) + (red ? K.hov * 0.35 : 0);

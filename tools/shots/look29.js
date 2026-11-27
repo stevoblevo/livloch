@@ -5,6 +5,7 @@
             Myra's hover, Rook's Lantern Lift), the first two abilities, a landing, a long idle. SIDE=1 for side-on.
      faces  every hero 4.5 to 11 m in front of the player, facing the camera (one frame; same spots as look.js faces).
      walk   a short walk toward and away and a stand (for the paper fallback: PAPER=1).
+     idle   a few steps, then standing four seconds, the camera a quarter round: the idle fidget comes in after two.
    Writes OUT/<scene>_###.png and OUT/<scene>.json (per frame: hero on screen [x, y of the head], state).
    Env: LL_ROOT, OUT, SCENE, HERO (0..4), SIDE, PAPER, LOW, LOOK, W/H (1280x720), PORT (8875-8879), N (act length), EVERY (save every n-th frame), KEEP (frames always saved). */
 const { chromium } = require('/opt/npm-tools/node_modules/playwright');
@@ -23,7 +24,7 @@ const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split
   await pg.evaluate((i) => { LL.cfg.mode = 'match'; LL.cfg.pet = false; document.querySelectorAll('.hero')[i].click(); }, hero);
   if (process.env.LOOK) await pg.evaluate((l) => { LL.cfg.look = l; document.body.setAttribute('data-look', l); LL.gfx.setLook(l); }, process.env.LOOK);
   await pg.click('#bPlay'); await pg.waitForTimeout(3500);
-  await pg.evaluate((o) => { window.requestAnimationFrame = () => 0; document.getElementById('hud').hidden = true;
+  await pg.evaluate((o) => { window.requestAnimationFrame = () => 0; if (LL.face && LL.face.plain) LL.face.plain(); document.getElementById('hud').hidden = true; const gl = document.getElementById('gl'); document.querySelectorAll('body > *').forEach(e => { if (!e.contains(gl)) e.style.visibility = 'hidden'; });
     const W = LL.sim.W, p = W.player; p.useAI = false; W.waveT = 1e9; W.thiefT = 1e9; W.hollowT = [1e9, 1e9, 1e9]; W.troopers.forEach(u => { u.alive = false; }); W.projs.length = 0; if (W.ness) { W.ness.respT = 1e9; W.ness.alive = false; W.ness.rise = 0; }
     W.heroes.forEach((h, i) => { if (h !== p) { h.useAI = false; h.x = (i ? 1 : -1) * 60; h.z = -120; h.ctl.mx = h.ctl.mz = 0; } });
     if (o.low) LL.gfx.setQuality(true);
@@ -46,15 +47,16 @@ const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split
       await pg.screenshot({ path: out + '/faces_000.png' }); fs.writeFileSync(out + '/faces.json', JSON.stringify(info)); console.log('faces', JSON.stringify(info));
       continue;
     }
-    const N = +(process.env.N || (sc === 'walk' ? 90 : 230)), log = [];
+    const N = +(process.env.N || (sc === 'walk' ? 90 : (sc === 'idle' ? 125 : 230))), log = [];
     await pg.evaluate((o) => { const W = LL.sim.W, p = W.player, v = LL.dbg.view; p.alive = true; p.hp = p.maxHp; p.x = 0; p.z = -18; p.y = 0; p.vx = p.vy = p.vz = 0; p.onGround = true; p.jumps = 0; p.stamina = 3; p.yaw = 0; p.cds = [0, 0, 0]; p.liftT = 0; p.glide = false; p.tbN = 0; p.tbT = 0;
-      v.mode = 'play'; v.target = p; v.yaw = o.side ? -Math.PI / 2 : 0; v.pitch = -0.05; v.zoom = 0; W.fx.length = 0; for (let k = 0; k < 8; k++) LL.gfx.frame(1 / 30, v); }, { side: side });
+      v.mode = 'play'; v.target = p; v.yaw = o.side ? -Math.PI / 2 : (o.sc === 'idle' ? 0.75 : 0); v.pitch = -0.05; v.zoom = 0; W.fx.length = 0; for (let k = 0; k < 8; k++) LL.gfx.frame(1 / 30, v); }, { side: side, sc: sc });
     for (let k = 0; k < N; k++) {
       const row = await pg.evaluate((o) => {
         const W = LL.sim.W, S = LL.sim, p = W.player, ct = p.ctl, v = LL.dbg.view, dt = 1 / 30, k = o.k, id = p.def.id, ev = [];
         /* the script, by frame (30 a second) */
         let mz = 0, mx = 0, fire = false, pitchA = 0.05, jump = false, hold = false, ab = -1, beat = 'stand';
-        if (o.sc === 'walk') { mz = k < 30 ? 0.55 : (k < 60 ? -0.55 : 0); beat = k < 30 ? 'walk away' : (k < 60 ? 'walk back' : 'stand'); }
+        if (o.sc === 'idle') { mz = k < 10 ? 0.6 : 0; beat = k < 10 ? 'walk' : (k < 70 ? 'stand' : 'fidget'); }
+        else if (o.sc === 'walk') { mz = k < 30 ? 0.55 : (k < 60 ? -0.55 : 0); beat = k < 30 ? 'walk away' : (k < 60 ? 'walk back' : 'stand'); }
         else {
           if (k < 15) beat = 'stand';
           else if (k < 35) { beat = 'walk'; mz = 1; }
