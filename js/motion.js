@@ -209,11 +209,11 @@ function pose(m, u, dt, t, still, sc) {
      hem fluttering. All of it scales with G.idle and fades out in reduced motion (still). Units as the rest: metres for
      body, radians for roll, fractions of height for cloak, flare, head and wave. */
   const pap = !!(sc && sc.paper) && !still, pk = pap ? Math.max(0.6, G.idle) : 0, rest = (1 - m.mix) * (m.ground ? 1 : 0);
-  const pBody = pap ? (rest * 0.018 * Math.sin(t * 2.1 + seed) + m.mix * 0.03 * lift * G.bob) * pk : 0;
-  const pRoll = pap ? (rest * 0.012 * Math.sin(t * 0.9 + seed) + sway * 0.025 * G.roll) * pk : 0;
-  const pCloak = pap ? (rest * 0.016 * Math.sin(t * 1.7 + seed * 1.3) + m.mix * 0.012 * Math.sin(m.phase * 2 + 0.8)) * pk : 0;
-  const pHead = pap ? (rest * 0.012 * Math.sin(t * 1.1 + seed * 0.7) + m.mix * 0.025 * Math.sin(m.phase * 2)) * pk : 0;
-  const pWave = pap ? (0.016 * rest + 0.02 * m.mix) * pk : 0, pFlare = pap ? (0.012 * rest * (0.5 + 0.5 * Math.sin(t * 1.3 + seed)) + 0.01 * m.mix) * pk : 0;
+  const pBody = pap ? (rest * 0.026 * Math.sin(t * 2.1 + seed) + m.mix * 0.035 * lift * G.bob) * pk : 0;
+  const pRoll = pap ? (rest * 0.02 * Math.sin(t * 0.9 + seed) + sway * 0.035 * G.roll) * pk : 0;
+  const pCloak = pap ? (rest * 0.03 * Math.sin(t * 1.7 + seed * 1.3) + m.mix * 0.02 * Math.sin(m.phase * 2 + 0.8)) * pk : 0;
+  const pHead = pap ? (rest * 0.02 * Math.sin(t * 1.1 + seed * 0.7) + m.mix * 0.03 * Math.sin(m.phase * 2)) * pk : 0;
+  const pWave = pap ? (0.025 * rest + 0.025 * m.mix) * pk : 0, pFlare = pap ? (0.02 * rest * (0.5 + 0.5 * Math.sin(t * 1.3 + seed)) + 0.01 * m.mix) * pk : 0;
   return {
     sway, phase: m.phase, mix: m.mix, aim: m.aim, hem: r.hem, g: G,
     liftL: Math.max(0, sway) * 0.21, liftR: Math.max(0, -sway) * 0.21,
