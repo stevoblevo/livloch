@@ -163,7 +163,7 @@ RF.fx = function (e, w) {
       const t = th[e.lane]; if (t) { LL.laneNearest(e.lane, e.x, e.z, Q); t.u.uArrS.value = Q.s; t.u.uArrD.value = e.u && e.u.team === 1 ? -1 : 1; t.arrW = W ? W.t : 0; t.arrR = e.reach || 24; }
       X.ring(e.x, 0.02, e.z, 0.6, e.r || 8, 0xffd28a, 0.5); X.ring(e.x, 0.04, e.z, 0.3, (e.r || 8) * 0.5, 0xfff4dc, 0.32);
       const n = red ? 6 : (low ? 9 : 16);
-      for (let k = 0; k < n; k++) { const q = k / n * 6.283 + Math.random() * 0.2, v = 4 + Math.random() * 2.5; X.puff(e.x + Math.cos(q) * 0.5, 0.15, e.z + Math.sin(q) * 0.5, Math.cos(q) * v, 0.35 + Math.random() * 0.4, Math.sin(q) * v, 0.35, 1.5, 0.75, 0.42); }
+      for (let k = 0; k < n; k++) { const q = k / n * 6.283 + Math.random() * 0.2, v = 2.6 + Math.random() * 1.6; X.puff(e.x + Math.cos(q) * 0.5, 0.12, e.z + Math.sin(q) * 0.5, Math.cos(q) * v, 0.25 + Math.random() * 0.3, Math.sin(q) * v, 0.3, 1.15, 0.65, 0.4); }
       X.emit(e.x, 0.4, e.z, red ? 10 : 26, 0xffe2a0, 7, 0.55, 3.5);
       if (!red && t) { LL.laneNearest(e.lane, e.x, e.z, Q); const d = t.u.uArrD.value; for (let s = 3; s <= t.arrR; s += low ? 6 : 3) { LL.lanePoint(e.lane, Q.s + s * d, P); X.emit(P.x, 0.3, P.z, 1, 0xffd28a, 2.2, 0.35 + s / t.arrR * 0.4, 2.5, 4); } }
       if (e.n && X.bits) X.bits(e.x, 0.6, e.z, Math.min(14, 4 + e.n * 2), X.TISSUE, 3.2, X.BIT_TISSUE);
