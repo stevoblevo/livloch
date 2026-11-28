@@ -102,7 +102,7 @@ var C = LL.C = {
        ARRIVE.among  1: an arrival strikes only if a Hush trooper is within `r` of the landing; let go behind your own
                 line and the ride ends quietly
        PATRON_DIM    the Hush patron lives on its houses: each Hush guardian or warden that falls, on any thread, takes
-                this share of the patron's full health from it (never the last point)
+                this share of the patron's full health from it (never the last point; long match only)
        EMBER.wait    seconds standing in the fountain in one visit that give a hero a light, hurt or not
        EMBER.thief   1: the hero who catches a small one carries off a light
        EMBER.under   1 since 0.29: any standing house of the carrier's side takes the light, whole or hurt

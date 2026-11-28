@@ -778,7 +778,7 @@ function kill(t, src, hero) {
     if (W.slack.t > 0 && W.slack.lane === t.lane) { W.slack.t = 0; let n = 0; if (t.team === 1) for (let i = 0; i < W.troopers.length; i++) { const u = W.troopers[i]; if (u.alive && u.lean === W.slack.n) { u.alive = false; n++; fx({ k: 'death', u: u, x: u.x, y: u.y, z: u.z, team: 1, kind: 'trooper', by: null, creased: true }); } } fx({ k: 'slackend', lane: t.lane, fell: t.team, broke: n }); } // 0.28 play: one house falls and the slack thread pulls tight
     for (let i = 0; i < W.heroes.length; i++) if (W.heroes[i].team !== t.team) give(W.heroes[i], b);
     fx({ k: 'structdown', u: t, bounty: b });
-    if (t.team === 1 && C.PATRON_DIM > 0 && !W.fallen) { const p = W.patron[1]; if (p.alive) { const cut = Math.min(p.hp - 1, p.maxHp * C.PATRON_DIM); p.hp -= cut; p.dims = (p.dims || 0) + 1; fx({ k: 'patrondim', u: p, by: t, n: p.dims, amt: cut }); } } // 0.29 play: the Hush patron lives on its houses; every one that falls, on any thread, takes a part of it
+    if (t.team === 1 && C.PATRON_DIM > 0 && !W.fallen && !W.short) { const p = W.patron[1]; if (p.alive) { const cut = Math.min(p.hp - 1, p.maxHp * C.PATRON_DIM); p.hp -= cut; p.dims = (p.dims || 0) + 1; fx({ k: 'patrondim', u: p, by: t, n: p.dims, amt: cut }); } } // 0.29 play: the Hush patron lives on its houses; every one that falls, on any thread, takes a part of it (not in First Rain, which must last until its rain)
   } else if (t.kind === 'patron') {
     W.over = true; W.winner = 1 - t.team;
     fx({ k: 'over', winner: W.winner, fallen: W.fallen, t: W.t, lights: W.lights, moods: W.moodsSolved, dream: W.dream });

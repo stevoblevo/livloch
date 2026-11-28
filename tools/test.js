@@ -849,6 +849,7 @@ test('0.29 play: every Hush house that falls takes a part of the Hush patron', (
   assert.ok(Math.abs((hp0 - p.hp) - p.maxHp * C.PATRON_DIM) < 0.01, 'a guardian on the west thread: ' + (hp0 - p.hp).toFixed(0)); assert.ok(e && e.u === p && e.n === 1 && e.by === W.st[1][0].outer, 'and it is said');
   const r0 = W.patron[0].hp; S._t.kill(W.st[0][0].outer, null, null); assert.strictEqual(W.patron[0].hp, r0, 'the Reign patron does not live on its houses');
   p.hp = 5; S._t.kill(W.st[1][2].outer, null, null); assert.ok(p.alive && p.hp >= 1 && !W.over, 'a falling house never takes the last of it');
+  const F = world({ auto: false, mode: 'short' }), f0 = F.patron[1].hp; S._t.kill(F.st[1][0].outer, null, null); assert.strictEqual(F.patron[1].hp, f0, 'not in First Rain');
 });
 test('0.29 play: an arrival needs a landing among the Hush', () => {
   const W = world({ auto: false }), h = W.player; run(W, 5, keepAlive); const u = hushSmall(W, 1, 80 + C.ARRIVE.r + 6); LL.lanePoint(1, 80, PP); h.x = PP.x; h.z = PP.z; h.zip = { lane: 1, dir: 1, s: 80, s0: 20 }; const hp0 = u.hp; h.ctl.zip = true; S._t.heroStep(h, 1 / 30);
