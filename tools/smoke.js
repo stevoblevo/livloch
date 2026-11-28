@@ -25,7 +25,7 @@ const srv = http.createServer(function (q, r) {
 const problems = [], steps = [];
 const step = function (s) { steps.push(s); console.log('·', s); };
 (async function () {
-  const b = await pw.chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--enable-webgl', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
+  const b = await pw.chromium.launch({ executablePath: process.env.CHROME || undefined, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--enable-webgl', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
   const pg = await (await b.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
   pg.on('pageerror', function (e) { problems.push('page error: ' + String(e && e.stack || e).slice(0, 600)); });
   pg.on('console', function (m) { if (m.type() === 'error') problems.push('console error: ' + m.text().slice(0, 400)); });

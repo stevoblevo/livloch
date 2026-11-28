@@ -1,0 +1,90 @@
+0.29 play: what 0.28 left. What was built, what was tried and dropped, and what it measured.
+Everything here is simulator output from tools/tune.js (a scripted player, not a person, not a bot match) unless it says
+soak (bots only). A row of 48 seeds has a standard error of about 7 points of win rate, a difference of two rows about 10.
+This session met that noise head on: the same lesson-4 policy on Cruel measured 48, 52, 54, 56, 56, 63, 65, 67, 67 and 71%
+across rule variants that barely touched it. Single rows under 15 points apart are not findings. Tables: play-0.29-before.txt,
+play-0.29-after.txt.
+
+TARGETS
+ 1. Lesson 5 beats lesson 4 on Cruel by 10 points or more.                MET.  75% against 58% over 96 seeds a row (+17,
+    standard error of the difference 6.7). Seeds 1-48: 77 against 63. Seeds 49-96: 73 against 54.
+ 2. Even with no lessons back to about 40-45%.                             CLOSE. 48% (was 56%; 0.27 had 38%). Within one
+    standard error of the band, not inside it. The slope 0 -> 1 -> 2 on Even is NOT clean: 48 / 69 / 48. Lesson 2 at 48%
+    is 21 points under lesson 1; 0.28's dropped attempt showed the same dip (46/60/35). Unexplained; lesson 2's habits
+    (falling back to its own house in a full rain, leaving its thread for thieves and fruit) are the suspects.
+ 3. Median longest quiet stretch <= 3:00 on Even and Cruel.                NOT MET. Cruel 3:12 to 3:56, Even 3:08 to 4:10
+    (0.28: Cruel 3:13 to 3:39, Even 3:16 to 4:10). No better than 0.28 at the median. The first building now falls at
+    about 1:55 (was about 3:00), and Gentle is 2:11 to 2:43.
+    Median match >= 9 min.                                                 MET on Even (11:41 to 14:25) and Cruel (11:54 to
+    13:16). NOT on Gentle: 7:06 to 9:13 (0.28: 8:51 to 11:52).
+    Gentle stays 100%.                                                     MET, every row.
+    First Rain, Even, no lessons, houses >= 90%.                           MET. 92% (0.28: 96%).
+ 4. Soak (bots only, 12 seeds a difficulty, node tools/soak.js 12 1).      Before: Gentle 12/12, Even 1/12, Cruel 1/12.
+                                                                           After:  Gentle 12/12, Even 5/12, Cruel 2/12.
+
+WHY EVEN WITH NO LESSONS ROSE IN 0.28 (measured; table at the end of play-0.29-before.txt)
+  All 0.28 rules on 56%. Without the slack thread 54%. With it but no leaning hollow 58%. Without lights 48%. Without
+  arrivals 42%. Without all three 38%, which is 0.27's number exactly. So: the slack thread was not it. The two bot
+  teammates were. A bot rides out from home every time it has been back, lets go behind its own line, and in 0.28 that
+  landed an arrival (140 and more to every small Hush for 24 m ahead) each time; and a bot that went home hurt came back
+  with a light. They were playing lessons 4 and 5 for a player who knew none.
+  The fix is a rule, not a number: an arrival now needs a landing among the Hush (a Hush trooper within 8 m of where the
+  rider lets go). A person who rides into them gets it; a bot that lets go behind its own troopers lands quietly.
+
+THE RULES (sim.js "0.29 play"; numbers in core.js)
+  An arrival needs company   C.ARRIVE.among. Above.
+  Three ways to a light      mended at home (0.28); or stand 3 s in the fountain, hurt or not; or catch a small one.
+  A kept house               the house that takes a light is kept for 80 s (was: bright for 30 s). It fires twice as fast
+                             (0.28), takes 35% of all harm, is never slack even on a slack thread, and no small one picks
+                             it. Any standing house takes a light now, whole or hurt.
+  The Hush patron lives on its houses   every Hush guardian or warden that falls, on any thread, takes 12% of the Hush
+                             patron's full health with it. Long match only. Event patrondim. This is the rule that made
+                             lesson 5 count: before it, harm that was spread over three threads did not win.
+  The tides                  a thread goes slack at 1:40, then 90 s before each red rain and again as each rain ends
+                             (1:40, 3:30, 6:00, 8:30, 11:00, 13:30), for up to 60 s, said 30 s ahead. The leaning hollow
+                             sets out 28 s before, so it is seen coming and is at the house as it opens. 0.28 had 2:30,
+                             7:30, 12:30 with the hollow leaving as the thread went slack: it reached the house with a few
+                             seconds of the fifty left.
+  A dark house's clock runs on a slack thread (it stood still there in 0.28; found by a test).
+  New events: patrondim (u the patron, by the house, n, amt). ember gains waited and thief. No other new event kinds.
+
+WHAT THE SCRIPTED PLAYER DOES NOW (tools/tune.js header)
+  Lesson 5: stops running to guardian fires (0.28); STAYS on its thread when another goes slack (0.28 rode to the far
+  house); carries a light to the house that needs it most, where lessons 0 to 4 leave it in the first house they walk
+  past. On Cruel it places 4.7 lights a match against 1.7.
+  Every lesson: walks home to a point beside the patron. Until 0.29 a rider coming home down the middle thread walked
+  into its own patron and stood there until its health came back by itself. That bug is part of why 0.28 measured
+  going home as a loss; it does not explain all of it (below).
+
+WHAT WAS TRIED AND DID NOT WORK (48 seeds, Cruel, lesson 4 row then lesson 5 row; runs kept in the session only)
+  Each was built, tested and measured before it was dropped; the code is in the branch history (06e0c00 to 1a65d35).
+  - Riding home by choice for a light, with a lit house sending its waves out half again as strong for 60 s:   54 / 42.
+  - Riding home for a light as a rain or a tide is about to come, to keep one house through it:                67 / 48,
+    and with tides every 100 s 67 / 54. It keeps more Reign houses (4.0 lost against 4.5) and wins less.
+  - A light carried to a Hush house blinds it for 25 s (cannot fire, unprotected, harm x1.5):                  71 / 56,
+    and with the patron blindable and tides every 100 s 52 / 44. 5.8 houses blinded a match, more Hush houses down, fewer wins.
+  - Lights from thieves spent on blinding instead of keeping:                                                    56 / 52.
+  - Riding the slack thread to the far house (lesson 5 as 0.28 had it), under the final rules:                 63 / 56 on
+    seeds 1-48 and 54 / 58 on seeds 49-96, against 77 and 73 for staying.
+  - Tides every 100 s; tides that last 80 or 90 s; a third tide to each rain (not run: it would fell a house every 80 s).
+  - Gentle's Hush buildings 1.65 for longer matches: 7:35 to 9:55, still under nine minutes with lessons 3 to 5. Not adopted.
+  What these have in common: every errand that takes the hero off its thread cost more than it returned, whatever the
+  errand paid. In every such run lesson 5 lost fewer houses and took more than lesson 4, played longer, and then lost
+  at the fray (15:00). It was winning the wrong thing. Two changes turned that round: harm anywhere now reaches the Hush
+  patron, and lesson 5 stopped travelling (lights come to it from the small ones it catches).
+  So the honest reading of target 1: choosing which house to keep is now a winning decision. GOING HOME is not: it is
+  possible, quick (about 14 s there and back on the threads) and readable, and it did not measure as worth the trip.
+
+WHAT STILL LOOKS WEAK
+  - The quiet stretches. More tides did not shorten the longest one: a tide that fells nothing (a kept house, a hollow
+    killed on the way) leaves five minutes between falls, and about half of all matches have one.
+  - Gentle is short: 7 to 9 minutes. The patron rule and the tides both shorten it.
+  - Even's slope is 48 / 69 / 48 for lessons 0, 1, 2. Lesson 2 is not worth what lesson 1 is.
+  - Cruel with three lessons is 54% (0.28: 40%), so "Cruel only with four" is softer: 15 / 54 / 63 / 77 for 2, 3, 4, 5.
+  - Bots alone win more on Even (5 of 12 against 1 of 12). Twelve seeds; the direction is real, the size is not known.
+  - Lesson 5's gain was found after many variants were looked at on seeds 1-48. Seeds 49-96 were run once, after the
+    rules and the policy were fixed, and agree (+19). That second set is the evidence; the first set chose the rules.
+    The second set ran one commit before the last two small changes (a dark house's clock on a slack thread; the patron
+    rule kept out of First Rain, which cannot touch a long match).
+  - Nothing of these rules is drawn or has a sound. They are said in banners and the feed (ui.js lines marked 0.29 play).
+    No frames were captured: there is nothing new on screen but words.

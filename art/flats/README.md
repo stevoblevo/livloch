@@ -15,7 +15,12 @@ Every sheet: figures in one row on a flat mid-grey background, feet on one basel
 | `ness.png` | one side view, facing left | the Ness | `FLATS.ness = { src: 'art/flats/ness.png', cells: 1 };` |
 | `pines.png` | three different trees | all trees | `FLATS.pines = { src: 'art/flats/pines.png', cells: 3 };` |
 | `rocks.png` | three different rocks | all rocks | `FLATS.rocks = { src: 'art/flats/rocks.png', cells: 3 };` |
+| `fruit.png` | lemon, rose hips, Verde Limón, big lemon, big rose hips, big Verde Limón (the bush only, no fruit) | the leaves and stem of each fruit bush; the fruit and its glow stay built, in the fruit's own colour | `FLATS.fruit = { src: 'art/flats/fruit.png', cells: 6, paper: true };` |
+| `stray.png` | front, back | the strays | `FLATS.stray = { src: 'art/flats/stray.png', cells: 2, paper: true };` |
+| `crane.png` | wings up, wings down (side view) | the fold crane; the two cells alternate as the wings flap | `FLATS.crane = { src: 'art/flats/crane.png', cells: 2, paper: true };` |
 | `../backdrop.jpg` | one wide painting, no cutting needed | the far view; the valley walls drop to foothills | `FLATS.backdrop = { src: 'art/backdrop.jpg', cells: 1 };` |
+
+`paper: true` (the three rows above) puts the picture in only for Origami, Knight Night and Lighter graphics; the 3D props stay for the full views. Add `always: true` to use it in every look. The files here are stand-ins drawn by `python3 tools/flats-standins.py`; replace them with real paintings.
 
 Heroes go in `art/heroes/` with four figures (front, left side, back, three-quarter) and a line in `PAPER`.
 

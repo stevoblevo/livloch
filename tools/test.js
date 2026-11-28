@@ -38,7 +38,7 @@ test('a guardian robbed of its light is dark 120 s and loses 25% health; capture
   W = world(); g = W.st[0][1].outer; t = thiefOn(W, g); run(W, 3, w => { w.thiefT = 1e9; keepAlive(w); }); assert.ok(g.dark);
   t.x = 0; t.z = C.PATRON_Z - 7; const hp0 = g.hp; let ev = run(W, 2, w => { w.thiefT = 1e9; keepAlive(w); }); assert.ok(ev.some(e => e.k === 'thiefhome'));
   assert.ok(Math.abs((hp0 - g.hp) - g.maxHp * 0.25) < g.maxHp * 0.02, 'lost a quarter: ' + (hp0 - g.hp)); assert.ok(g.dark);
-  const t0 = W.t; ev = run(W, 125, w => { w.thiefT = 1e9; keepAlive(w); g.hp = Math.max(g.hp, 500); }); const relit = ev.find(e => e.k === 'relit' && e.u === g);
+  const t0 = W.t; ev = run(W, 125, w => { w.thiefT = 1e9; keepAlive(w); g.hp = Math.max(g.hp, 500); w.heroes.forEach(h => { h.ember = false; }); }); /* 0.29 play: no hero walks a light into it meanwhile */ const relit = ev.find(e => e.k === 'relit' && e.u === g);
   assert.ok(relit, 'relit event'); assert.ok(Math.abs((relit.at - t0) - 118) < 4, 'dark for about 120 s, got ' + (relit.at - t0 + 2).toFixed(1));
 });
 test('a hollow returns to its thread after the respawn delay', () => {
@@ -203,6 +203,21 @@ test('motion gaits (0.21): Dora bobs and rolls as in 0.20; Anna is lower, rolls 
   assert.ok(Math.abs(d.p.roll - d.p.sway * 0.03 - Math.max(-0.06, Math.min(0.06, -d.p.turn * 0.02))) < 1e-9, 'Dora rolls exactly as in 0.20 (no idle while striding)');
   assert.ok(a.contacts > 3, 'Anna steps: ' + a.contacts); assert.ok(a.sq > d.sq + 0.1, 'each of Anna\'s steps squashes, Dora\'s do not: ' + a.sq.toFixed(2) + ' vs ' + d.sq.toFixed(2));
   assert.ok(a.p.g.shift > 1 && a.p.g.bob < 1, 'Anna moves her weight more and bounces less');
+});
+/* 0.29 look */
+test('paper life (0.29): a painted card standing still breathes, sways and stirs; walking it waddles; a 3D figure and reduced motion are untouched', () => {
+  const M = require(path.join(__dirname, '..', 'js', 'motion.js'));
+  const stand = (paper, still) => { const m = M.create(), u = { x: 0, z: 0, yaw: 0, onGround: true, def: { id: 'rook' }, lastShotT: -99, id: 3 }; let lo = {}, hi = {};
+    for (let i = 0; i < 150; i++) { const p = M.pose(m, u, 1 / 30, i / 30, still, { r: 0, f: 0, fb: true, m: 1, h: 2.4, paper: paper }); if (i < 30) continue;
+      ['body', 'roll', 'cloak', 'head'].forEach(k => { lo[k] = Math.min(lo[k] == null ? 9 : lo[k], p[k]); hi[k] = Math.max(hi[k] == null ? -9 : hi[k], p[k]); }); }
+    const r = {}; for (const k in lo) r[k] = hi[k] - lo[k]; return r; };
+  const pap = stand(true, false), fig = stand(false, false), red = stand(true, true);
+  assert.ok(pap.body > 0.02 && pap.roll > 0.012 && pap.cloak > 0.015 && pap.head > 0.01, 'a standing card moves: ' + JSON.stringify(pap));
+  assert.ok(fig.body < 1e-9 && fig.cloak < 1e-9, 'a 3D figure standing gets none of it: ' + JSON.stringify(fig));
+  assert.ok(red.body + red.roll + red.cloak + red.head === 0, 'reduced motion stays still');
+  const walk = (paper) => { const m = M.create(), u = { x: 0, z: 0, yaw: 0, onGround: true, def: { id: 'rook' }, lastShotT: -99 }; let hi = 0;
+    for (let i = 0; i < 90; i++) { u.z += 0.2; const p = M.pose(m, u, 1 / 30, i / 30, false, { r: 0, f: 6, fb: true, m: 1, h: 2.4, paper: paper }); if (i > 30) hi = Math.max(hi, Math.abs(p.roll)); } return hi; };
+  assert.ok(walk(true) > walk(false) * 1.5, 'walking, the card waddles more than the bare rig: ' + walk(true).toFixed(3) + ' vs ' + walk(false).toFixed(3));
 });
 test('the braid (0.21): hangs at rest, trails a run across the screen, swings with the step and settles when she stops', () => {
   const M = require(path.join(__dirname, '..', 'js', 'motion.js')), u = { x: 0, z: 0, yaw: 0, onGround: true, def: { id: 'anna' }, lastShotT: -99, id: 1 };
@@ -711,9 +726,11 @@ test('whole bot matches with the Ness: floods end, nobody stays in the jaws, bot
   }
   /* measured at 0.27 over these eight: 15 floods, 36 tells, 17 bitten, 19 dodged, 39 rides in a flood, 16 fishing, 13 downs
      measured at 0.28 (play: the slack thread, the fold's catch, lights) over the same eight: 12 floods, 29 tells, 11 bitten,
-     17 dodged, 39 rides in a flood, 20 fishing, 9 downs */
+     17 dodged, 39 rides in a flood, 20 fishing, 9 downs
+     measured at 0.29 (play: kept houses, lights from thieves, the tides, the patron that dims) over the same eight: 32 tells,
+     7 bitten, 25 dodged, 38 rides in a flood, 15 fishing, 10 downs; the floor for bites taken went from 8 to 5 */
   assert.ok(longest < 25, 'the longest flood: ' + longest.toFixed(1) + ' s');
-  assert.ok(tells >= 24, 'heroes are picked: ' + tells); assert.ok(bitten >= 8 && dodged >= 8, 'bots dodge some bites and take some: ' + dodged + ' dodged, ' + bitten + ' bitten');
+  assert.ok(tells >= 24, 'heroes are picked: ' + tells); assert.ok(bitten >= 5 && dodged >= 8, 'bots dodge some bites and take some: ' + dodged + ' dodged, ' + bitten + ' bitten');
   assert.ok(zips >= 20, 'bots take the threads in a flood: ' + zips); assert.ok(fishing >= 12, 'bots still go fishing: ' + fishing); assert.ok(downs >= 8, 'and still land the Ness: ' + downs);
 });
 /* 0.27 SEED (#27). Every random draw in the model goes through W.rng, so one seed and one set of inputs give one match.
@@ -777,10 +794,10 @@ test('0.28 play: the fold catches the small Hush on the thread folded away, and 
 });
 test('0.28 play: the fountain\'s mending sends a hero out with one light, and the light mends or relights one house', () => {
   const W = world({ auto: false }), h = W.player, sp = S.spawnPos(0, h.slot), g = W.st[0][1].outer, wd = W.st[0][1].inner, hold = (w) => { w.patron.forEach(p => { p.hp = p.maxHp; }); w.waveT = 99; w.thiefT = 1e9; };
-  let ev = run(W, 6, hold); assert.ok(!h.ember && !ev.some(e => e.k === 'ember'), 'a hero standing whole at home is given nothing');
-  h.hp = h.maxHp * 0.3; ev = run(W, 8, hold); assert.ok(h.ember, 'mended at home, it carries a light'); assert.strictEqual(ev.filter(e => e.k === 'ember').length, 1); assert.ok(ev.find(e => e.k === 'ember').p);
+  let ev = run(W, C.EMBER.wait - 0.5, hold); assert.ok(!h.ember && !ev.some(e => e.k === 'ember'), 'a hero standing whole at home is given nothing at once');
+  h.x = 40; h.z = -90; run(W, 0.2, hold); h.x = sp.x; h.z = sp.z; h.hp = h.maxHp * 0.3; ev = run(W, C.EMBER.need / 0.14 + 0.1, hold); assert.ok(h.ember, 'mended at home, it carries a light'); assert.strictEqual(ev.filter(e => e.k === 'ember').length, 1); assert.ok(ev.find(e => e.k === 'ember').p && !ev.find(e => e.k === 'ember').waited, 'and the light says it came of mending');
   h.hp = h.maxHp * 0.3; ev = run(W, 8, hold); assert.strictEqual(ev.filter(e => e.k === 'ember').length, 0, 'one light at a time');
-  g.hp = g.maxHp * 0.5; wd.hp = wd.maxHp * 0.99; h.x = wd.x + 4; h.z = wd.z; ev = run(W, 0.2, hold); assert.ok(h.ember && !ev.some(e => e.k === 'mended'), 'a house that is nearly whole does not take it');
+  g.hp = g.maxHp * 0.5; h.x = 30; h.z = -100; ev = run(W, 0.2, hold); assert.ok(h.ember && !ev.some(e => e.k === 'mended'), 'away from every house it keeps the light');
   h.x = g.x + 4; h.z = g.z; h.zip = { lane: 1, dir: 1, s: g.s, s0: g.s }; S._t.heroStep(h, 1 / 30); assert.ok(h.ember, 'a rider keeps the light as it passes'); h.zip = null; h.x = g.x + 4; h.z = g.z; h.y = 0;
   ev = run(W, 0.2, hold); const m = ev.find(e => e.k === 'mended'); assert.ok(m && m.s === g && m.p, 'on foot by a hurt house, the light goes in'); assert.ok(Math.abs(g.hp - g.maxHp * (0.5 + C.EMBER.heal)) < 2, 'mended by ' + C.EMBER.heal + ': ' + (g.hp / g.maxHp).toFixed(2)); assert.ok(!h.ember, 'and the light is spent'); assert.ok(g.brightT > 0, 'the house burns bright');
   h.ember = true; const t = thiefOn(W, g); g.dark = true; g.darkT = 0; t.carry = g; t.state = 1; h.x = g.x + 4; h.z = g.z; ev = run(W, 0.2, hold); assert.ok(!g.dark && ev.some(e => e.k === 'mended' && e.relit), 'a dark house is lit again'); assert.strictEqual(t.carry, null, 'and the hush carries nothing now');
@@ -800,13 +817,58 @@ test('0.28 play: halfway between rains one thread goes slack: its houses stop fi
   ev = run(W, 3, hold); assert.ok(ev.some(e => e.k === 'slackend' && e.lane === lane), 'it pulls tight after ' + D.t + ' s'); assert.ok(!S.slack(a));
   const worn = (lane + 1) % 3, gone = (lane + 2) % 3, hold2 = (w) => { keepAlive(w); w.structs.forEach(s => { if (s.alive) s.hp = s.maxHp * (s.lane === worn && s.kind === 'guardian' && s.team === 0 ? 0.5 : 1); }); };
   W.st[1][gone].outer.alive = false; W.st[1][gone].inner.alive = false; // the thread with the most lost, but one side has no house left on it
-  ev = run(W, D.every, hold2); const s1 = ev.find(e => e.k === 'slack'); assert.ok(s1 && Math.abs(s1.at - (D.first + D.every)) < 0.1, 'again one rain later'); assert.strictEqual(s1.lane, worn, 'the most worn thread goes slack, and a thread where one side has no house comes last');
+  ev = run(W, S.tideAfter(D.first) - D.first, hold2); const s1 = ev.find(e => e.k === 'slack'); assert.ok(s1 && Math.abs(s1.at - S.tideAfter(D.first)) < 0.1, 'again at the next tide'); assert.strictEqual(s1.lane, worn, 'the most worn thread goes slack, and a thread where one side has no house comes last');
   { const Z = world({ auto: false }), zh = Z.player, far = Z.st[1][1].outer; Z.slack.lane = 1; Z.slack.t = 30; assert.ok(Math.abs(S.zipEnd(0, 1) - LL.lanes[1].len * D.ride[0]) < 0.01, 'a slack thread carries to the far guardian'); assert.ok(S.zipEnd(0, 0) < LL.lanes[0].len * 0.5, 'the others end where they did'); far.alive = false; assert.ok(Math.abs(S.zipEnd(0, 1) - LL.lanes[1].len * D.ride[1]) < 0.01, 'and on to the warden once the guardian is down'); Z.slack.t = 0; assert.ok(S.zipEnd(0, 1) < LL.lanes[1].len * 0.7, 'pulled tight, it ends where it did'); }
   { const Z = world({ auto: false, difficulty: 1 }); run(Z, D.first + 1, hold); const ln = Z.slack.lane, lean = Z.troopers.filter(u => u.alive && u.lean === Z.slack.n); assert.strictEqual(lean.length, C.DIFF[1].slackHollows, 'the leaning hollow is marked');
     S._t.kill(Z.st[1][ln].outer, null, null); const e2 = Z.fx.find(e => e.k === 'slackend'); assert.ok(e2 && e2.fell === 1 && e2.broke === lean.length, 'a Hush house falls: the thread pulls tight and the lean breaks'); assert.ok(!(Z.slack.t > 0) && lean.every(u => !u.alive) && !S.slack(Z.st[0][ln].outer), 'the Reign house on it is its own again');
     const Y = world({ auto: false, difficulty: 1 }); run(Y, D.first + 1, hold); const ly = Y.slack.lane, lean2 = Y.troopers.filter(u => u.alive && u.lean === Y.slack.n); S._t.kill(Y.st[0][ly].outer, null, null); assert.ok(!(Y.slack.t > 0) && Y.fx.some(e => e.k === 'slackend' && e.fell === 0 && e.broke === 0), 'a Reign house falls: tight again'); assert.ok(lean2.every(u => u.alive), 'and the hollow keeps coming'); }
   for (const mode of ['short', 'fallen']) { const X = world({ mode: mode }); ev = run(X, D.first + 5, hold); assert.ok(!ev.some(e => e.k === 'slackwarn' || e.k === 'slack'), 'no slack thread in ' + mode); }
   const G = world({ difficulty: 0, auto: false }); ev = run(G, D.first + 1, hold); assert.strictEqual(ev.filter(e => e.k === 'hollow' && e.extra).length, C.DIFF[0].slackHollows, 'Gentle: the Hush does not lean');
+});
+/* ---------- 0.29 play: a light can be fetched, a kept house holds, the tides come more often ---------- */
+test('0.29 play: a hero who waits at home leaves with a light; stepping out starts the wait again', () => {
+  const W = world({ auto: false }), h = W.player, sp = S.spawnPos(0, h.slot), hold = (w) => { w.patron.forEach(p => { p.hp = p.maxHp; }); w.waveT = 99; w.thiefT = 1e9; };
+  let ev = run(W, C.EMBER.wait - 0.3, hold); assert.ok(!h.ember, 'not before ' + C.EMBER.wait + ' s');
+  h.x = 40; h.z = -90; run(W, 0.2, hold); h.x = sp.x; h.z = sp.z; ev = run(W, C.EMBER.wait - 0.3, hold); assert.ok(!h.ember, 'a step outside and the wait begins again');
+  ev = run(W, 0.6, hold); const e = ev.find(x => x.k === 'ember'); assert.ok(h.ember && e && e.p && e.waited, 'whole, it waited ' + C.EMBER.wait + ' s and carries a light');
+  ev = run(W, C.EMBER.wait + 1, hold); assert.ok(!ev.some(x => x.k === 'ember'), 'one light at a time');
+  const g = W.st[0][0].outer; h.x = g.x + 4; h.z = g.z; ev = run(W, 0.2, hold); assert.ok(ev.some(x => x.k === 'mended' && x.s === g) && g.brightT > 0, 'a whole house takes the light too, and is kept');
+  const F = world({ auto: false, mode: 'fallen' }); run(F, C.EMBER.wait + 3, hold); assert.ok(!F.player.ember, 'not in Ever Fallen');
+});
+test('0.29 play: a kept house takes less harm, is never slack, and no small one takes its light', () => {
+  const W = world({ auto: false, difficulty: 1 }), D = C.SLACK, hold = (w) => { keepAlive(w); w.structs.forEach(s => { s.hp = s.maxHp; }); };
+  const a = W.st[0][0].outer, b = W.st[0][2].outer; a.pressed = b.pressed = true; a.brightT = 500; const ha = a.hp, hb = b.hp; S._t.damage(a, 100, null, 'unit'); S._t.damage(b, 100, null, 'unit'); W.fx.length = 0;
+  assert.ok(Math.abs((ha - a.hp) - 100 * C.EMBER.guard) < 0.01, 'kept, it takes ' + C.EMBER.guard + ' of the blow: ' + (ha - a.hp)); assert.ok(Math.abs((hb - b.hp) - 100) < 0.01, 'the house beside it takes it all');
+  W.structs.forEach(s => { if (s.team === 0) s.brightT = 500; }); const first = W.slack.next; run(W, first + 1, hold); const ln = W.slack.lane; assert.ok(W.slack.t > 0, 'a thread is slack');
+  assert.ok(!S.slack(W.st[0][ln].outer) && !S.slack(W.st[0][ln].inner), 'the kept houses on it are not'); assert.ok(S.slack(W.st[1][ln].outer), 'the Hush house on it is');
+  const k = W.st[0][ln].outer; k.pressed = false; const hk = k.hp; S._t.damage(k, 100, null, 'unit'); assert.ok(Math.abs((hk - k.hp) - 100 * 0.3 * C.EMBER.guard) < 0.01, 'and it keeps its protection: ' + (hk - k.hp));
+  const u = hushSmall(W, ln, k.s + 6); k.atkT = 0; const ev = run(W, 3, w => { hold(w); w.waveT = 99; u.hp = u.maxHp; u.x = k.x; u.z = k.z + 6; }); assert.ok(ev.some(e => e.k === 'towershot' && e.u === k), 'and it fires');
+  const X = world({ auto: false }); X.heroes.forEach(h => { h.souls = 0; }); X.st[0][0].outer.brightT = X.st[0][1].outer.brightT = 500; for (let i = 0; i < 12; i++) { X.thiefT = 1e9; S._t.spawnThief(); const t = X.thieves[X.thieves.length - 1]; assert.strictEqual(t.mark, X.st[0][2].outer, 'the small one goes for the house that is not kept'); t.alive = false; }
+});
+test('0.29 play: one early tide, then two to every rain, none while it rains; the hollow sets out ahead', () => {
+  const W = world({ difficulty: 1 }), D = C.SLACK, E = C.RED_EVERY, hold = (w) => { keepAlive(w); w.structs.forEach(s => { s.hp = s.maxHp; }); }, ev = run(W, 2 * E + C.RED_T + D.t + 5, hold);
+  const at = ev.filter(e => e.k === 'slack').map(e => Math.round(e.at)), warn = ev.filter(e => e.k === 'slackwarn').map(e => Math.round(e.at)), want = [D.first, E - D.pre, E + C.RED_T, 2 * E - D.pre, 2 * E + C.RED_T];
+  assert.deepStrictEqual(at, want, 'tides at ' + want.join(', ') + ' s: ' + at.join(', ')); assert.deepStrictEqual(warn, want.map(t => t - D.warn), 'each said ' + D.warn + ' s ahead');
+  for (const t of at) for (const r of [E, 2 * E]) assert.ok(t + D.t <= r || t >= r + C.RED_T, 'the tide at ' + t + ' is over before the rain at ' + r + ' falls, or begins as it ends');
+  const lean = ev.filter(e => e.k === 'hollow' && e.extra && Math.abs(e.at - (D.first - D.lead)) < 0.1); assert.strictEqual(lean.length, C.DIFF[1].slackHollows, 'the hollow sets out ' + D.lead + ' s before the first tide');
+  assert.strictEqual(ev.filter(e => e.k === 'hollow' && e.extra && Math.abs(e.at - D.first) < 0.1).length, 0, 'and no second one when the thread goes slack');
+});
+test('0.29 play: whoever catches a small one carries off a light', () => {
+  const W = world({ auto: false }), h = W.player; h.x = -12; h.z = -12; const t = thiefOn(W, h); S._t.damage(t, 1e6, h, 'gun'); assert.ok(h.ember, 'the catcher carries a light'); assert.ok(W.fx.some(e => e.k === 'ember' && e.u === h && e.thief), 'and the event says where it came from'); W.fx.length = 0;
+  const t2 = thiefOn(W, h); S._t.damage(t2, 1e6, h, 'gun'); assert.strictEqual(W.fx.filter(e => e.k === 'ember').length, 0, 'one light at a time');
+  h.ember = false; const t3 = thiefOn(W, h); S._t.damage(t3, 1e6, null, 'unit'); assert.ok(!h.ember, 'a small one that a house or trooper puts down leaves no light');
+  const F = world({ auto: false, mode: 'fallen' }), fh = F.player, ft = thiefOn(F, fh); S._t.damage(ft, 1e6, fh, 'gun'); assert.ok(!fh.ember, 'not in Ever Fallen: there the light goes to a dark house');
+});
+test('0.29 play: every Hush house that falls takes a part of the Hush patron', () => {
+  const W = world({ auto: false }), p = W.patron[1], hp0 = p.hp; S._t.kill(W.st[1][0].outer, null, null); const e = W.fx.find(x => x.k === 'patrondim');
+  assert.ok(Math.abs((hp0 - p.hp) - p.maxHp * C.PATRON_DIM) < 0.01, 'a guardian on the west thread: ' + (hp0 - p.hp).toFixed(0)); assert.ok(e && e.u === p && e.n === 1 && e.by === W.st[1][0].outer, 'and it is said');
+  const r0 = W.patron[0].hp; S._t.kill(W.st[0][0].outer, null, null); assert.strictEqual(W.patron[0].hp, r0, 'the Reign patron does not live on its houses');
+  p.hp = 5; S._t.kill(W.st[1][2].outer, null, null); assert.ok(p.alive && p.hp >= 1 && !W.over, 'a falling house never takes the last of it');
+  const F = world({ auto: false, mode: 'short' }), f0 = F.patron[1].hp; S._t.kill(F.st[1][0].outer, null, null); assert.strictEqual(F.patron[1].hp, f0, 'not in First Rain');
+});
+test('0.29 play: an arrival needs a landing among the Hush', () => {
+  const W = world({ auto: false }), h = W.player; run(W, 5, keepAlive); const u = hushSmall(W, 1, 80 + C.ARRIVE.r + 6); LL.lanePoint(1, 80, PP); h.x = PP.x; h.z = PP.z; h.zip = { lane: 1, dir: 1, s: 80, s0: 20 }; const hp0 = u.hp; h.ctl.zip = true; S._t.heroStep(h, 1 / 30);
+  assert.ok(!W.fx.some(e => e.k === 'arrive') && u.hp === hp0 && !h.zip, 'let go short of them, with none in reach of the landing, the ride ends quietly: the one ahead on the thread is not struck');
 });
 test('the model never reads the look: sim and core have no presentation references', () => {
   for (const f of ['core.js', 'sim.js']) { const src = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8').replace(/typeof window !== 'undefined' \? window : globalThis/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/.*$/gm, '$1'); // comments may talk about the rule; code may not break it
