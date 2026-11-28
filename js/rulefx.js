@@ -216,12 +216,14 @@ RF.fx = function (e, w) {
     }
     case 'brightend': if (e.u) X.emit(e.u.x, 4, e.u.z, red ? 4 : 12, 0xb8a890, 1.2, 1, 1.2, 0); break;
     case 'towershot': { const s = e.u; if (s && s.brightT > 0 && s.team === 0) { const hy = s.kind === 'warden' ? 9 : 6.6; X.emit(s.x, hy, s.z, red ? 2 : 7, 0xfff0c0, 4, 0.3, 1.5, 0); } break; }
+    case 'slacklast': { const u = e.u; if (u) { column(u.x, u.z, 10, 1.8, true); X.ring(u.x, 0.05, u.z, 1, (u.r || 3) + 7, 0xffb060, 0.5); } break; } /* 0.30 lead: the house the tide will take */
+    case 'slacktake': { const u = e.u; if (!u) break; column(u.x, u.z, 1.8, 1.4, true); X.ring(u.x, 0.05, u.z, 1, (u.r || 3) + 10, 0xffd060, 0.8); X.emit(u.x, 4, u.z, red ? 8 : 28, 0xffe2a0, 6, 1, 3, 1.5); if (X.bits) X.bits(u.x, 3, u.z, red ? 6 : 22, X.PAPER, 4, X.BIT_PAPER); break; } /* 0.30 lead */
     case 'slackend': { const t = th[e.lane]; if (t) t.snapW = W ? W.t : 0; break; }
     case 'slack': { const t = th[e.lane]; if (t) t.snapW = -99; break; }
   }
 };
 /* 0.30 feel: a short-lived column where the fold took something (a pinned hollow keeps its own, drawn each frame) */
-function column(x, z, life, k) { if (!W) return; if (cols.length >= COL_N - 8) cols.shift(); cols.push({ x: x, z: z, t0: W.t, life: life, k: k }); ptrT = W.t; ptrX = x; ptrZ = z; }
+function column(x, z, life, k, noPtr) { if (!W) return; if (cols.length >= COL_N - 8) cols.shift(); cols.push({ x: x, z: z, t0: W.t, life: life, k: k }); if (!noPtr) { ptrT = W.t; ptrX = x; ptrZ = z; } } /* 0.30 lead: noPtr, the tide's columns are not a catch */
 let ptrT = -99, ptrX = 0, ptrZ = 0;
 const V3 = { v: null };
 function creaseX(i) { return C.CREASE_X[i] != null ? C.CREASE_X[i] : 0; }

@@ -290,6 +290,8 @@ function ruleSound(e, pl, near) {
     case 'brightend': { const s = e.u, g = s ? near(s.x, s.z, 60) : 0; if (g < 0.1) return; tone(edo(49), 0.35, 'sine', 0.04 * g); tone(edo(41), 0.5, 'sine', 0.04 * g, 0, 0.16); return; }
     case 'slackwarn': tremble(edo(0), 3, 0.12, 7); tone(edo(18), 1.6, 'sine', 0.025, edo(17), 1.2); return;
     case 'slack': tone(edo(31), 1.5, 'triangle', 0.08, edo(28)); tone(edo(49), 1.2, 'sine', 0.035, edo(44), 0.04); bell(-13, 0.07, 3); soft(1.2, 0.04, 600, 1.4, 'bandpass', 0, 220, 0.02); return;
+    case 'slacklast': tremble(edo(-13), 2.2, 0.1, 5); bell(-13, 0.05, 2.6); return; /* 0.30 lead: the tide will take a house */
+    case 'slacktake': { const u = e.u, g = u ? Math.max(0.35, near(u.x, u.z, 120)) : 0.5; tone(54, 1.1, 'sine', 0.2 * g, 32); soft(0.9, 0.12 * g, 260, 0.9, 'lowpass', 0, 60, 0.01); bell(-13, 0.08 * g, 3.2); crumple(0.12 * g, 7); return; } /* 0.30 lead */
     case 'slackend':
       if (e.fell === 1) { [41, 49, 62].forEach(function (n, i) { tone(edo(n), 0.4, 'triangle', 0.09, 0, i * 0.09); }); bell(62, 0.07, 2); }
       else if (e.fell === 0) { [41, 36, 31].forEach(function (n, i) { tone(edo(n), 0.45, 'triangle', 0.065, 0, i * 0.11); }); bell(31, 0.05, 2.2); }
