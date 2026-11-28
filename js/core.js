@@ -110,6 +110,13 @@ var C = LL.C = {
                 `guard` of all harm, is never slack, and no small one picks it
        SLACK.first, pre  when a thread goes slack: once at `first`, then for every red rain once `pre` seconds before it
                 falls and once as it ends (`every` is gone). `lead`: the leaning hollow sets out this long before */
+  /* 0.30 play (rules in sim.js under "0.30 play"; why and the measurements in docs/evidence/play-0.30-*.txt):
+       SLACK.take    the tide takes a house: a slack thread that runs its `t` seconds with no house fallen pulls tight and
+                the more worn of its two front houses (one a side) falls, if its health is at or under this share of
+                its full health (0.999: any house that has been touched). Only where the C.DIFF row has slackTake
+       SLACK.last    seconds before that at which it is said (event slacklast)
+       SLACK.bot     1: a bot teammate singles out a slack house in its range, pressed or not (0.28 and 0.29). 0 since
+                0.30: to a bot a slack house is a house like any other, so the race for it is the player's to run */
   ARRIVE: { min: 45, r: 8, reach: 24, dmg: 140, dmgMin: 10, slow: 0.5, slowT: 2.5, among: 1 },
   FOLD_CATCH: 2.5, FOLD_CRUSH: 0.04, PATRON_DIM: 0.12,
   EMBER: { need: 0.4, r: 9, heal: 0.3, under: 1, bright: 80, fire: 2, wait: 3, guard: 0.35, thief: 1 },
@@ -126,11 +133,15 @@ var C = LL.C = {
                  fallen hollow returns to its thread
      thiefEvery  seconds between small ones (Mercy and Ever Fallen scale it)
      slackHollows  (0.28 play) hollows the Hush sends down a thread as it goes slack (C.SLACK)
+     slackTake   (0.30 play) 1: a tide that fells nothing takes the more worn front house on its thread (C.SLACK.take)
+     slackMul    (0.30 play) what a slack house takes of each blow (C.SLACK.mul everywhere until 0.30; Gentle 1 now)
+     dimK        (0.30 play) how much of C.PATRON_DIM each fallen Hush house takes from the Hush patron (Gentle half)
      orbDrift    what share of a soul orb nobody shot drifts to the nearest hero of its side anyway (shot, it is all of it)
    Until 0.27 these were numbers scattered through sim.js, never tuned; 0.27 moved them here and tuned Even and Cruel with
    tools/tune.js (before and after tables: docs/evidence/tune-0.27-before.txt, -after.txt). Gentle is as it was, but
    for its buildings, 1.2 until 0.28 (0.28 play: the fold and the slack thread ended Gentle matches under nine minutes;
-   First Rain keeps 1.2). The
+   First Rain keeps 1.2; 0.30 play: 1.35 -> 1.6, with slackMul 1 and dimK 0.5, because Gentle matches ended at about
+   seven minutes: docs/evidence/play-0.30-notes.txt). The
    tuning showed the long match is decided by the red rain, so the rain's two halves are the main knobs: what a full rain
    brings (rainWave, rainHollows) and what is left of it once the mood is answered (thinWave, thinHollows; until 0.27 a
    thin rain brought nothing, and answering the mood alone won Cruel 97% of scripted matches). In First Rain the rain is

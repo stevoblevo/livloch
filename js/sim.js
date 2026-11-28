@@ -1278,7 +1278,7 @@ function rollStart(h, mx, mz) {
      faster) for a while, so a light walked to the house a hollow is about to reach can save it. One light, one house. A hero riding a
      thread keeps the light (it passes houses without stopping), so the rider chooses where to step off.
    Bots follow the same rules: they land arrivals when they ride out, a bot that went home hurt mends the house it
-   comes back to stand by, and a bot shoots a slack house that is in its range. They do not plan around any of it:
+   comes back to stand by, and (0.28 and 0.29; not since 0.30, C.SLACK.bot) a bot shoots a slack house that is in its range. They do not plan around any of it:
    no bot folds, walks a light to the house that needs it, or leaves its thread for the slack one. */
 /* ---------- 0.29 play: a light to place, the tides, and a patron that lives on its houses ----------
    0.28 left lesson 5 worth nothing on Cruel and Even 18 points easier for a player who knows no lesson. What 0.29 found

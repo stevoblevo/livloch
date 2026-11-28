@@ -46,6 +46,12 @@
               coming home down the middle thread walked into its own patron and stood there, which is part of why
               0.28 measured going home as a loss. See docs/evidence/play-0.29-notes.txt.)
 
+              (0.30: lesson 2's three habits around a house were measured one at a time on 0.29's rules, Even, 48 seeds:
+              letters x no pressing while the hollow is down, d no standing under a slack Hush house, g no falling back
+              in a full rain. All three on 48%, all off 69%; only x on 63%, only g on 54%, only d on 46%. Standing under
+              the open house at once let the leaning hollow walk past to the player's own open house; and with the
+              guardian gone "its own house" was the warden, sixty metres back. Now it goes under the open house only once
+              no hollow is on its thread, and falls back in a rain only to a guardian. D and G bring the old habits back.)
    Letters after the digits switch one habit off (or, in capitals, an experiment on), to measure it alone: h a light
    goes to the first house passed, n the crease is not kept for the rain, a no arrivals, v runs to guardian fires as
    lessons 0 to 4 do; S rides the slack thread to the far side's open house (lesson 5 until 0.29), R gives that house up
@@ -55,7 +61,7 @@
    WHAT IT MEASURES. Per difficulty and lessons known: the long match's win rate, median length, how losses came (by the
    gutter after 20:00, or overrun), structures lost each side, the player's deaths and what killed it, the longest
    stretch with no building falling and when the first one fell; arrivals landed, lights carried into houses and small
-   Hush caught by a fold; First Rain's mean stars, how often every house stood, and how often 3+ stars.
+   Hush caught by a fold; tides, how many ended with a house fallen, and how many houses the tide itself took (0.30); First Rain's mean stars, how often every house stood, and how often 3+ stars.
    WHAT IT CANNOT. It is a policy, not a person: it never misreads the screen, never panics, never discovers a lesson
    halfway. Read the rows as the slope between lessons, not as what a person will feel. Simulator output only. */
 const path = require('path'), cp = require('child_process'), os = require('os');
