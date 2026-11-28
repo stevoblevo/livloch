@@ -1,0 +1,56 @@
+0.30 feel: the weak spots left by 0.29 feel.
+
+FILES
+  js/rulefx.js   the fold's columns (folded paper light over each catch and pinned hollow), a wider burning crease,
+                 the off-screen pointer; Hypermetapunk's glows back to the look's gold (0.29's orange workaround undone)
+  js/gfx.js      post hand 4 (Hypermetapunk) and hand 1 (Inkblot Noir) in the composite shader, marked `0.30 feel`;
+                 rfx() hands rulefx the camera (cam); R._cam for tools
+  js/audio.js    rule sounds fixed by measurement; the effects follow the playing cue's key (KEYS)
+  js/ui.js       banner-on on <body> while a banner shows
+  css/hud.css    banner placement per layout; #foldPtr
+  tools/shots/   feel30.js (stills), feel30-sheet.py, feel30-banner.js, feel30-audio.js/.py, feel30-demo.py
+
+1. THE FOLD FROM BEHIND (feel-0.30-fold.jpg, -foldfar.jpg, -foldoff.jpg; before = origin/work/0.30 2889bb8)
+  - A 9.5 m open column of gold chevrons (paper folded zigzag), bright at the foot and gone at the top, turning, over
+    every caught small one (1.8 s), every creased death (1.6 s) and every pinned hollow (as long as it is pinned),
+    with a glow at the foot. One instanced draw (cap 24). The crease's dashed line widens 2.9x when burning (was 1.8x)
+    and throws a glow running along it.
+  - Pointer: for 3 s after a catch, if it is off screen or behind the camera, a gold arrow and CAUGHT at the side edge
+    toward it, kept between the top and bottom HUD (behind the camera it goes to the nearer side, never down).
+    Seen in frame in -foldoff (Cobalt Snow: right edge). No camera glance (it would take the camera from the player).
+  - Seen in frame: from 25 m behind the hero the columns stand clearly over the crease in all four looks; in 0.29's
+    pose too. Draws: rule objects at most 7 now (columns added).
+2. HYPERMETAPUNK WARM (feel-0.30-light.jpg, bottom row)
+  - Cause: its post split channels by taking red and blue from the scene without the bloom and green with it, so every
+    bloomed warm glow gained green; and gold clipped per channel to yellow that the scanlines dimmed to olive.
+    Fix in hand 4 only: bloom into all three channels, and a warm colour (r and g over b, g not far over r) is clipped
+    by its largest channel with g at most 0.8 r. The bright house went from green to warm peach-gold under the look's
+    magenta. Its glows are drawn in the look's own gold again (GK 0.6, was 0.3 with forced orange).
+  - Other looks: hand 4 is a separate branch, so Snow and Origami are unchanged by construction; the before/after
+    rows differ only in game time (the after run stages one more scene first, so allies stand elsewhere).
+3. SOUNDS (feel-0.30-sounds.txt, .ogg demo, feel-0.30-sounds/ WAVs) - measured, not heard
+  - Crumple and paper snap were 72-76 % in 2-5 kHz with 4-6 clicks; now 33 % / 1 %, no clicks. Noise in rule sounds
+    starts with a short attack. Pinned glided between D# and E (100 % off-key); now holds E. The bright light going out
+    glided through D#; now two notes. Quiet ones raised 4-10 LU toward the soul (-31.6) and shot (-33.6).
+  - Found: the score is not in A major. title and valley-1 F major, valley-2 A major, battle-1/2 F minor, red closest
+    to B flat minor (weak), win D major, lose E. With Saelion tuning off the effects now follow the playing cue's key
+    (A moved to F, minor degrees lowered). Against F minor battle music, mended went 49 % -> 1 % off-key, slackend
+    100 % -> 1 %, the toll 100 % -> 1 %. This moves every effect that uses edo(), not only the rule sounds: the soul
+    ladder, UI clicks and the Saelion-off chimes now sit a third lower in F cues.
+4. BANNER (feel-0.30-banner.jpg; tools/shots/feel30-banner.js)
+  - Desktop: under the score at st+66 px, a size smaller, the feed slides 92 px down while it shows. Phone portrait:
+    st+156 px, full width, feed and objective fade while it shows. Phone on its side: top right under the health bar,
+    feed fades. Overlap with the middle of the frame (30-70 % x, 35-80 % y), px^2 before -> after: desktop 0 -> 0,
+    960x540 0 -> 0, portrait 2872 -> 0, landscape 21765 -> 2321 (the corner of the box, over sky); with the HUD:
+    feed 590/9988/8315/8115 -> 0, objective (landscape) 6796 -> 0. From the spawn the banner still crosses the top of
+    the base house's roof on desktop (it is the sky band; less than before).
+5. INKBLOT NOIR FACES (feel-0.30-ink-faces.jpg)
+  - Hand 1 lifts skin-like colours (r>g>b, red-to-blue 0.2-0.55 of red, not near black) to the light hatch. Seen in
+    frame: a small difference at 5-11 m; faces were already mostly in the hatched band in this staging. Unverified that
+    it fixes the case the owner saw (black faces).
+
+TESTED: node tools/test.js 83/83, test-debrief 9/9, node --check on js/ and tools/, smoke ok (Chrome, port 8874).
+UNVERIFIED: how any of it sounds (not listened to); the pointer on phones; reduced motion and Lighter graphics for the
+  columns (by code: columns stand still but rotate 0 under reduced motion; they stay on Lighter graphics).
+WEAK STILL: the columns are additive and read thin in Origami's normal blending; the Hypermetapunk bright house reads
+  pale peach more than gold; the banner on the desktop spawn still touches the base house's roof peak.
