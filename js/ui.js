@@ -218,7 +218,7 @@ UI.startHUD = function (w) {
 };
 UI.coach = function (text) { const c = $('coach'); c.hidden = !text; if (text) c.textContent = text; };
 UI.banner = function (text, small, secs) {
-  const b = $('banner'); b.innerHTML = esc(text) + (small ? '<small>' + esc(small) + '</small>' : ''); b.classList.add('on'); bannerT = secs || 3.5;
+  const b = $('banner'); b.innerHTML = esc(text) + (small ? '<small>' + esc(small) + '</small>' : ''); b.classList.add('on'); document.body.classList.add('banner-on'); bannerT = secs || 3.5; /* 0.30 feel: banner-on lets the feed and objective make room (css/hud.css) */
 };
 UI.feed = function (html) { feed(html); }; // 0.23 wardrobe: js/wardrobe.js says "New in the wardrobe" here
 function feed(html) { const f = $('feed'), p = document.createElement('p'); p.innerHTML = html; f.appendChild(p); while (f.children.length > 4) f.removeChild(f.firstChild); setTimeout(function () { if (p.parentNode) p.parentNode.removeChild(p); }, 6000); }
@@ -464,7 +464,7 @@ UI.frame = function (dt, w, view, info) {
     n.el.style.opacity = pr.vis ? (f < 0.7 ? 1 : (1 - f) / 0.3) : 0;
     n.el.style.transform = 'translate(' + Math.round(pr.x) + 'px,' + Math.round(pr.y) + 'px) translate(-50%,-50%)';
   }
-  if (bannerT > 0) { bannerT -= dt; if (bannerT <= 0) $('banner').classList.remove('on'); }
+  if (bannerT > 0) { bannerT -= dt; if (bannerT <= 0) { $('banner').classList.remove('on'); document.body.classList.remove('banner-on'); } } /* 0.30 feel */
   hurt = Math.max(0, hurt - dt * 1.6);
   const hpF = p.hp / p.maxHp;
   $('vig').style.opacity = p.alive ? Math.min(0.9, hurt * 0.7 + (hpF < 0.35 ? (0.35 - hpF) * 2 : 0)) : 0;
