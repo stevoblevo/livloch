@@ -17,7 +17,7 @@ CAPTURES (tools/shots/feel29.js, Playwright paused clock, SwiftShader, 960x540, 
   so a still shows the state at its game time. Particles begun during the skip start when drawing starts.
 
 DRAW CALLS (RF._state().draws, the rule objects visible in the frame): 0 with no rule in play; arrival 1 (the
-  veil); slack 1 (veil); fold 1 (pinning paper); carrying a light 3 (lantern, staff, glows); a bright house 3
+  veil); slack 1 (veil); fold 1 (pinning paper); carrying a light 3 (lantern, staff, glows; 4 in the frame because the fold's pinning paper still holds); a bright house 3
   (glows, aura rings, veil off). Six at most by construction. Everything else uses gfx.js's existing pools.
 
 SOUND LEVELS (tools/shots/feel29-audio.js, LL.audio.offline, alone, no music; measured, not listened to)
