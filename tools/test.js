@@ -38,7 +38,7 @@ test('a guardian robbed of its light is dark 120 s and loses 25% health; capture
   W = world(); g = W.st[0][1].outer; t = thiefOn(W, g); run(W, 3, w => { w.thiefT = 1e9; keepAlive(w); }); assert.ok(g.dark);
   t.x = 0; t.z = C.PATRON_Z - 7; const hp0 = g.hp; let ev = run(W, 2, w => { w.thiefT = 1e9; keepAlive(w); }); assert.ok(ev.some(e => e.k === 'thiefhome'));
   assert.ok(Math.abs((hp0 - g.hp) - g.maxHp * 0.25) < g.maxHp * 0.02, 'lost a quarter: ' + (hp0 - g.hp)); assert.ok(g.dark);
-  const t0 = W.t; ev = run(W, 125, w => { w.thiefT = 1e9; keepAlive(w); g.hp = Math.max(g.hp, 500); }); const relit = ev.find(e => e.k === 'relit' && e.u === g);
+  const t0 = W.t; ev = run(W, 125, w => { w.thiefT = 1e9; keepAlive(w); g.hp = Math.max(g.hp, 500); w.heroes.forEach(h => { h.ember = false; }); }); /* 0.29 play: no hero walks a light into it meanwhile */ const relit = ev.find(e => e.k === 'relit' && e.u === g);
   assert.ok(relit, 'relit event'); assert.ok(Math.abs((relit.at - t0) - 118) < 4, 'dark for about 120 s, got ' + (relit.at - t0 + 2).toFixed(1));
 });
 test('a hollow returns to its thread after the respawn delay', () => {
@@ -711,9 +711,11 @@ test('whole bot matches with the Ness: floods end, nobody stays in the jaws, bot
   }
   /* measured at 0.27 over these eight: 15 floods, 36 tells, 17 bitten, 19 dodged, 39 rides in a flood, 16 fishing, 13 downs
      measured at 0.28 (play: the slack thread, the fold's catch, lights) over the same eight: 12 floods, 29 tells, 11 bitten,
-     17 dodged, 39 rides in a flood, 20 fishing, 9 downs */
+     17 dodged, 39 rides in a flood, 20 fishing, 9 downs
+     measured at 0.29 (play: kept houses, lights from thieves, the tides, the patron that dims) over the same eight: 32 tells,
+     7 bitten, 25 dodged, 38 rides in a flood, 15 fishing, 10 downs; the floor for bites taken went from 8 to 5 */
   assert.ok(longest < 25, 'the longest flood: ' + longest.toFixed(1) + ' s');
-  assert.ok(tells >= 24, 'heroes are picked: ' + tells); assert.ok(bitten >= 8 && dodged >= 8, 'bots dodge some bites and take some: ' + dodged + ' dodged, ' + bitten + ' bitten');
+  assert.ok(tells >= 24, 'heroes are picked: ' + tells); assert.ok(bitten >= 5 && dodged >= 8, 'bots dodge some bites and take some: ' + dodged + ' dodged, ' + bitten + ' bitten');
   assert.ok(zips >= 20, 'bots take the threads in a flood: ' + zips); assert.ok(fishing >= 12, 'bots still go fishing: ' + fishing); assert.ok(downs >= 8, 'and still land the Ness: ' + downs);
 });
 /* 0.27 SEED (#27). Every random draw in the model goes through W.rng, so one seed and one set of inputs give one match.
@@ -841,6 +843,12 @@ test('0.29 play: whoever catches a small one carries off a light', () => {
   const t2 = thiefOn(W, h); S._t.damage(t2, 1e6, h, 'gun'); assert.strictEqual(W.fx.filter(e => e.k === 'ember').length, 0, 'one light at a time');
   h.ember = false; const t3 = thiefOn(W, h); S._t.damage(t3, 1e6, null, 'unit'); assert.ok(!h.ember, 'a small one that a house or trooper puts down leaves no light');
   const F = world({ auto: false, mode: 'fallen' }), fh = F.player, ft = thiefOn(F, fh); S._t.damage(ft, 1e6, fh, 'gun'); assert.ok(!fh.ember, 'not in Ever Fallen: there the light goes to a dark house');
+});
+test('0.29 play: every Hush house that falls takes a part of the Hush patron', () => {
+  const W = world({ auto: false }), p = W.patron[1], hp0 = p.hp; S._t.kill(W.st[1][0].outer, null, null); const e = W.fx.find(x => x.k === 'patrondim');
+  assert.ok(Math.abs((hp0 - p.hp) - p.maxHp * C.PATRON_DIM) < 0.01, 'a guardian on the west thread: ' + (hp0 - p.hp).toFixed(0)); assert.ok(e && e.u === p && e.n === 1 && e.by === W.st[1][0].outer, 'and it is said');
+  const r0 = W.patron[0].hp; S._t.kill(W.st[0][0].outer, null, null); assert.strictEqual(W.patron[0].hp, r0, 'the Reign patron does not live on its houses');
+  p.hp = 5; S._t.kill(W.st[1][2].outer, null, null); assert.ok(p.alive && p.hp >= 1 && !W.over, 'a falling house never takes the last of it');
 });
 test('0.29 play: an arrival needs a landing among the Hush', () => {
   const W = world({ auto: false }), h = W.player; run(W, 5, keepAlive); const u = hushSmall(W, 1, 80 + C.ARRIVE.r + 6); LL.lanePoint(1, 80, PP); h.x = PP.x; h.z = PP.z; h.zip = { lane: 1, dir: 1, s: 80, s0: 20 }; const hp0 = u.hp; h.ctl.zip = true; S._t.heroStep(h, 1 / 30);

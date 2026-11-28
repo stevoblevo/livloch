@@ -98,6 +98,18 @@ var C = LL.C = {
                 fall on it pulls it tight at once; if that was a Hush house, the leaning hollow crumples. Which
                 thread: the most worn (sim.js, slackStep). Not in
                 First Rain or Ever Fallen, and never once the threads fray at 15:00 */
+  /* 0.29 play (rules in sim.js under "0.29 play"; why and the measurements in docs/evidence/play-0.29-*.txt):
+       ARRIVE.among  1: an arrival strikes only if a Hush trooper is within `r` of the landing; let go behind your own
+                line and the ride ends quietly
+       PATRON_DIM    the Hush patron lives on its houses: each Hush guardian or warden that falls, on any thread, takes
+                this share of the patron's full health from it (never the last point)
+       EMBER.wait    seconds standing in the fountain in one visit that give a hero a light, hurt or not
+       EMBER.thief   1: the hero who catches a small one carries off a light
+       EMBER.under   1 since 0.29: any standing house of the carrier's side takes the light, whole or hurt
+       EMBER.bright, guard  the house that takes a light is kept for `bright` seconds: it fires `fire` times as fast, takes
+                `guard` of all harm, is never slack, and no small one picks it
+       SLACK.first, pre  when a thread goes slack: once at `first`, then for every red rain once `pre` seconds before it
+                falls and once as it ends (`every` is gone). `lead`: the leaning hollow sets out this long before */
   ARRIVE: { min: 45, r: 8, reach: 24, dmg: 140, dmgMin: 10, slow: 0.5, slowT: 2.5, among: 1 },
   FOLD_CATCH: 2.5, FOLD_CRUSH: 0.04, PATRON_DIM: 0.12,
   EMBER: { need: 0.4, r: 9, heal: 0.3, under: 1, bright: 80, fire: 2, wait: 3, guard: 0.35, thief: 1 },

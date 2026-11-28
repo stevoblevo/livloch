@@ -1280,6 +1280,19 @@ function rollStart(h, mx, mz) {
    Bots follow the same rules: they land arrivals when they ride out, a bot that went home hurt mends the house it
    comes back to stand by, and a bot shoots a slack house that is in its range. They do not plan around any of it:
    no bot folds, walks a light to the house that needs it, or leaves its thread for the slack one. */
+/* ---------- 0.29 play: a light to place, the tides, and a patron that lives on its houses ----------
+   0.28 left lesson 5 worth nothing on Cruel and Even 18 points easier for a player who knows no lesson. What 0.29 found
+   and changed (tables and what was tried and dropped: docs/evidence/play-0.29-notes.txt):
+   - Even was easier because the two bot teammates landed an arrival on every long ride out. An arrival now needs a
+     landing among the Hush (C.ARRIVE.among); a bot lets go behind its own line, so its ride ends quietly.
+   - A light can be had three ways: mended at home (0.28), by waiting C.EMBER.wait seconds in the fountain, or by
+     catching a small one (kill). The house that takes it is KEPT for C.EMBER.bright seconds: faster fire (0.28), less
+     harm (C.EMBER.guard), never slack, and safe from small ones. Any standing house takes it. One light, one house:
+     which house is the choice.
+   - Harm that was spread did not win: only the houses of one thread stood between a side and the patron. Now every
+     Hush house that falls, anywhere, takes C.PATRON_DIM of the Hush patron's health with it (kill, event patrondim).
+   - The tides come once early and then twice to every rain, before it and as it ends (tideAfter), and the hollow
+     that leans on a slack thread sets out before the thread goes slack (C.SLACK.lead), so it is seen coming. */
 function arrive(h) {
   const zp = h.zip, A = C.ARRIVE; if (!zp || zp.dir < 0 || rel(h.team, zp.lane, zp.s) - rel(h.team, zp.lane, zp.s0) < A.min) return false;
   const dmg = A.dmg + A.dmgMin * (W.t / 60), ts = rel(h.team, zp.lane, zp.s); let n = 0, among = !A.among;
@@ -1824,8 +1837,8 @@ function trooperStep(u, dt) {
 }
 function structStep(s, dt) {
   if (W.fallen && s.team === 0 && !s.dark && s.kind !== 'patron') { s.litT -= dt * (W.lens === 'memory' ? 0.5 : 1); if (s.litT <= 0) { s.dark = true; s.darkT = 0; fx({ k: 'snuff', u: s, faded: true }); } }
-  if (isSlack(s)) { s.tgt = null; return; } // 0.28 play: on a slack thread no house fires
   if (s.dark) { if (s.darkT > 0) { s.darkT -= dt * (W.lens === 'memory' && s.team === 0 ? 2 : 1); if (s.darkT <= 0) { s.dark = false; fx({ k: 'relit', u: s }); } } s.tgt = null; return; }
+  if (isSlack(s)) { s.tgt = null; return; } // 0.28 play: on a slack thread no house fires (0.29 play: after the dark line, so a slack thread does not stop a dark house's clock)
   s.atkT -= dt * (s.brightT > 0 ? C.EMBER.fire : 1); s.scanT -= dt; if (s.brightT > 0) { s.brightT -= dt; if (s.brightT <= 0) fx({ k: 'brightend', u: s }); } // 0.28 play: a house that has just taken a light burns bright
   if (s.scanT <= 0) {
     s.scanT = 0.25; s.pressed = false;
