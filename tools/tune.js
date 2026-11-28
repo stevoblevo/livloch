@@ -79,10 +79,10 @@ function policy(W, L, seed) {
     const K = W.slack, slackOn = K.t > 0, slackSoon = K.warned || slackOn;
     { const rainDue = has('I') && W.red <= 0 && W.redNext - W.t < 14 && !W.short, tideDue = has('U') && K.warned && C.dif(W).slackHollows > 0 && W.st[0][K.lane].inner.alive;
       const tw0 = enemyNext(st.pick); let near0 = 0; for (const u of W.troopers) if (u.alive && u.team === 1 && hyp(u.x - p.x, u.z - p.z) < 35) near0 += u.big ? 3 : 1;
-      const siegeDue = !has('z') && (tw0.kind !== 'patron' || !has('P')) && S.vuln(tw0) && !(tw0.blindT > 0) && !S.slack(tw0) && near0 < 4 && !(W.red > 0 && !W.thin) && !slackOn && W.t - st.busyAt > 1.5;
+      const siegeDue = !has('z') && (tw0.kind !== 'patron' || !has('P')) && (tw0.kind === 'patron' || !has('Q')) && S.vuln(tw0) && !(tw0.blindT > 0) && !S.slack(tw0) && near0 < 4 && !(W.red > 0 && !W.thin) && !slackOn && W.t - st.busyAt > 1.5;
       if (st.had && !p.ember) { st.keep = null; st.fetchAt = W.t + 15; } st.had = !!p.ember;
       if (st.fetch) { if (p.ember || st.retreat || W.t > st.fetchT0 + 30) st.fetch = false; }
-      else if (has(5) && !has('g') && C.EMBER.wait < 100 && !p.ember && !st.retreat && hpF > 0.5 && W.t > st.fetchAt && (rainDue || tideDue || siegeDue)) { st.fetch = true; st.fetchT0 = W.t; st.fetchAt = W.t + 40; st.keep = rainDue ? 'rain' : tideDue ? 'tide' : 'siege'; } }
+      else if (has(5) && has('G') && C.EMBER.wait < 100 && !p.ember && !st.retreat && hpF > 0.5 && W.t > st.fetchAt && (rainDue || tideDue || siegeDue)) { st.fetch = true; st.fetchT0 = W.t; st.fetchAt = W.t + 40; st.keep = rainDue ? 'rain' : tideDue ? 'tide' : 'siege'; } }
     // views (lesson 3)
     const m = W.mood;
     if (has(3)) {
@@ -101,13 +101,13 @@ function policy(W, L, seed) {
     for (const k of W.creases) if (k.t > 0 && k.team === 0 && k.from === st.lane) st.lane = k.to; // whoever folds its own thread away goes with its troopers
     // lesson 5: a slack thread carries to the far side's open house. It leaves its own thread dark for fifty seconds and takes that house
     let raid = null;
-    if (has(5) && !has('s') && slackOn && hpF > 0.35) { const e = enemyNext(K.lane); const mine = W.st[0][st.pick], mh = mine.outer.alive ? mine.outer : mine.inner, risk = has('R') && K.lane !== st.pick && st.lane === st.pick && mh.alive && (mh.hp < mh.maxHp * 0.5 || W.troopers.some(u => u.alive && u.team === 1 && u.big && u.lane === st.pick && hyp(u.x - mh.x, u.z - mh.z) < 30)); if (S.slack(e) && S.vuln(e) && !risk) { st.lane = K.lane; raid = e; } }
+    if (has(5) && has('S') && slackOn && hpF > 0.35) { const e = enemyNext(K.lane); const mine = W.st[0][st.pick], mh = mine.outer.alive ? mine.outer : mine.inner, risk = has('R') && K.lane !== st.pick && st.lane === st.pick && mh.alive && (mh.hp < mh.maxHp * 0.5 || W.troopers.some(u => u.alive && u.team === 1 && u.big && u.lane === st.pick && hyp(u.x - mh.x, u.z - mh.z) < 30)); if (S.slack(e) && S.vuln(e) && !risk) { st.lane = K.lane; raid = e; } }
     let fire = null; // a house of ours being hit
     for (const s of W.structs) if (s.team === 0 && s.alive && st.hurtAt[s.id] > W.t - 2) { if (!has(5) || has('v') || s.kind !== 'guardian') { if (!fire || s.kind !== 'guardian') fire = s; } }
     if (fire && fire.lane !== st.lane && !raid) st.lane = fire.lane;
     // lesson 5: a light from home goes to the house that needs it most, and the hero's thread waits
     let mend = null;
-    let siege = null; if (has(5) && p.ember && st.keep === 'siege' && !st.retreat) { const e = enemyNext(st.pick); if (S.vuln(e) && !(e.blindT > 0)) siege = e; else st.keep = null; }
+    let siege = null; if (false && p.ember && (st.keep === 'siege' || !st.keep) && !st.retreat && hpF > 0.4) { const e = enemyNext(st.pick); if (S.vuln(e) && !(e.blindT > 0) && !S.slack(e)) siege = e; }
     if (has(5) && !has('h') && p.ember && !st.retreat && !siege) { let bv = 0; for (const s of W.structs) { if (s.team !== 0 || !s.alive || s.kind === 'patron' || !S.vuln(s) || !(s.dark || s.hp <= s.maxHp * C.EMBER.under)) continue; let hol = 0; for (const u of W.troopers) if (u.alive && u.team === 1 && u.big && u.lane === s.lane && hyp(u.x - s.x, u.z - s.z) < 60) hol++; const v = (1 - s.hp / s.maxHp) + (s.dark ? 0.5 : 0) + (st.hurtAt[s.id] > W.t - 6 ? 0.5 : 0) + hol * 0.6 + (s.lane === st.pick ? 0.15 : 0) + (s.brightT > 0 ? -3 : 0) + (st.keep === 'tide' && s.lane === K.lane ? 4 : 0) + (st.keep === 'rain' && s.lane === st.pick ? 2 : 0) + (st.keep && s.kind === 'guardian' ? 0.3 : 0); if (v > bv) { bv = v; mend = s; } } if (mend) { st.lane = mend.lane; raid = null; } }
     const lane = st.lane, Ln = lanes[lane];
     LL.laneNearest(lane, p.x, p.z, Q); const myS = rel(0, lane, Q.s), onLane = Q.d < 6;

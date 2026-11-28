@@ -99,9 +99,9 @@ var C = LL.C = {
                 thread: the most worn (sim.js, slackStep). Not in
                 First Rain or Ever Fallen, and never once the threads fray at 15:00 */
   ARRIVE: { min: 45, r: 8, reach: 24, dmg: 140, dmgMin: 10, slow: 0.5, slowT: 2.5, among: 1 },
-  FOLD_CATCH: 2.5, FOLD_CRUSH: 0.04,
-  EMBER: { need: 0.4, r: 9, heal: 0.3, under: 1, bright: 80, fire: 2, wait: 3, guard: 0.35, blind: 25, blindMul: 1.5 },
-  SLACK: { first: 150, every: 300, warn: 20, t: 50, mul: 2, ride: [0.58, 0.75], clear: 0, lead: 0 }
+  FOLD_CATCH: 2.5, FOLD_CRUSH: 0.04, PATRON_DIM: 0.12,
+  EMBER: { need: 0.4, r: 9, heal: 0.3, under: 1, bright: 80, fire: 2, wait: 3, guard: 0.35, thief: 1 },
+  SLACK: { first: 100, pre: 90, warn: 30, t: 60, mul: 2, ride: [0.58, 0.75], lead: 28 }
 };
 /* 0.27 tune: THE DIFFICULTY TABLE. One row per difficulty (0 Gentle, 1 Even, 2 Cruel); every number that differs by
    difficulty lives here, and tools/tune.js measures them against the agreed target (docs/PLAN.md: Even winnable with two
