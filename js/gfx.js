@@ -1469,6 +1469,7 @@ R.frame = function (dt, view) {
     { const pv = m.paper ? m.paper.v : 2; scr.k = pv === 1 ? 1 : (pv === 3 ? 0.45 : 0.12); } // side view drags cloth fully; facing away or toward, barely
     { const q0 = m.paper; scr.m = q0 && q0.sign ? q0.sign : 1; scr.h = q0 ? q0.h : 2.3; scr.fb = !!(q0 && q0.v != null && !(q0.cell === 1 || q0.cell === 6 || (!q0.useM && q0.v === 1))); } // what the braid needs to know of last frame's picture
     scr.cyc = m.fig ? LL.heroes3d.cyc(m.fig, h) : 1; // 0.24 heroes3d: the figure's stride length at this speed
+    scr.paper = !!m.paper; /* 0.29 look: a painted card gets the rig's paper life (motion.js) */
     const sp = Math.hypot(h.vx, h.vz), st = LL.paperMotion.pose(m.rig, h, dt, W.t, R.reduced, scr), G = st.g;
     if (m.fig) LL.heroes3d.pose(m.fig, st, h, { dt: dt, t: time, reduced: R.reduced }); // 0.24 heroes3d: legs, arms, aim, cloth, braid from the rig
     if (!R.reduced) heroDust(m, h, st, dt);

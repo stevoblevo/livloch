@@ -204,6 +204,21 @@ test('motion gaits (0.21): Dora bobs and rolls as in 0.20; Anna is lower, rolls 
   assert.ok(a.contacts > 3, 'Anna steps: ' + a.contacts); assert.ok(a.sq > d.sq + 0.1, 'each of Anna\'s steps squashes, Dora\'s do not: ' + a.sq.toFixed(2) + ' vs ' + d.sq.toFixed(2));
   assert.ok(a.p.g.shift > 1 && a.p.g.bob < 1, 'Anna moves her weight more and bounces less');
 });
+/* 0.29 look */
+test('paper life (0.29): a painted card standing still breathes, sways and stirs; walking it waddles; a 3D figure and reduced motion are untouched', () => {
+  const M = require(path.join(__dirname, '..', 'js', 'motion.js'));
+  const stand = (paper, still) => { const m = M.create(), u = { x: 0, z: 0, yaw: 0, onGround: true, def: { id: 'rook' }, lastShotT: -99, id: 3 }; let lo = {}, hi = {};
+    for (let i = 0; i < 150; i++) { const p = M.pose(m, u, 1 / 30, i / 30, still, { r: 0, f: 0, fb: true, m: 1, h: 2.4, paper: paper }); if (i < 30) continue;
+      ['body', 'roll', 'cloak', 'head'].forEach(k => { lo[k] = Math.min(lo[k] == null ? 9 : lo[k], p[k]); hi[k] = Math.max(hi[k] == null ? -9 : hi[k], p[k]); }); }
+    const r = {}; for (const k in lo) r[k] = hi[k] - lo[k]; return r; };
+  const pap = stand(true, false), fig = stand(false, false), red = stand(true, true);
+  assert.ok(pap.body > 0.02 && pap.roll > 0.012 && pap.cloak > 0.015 && pap.head > 0.01, 'a standing card moves: ' + JSON.stringify(pap));
+  assert.ok(fig.body < 1e-9 && fig.cloak < 1e-9, 'a 3D figure standing gets none of it: ' + JSON.stringify(fig));
+  assert.ok(red.body + red.roll + red.cloak + red.head === 0, 'reduced motion stays still');
+  const walk = (paper) => { const m = M.create(), u = { x: 0, z: 0, yaw: 0, onGround: true, def: { id: 'rook' }, lastShotT: -99 }; let hi = 0;
+    for (let i = 0; i < 90; i++) { u.z += 0.2; const p = M.pose(m, u, 1 / 30, i / 30, false, { r: 0, f: 6, fb: true, m: 1, h: 2.4, paper: paper }); if (i > 30) hi = Math.max(hi, Math.abs(p.roll)); } return hi; };
+  assert.ok(walk(true) > walk(false) * 1.5, 'walking, the card waddles more than the bare rig: ' + walk(true).toFixed(3) + ' vs ' + walk(false).toFixed(3));
+});
 test('the braid (0.21): hangs at rest, trails a run across the screen, swings with the step and settles when she stops', () => {
   const M = require(path.join(__dirname, '..', 'js', 'motion.js')), u = { x: 0, z: 0, yaw: 0, onGround: true, def: { id: 'anna' }, lastShotT: -99, id: 1 };
   const run = (m, n, sc, step, fps) => { let p, lo = 0, hi = 0; const dt = 1 / (fps || 30); for (let i = 0; i < n; i++) { u.x += (step || 0) * 30 * dt; p = M.pose(m, u, dt, (m.t = (m.t || 0) + dt), false, sc); lo = Math.min(lo, p.braid); hi = Math.max(hi, p.braid); } return { p, lo, hi }; };
