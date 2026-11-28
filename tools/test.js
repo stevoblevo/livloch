@@ -722,13 +722,16 @@ test('whole bot matches with the Ness: floods end, nobody stays in the jaws, bot
     }
     assert.ok(ok, 'seed ' + seed + ': every number stays finite'); assert.ok(W.over, 'seed ' + seed + ': the match ends (' + W.t.toFixed(0) + ' s)'); over++;
     assert.ok(!W.ness.out || W.flood, 'seed ' + seed + ': the Ness is only out of the loch in a flood');
-    assert.ok(floods > b[0] && fishing > b[2] && downs > b[3], 'seed ' + seed + ': a flood, a fishing trip and the Ness landed in every match'); // 0.28 play: a hero picked is counted over the eight, below; the new rules moved the draws and two of the eight now pass without a tell
+    assert.ok(floods > b[0] && fishing > b[2], 'seed ' + seed + ': a flood and a fishing trip in every match'); /* 0.30 play: the Ness landed is counted over the eight, below. With the tide taking a house, seed 8 (Cruel, bots alone) is lost at 6:58 before anyone lands it */ // 0.28 play: a hero picked is counted over the eight, below; the new rules moved the draws and two of the eight now pass without a tell
   }
   /* measured at 0.27 over these eight: 15 floods, 36 tells, 17 bitten, 19 dodged, 39 rides in a flood, 16 fishing, 13 downs
      measured at 0.28 (play: the slack thread, the fold's catch, lights) over the same eight: 12 floods, 29 tells, 11 bitten,
      17 dodged, 39 rides in a flood, 20 fishing, 9 downs
      measured at 0.29 (play: kept houses, lights from thieves, the tides, the patron that dims) over the same eight: 32 tells,
-     7 bitten, 25 dodged, 38 rides in a flood, 15 fishing, 10 downs; the floor for bites taken went from 8 to 5 */
+     7 bitten, 25 dodged, 38 rides in a flood, 15 fishing, 10 downs; the floor for bites taken went from 8 to 5
+     measured at 0.30 (play: the tide takes a house; bots no longer single out a slack house): 14 floods, 31 tells,
+     7 bitten, 22 dodged, 33 rides in a flood, 17 fishing, 11 downs; seed 8 is lost at 6:58 with no Ness landed, so that is counted over the eight */
+  if (process.env.NESS_COUNTS) console.log('ness counts', JSON.stringify({ floods, tells, bitten, dodged, zips, fishing, downs, longest }));
   assert.ok(longest < 25, 'the longest flood: ' + longest.toFixed(1) + ' s');
   assert.ok(tells >= 24, 'heroes are picked: ' + tells); assert.ok(bitten >= 5 && dodged >= 8, 'bots dodge some bites and take some: ' + dodged + ' dodged, ' + bitten + ' bitten');
   assert.ok(zips >= 20, 'bots take the threads in a flood: ' + zips); assert.ok(fishing >= 12, 'bots still go fishing: ' + fishing); assert.ok(downs >= 8, 'and still land the Ness: ' + downs);

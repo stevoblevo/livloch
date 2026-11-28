@@ -1,0 +1,69 @@
+0.30 play, BEFORE: work/0.30 as branched (2889bb8; gameplay is 0.29's), tools/tune.js, scripted player, simulator output.
+A row of 48 seeds has a standard error of about 7 points of win rate (sqrt(p(1-p)/48): 7.2 at 50%, 6.7 at 69%, 3.9 at 92%).
+The full 0.29 tables (all three difficulties, First Rain, soak) are docs/evidence/play-0.29-after.txt; they are the "before" of
+this work and are not repeated here. What was run again or new before any rule changed:
+
+EVEN, seeds 1-48, lessons none, 1, 12 and lesson 2 with one group of habits switched off
+(k: none of the three habits around a house; t: no thief hunting; f: no little fruit)
+node tools/tune.js 48 1 --mode match --diff 1 --lessons 0,1,12,12k,12t,12f
+diff    lessons  win   margin  median  lost by gutter/overrun  structs lost R-H  player deaths (by)          longest quiet  first fall  folds moods ness  arrivals lights caught
+Even    none      48%    -1.0   12:24   0/25                   4.7-3.7           0.0 ()                         3:41         1:56      0.0   0.0  0.0      0.0    1.8      0
+Even    1         69%    -0.9   14:25   0/15                   4.3-3.4           0.2 (ness 0.2)                 4:10         1:58      0.0   0.0  0.6      0.0    2.9      0
+Even    12        48%    -0.7   12:16   0/25                   4.3-3.6           0.3 (ness 0.2, trooper 0.0, hollow 0.0)   3:08         1:58      0.0   0.0  0.9      0.0    3.4      0
+Even    12k       69%    -0.7   15:33   0/15                   4.2-3.5           0.2 (ness 0.2, trooper 0.0, hollow 0.0)   4:07         1:58      0.0   0.0  0.6      0.0    3.0      0
+Even    12t       50%    -0.5   12:22   1/23                   4.1-3.7           0.3 (ness 0.2, trooper 0.0)    3:42         1:58      0.0   0.0  0.7      0.0    2.4      0
+Even    12f       48%    -0.7   12:22   1/24                   4.2-3.5           0.5 (ness 0.3, hollow 0.1, trooper 0.1)   3:16         1:58      0.0   0.0  0.8      0.0    3.5      0
+
+The three habits inside k, one switched off at a time (x: no pressing the building while its thread's hollow is down;
+d: no standing under a slack Hush house; g: no falling back to its own house in a full red rain)
+node tools/tune.js 48 1 --mode match --diff 1 --lessons 12x,12d,12g
+Even    12x       54%    -0.7   12:21   0/22                   4.4-3.7           0.3 (ness 0.2, hollow 0.0, trooper 0.0)   3:13         1:58      0.0   0.0  0.9      0.0    3.3      0
+Even    12d       54%    -1.0   14:02   1/21                   4.4-3.5           0.2 (ness 0.1, trooper 0.1, hollow 0.0)   3:44         1:58      0.0   0.0  0.7      0.0    2.5      0
+Even    12g       48%    -0.6   12:20   0/25                   4.1-3.5           0.3 (ness 0.1, hollow 0.1, trooper 0.1)   3:38         1:58      0.0   0.0  0.9      0.0    2.9      0
+
+and two switched off at a time, so that only one is left on (12xd: only g on; 12dg: only x on; 12xg: only d on).
+Run with the 0.30 code and the take switched off (--c SLACK.take=-1), which is 0.29's rules: no draw differs.
+node tools/tune.js 48 1 --mode match --diff 1 --lessons 12xd,12dg,12xg --c SLACK.take=-1
+Even    12xd      54%    -1.0   14:17   1/21                   4.4-3.4           0.2 (ness 0.1, trooper 0.1)    3:53         1:58      0.0   0.0  0.6      0.0    2.9      0    5.6  3.4 (0.0-0.0)
+Even    12dg      63%    -0.8   14:53   0/18                   4.3-3.5           0.2 (ness 0.1, hollow 0.0, trooper 0.0)   4:06         1:58      0.0   0.0  0.6      0.0    2.8      0    5.6  3.4 (0.0-0.0)
+Even    12xg      46%    -0.5   12:10   0/26                   4.2-3.6           0.3 (ness 0.2, hollow 0.1, trooper 0.0)   3:46         1:58      0.0   0.0  0.9      0.0    2.6      0    5.3  3.6 (0.0-0.0)
+
+Read together (win rate, 48 seeds, SE about 7):   all three on 48   all three off 69
+   only x on 63   only g on 54   only d on 46      x off 54   d off 54   g off 48      no thieves 50   no fruit 48
+Lesson 1 alone is 69. So the dip is in the three habits around a house, not in thieves or fruit; standing under the
+slack house (d) costs the most, the rain fallback (g) next, pressing (x) least; they do not add up cleanly, and single
+rows 6 points apart are noise.
+
+WHERE THE QUIET WAS (the same run, --lines; Even, no lessons, the first 30 seeds)
+The first tide (1:40) fells the Reign's middle guardian at about 1:56 in nearly every match. In 21 of those 30 the
+longest quiet stretch starts right there: the 3:30 tide fells nothing and the next building falls in the first rain.
+  seed 1 14:29 won falls R116m H309e H320m R354w R394m R564w H588m R663e R687e quiet 3:12@1:56
+  seed 2 14:37 won falls R118e R180m H265w R383m R385e H599e H665w quiet 3:34@6:24
+  seed 3 11:56 overrun falls R117m R360m R363e H521m H561w R670w R673e R705w H712m quiet 4:03@1:56
+  seed 4 12:21 won falls R113m H405w H420m H431e H569m H596w quiet 4:51@1:53
+  seed 5 13:59 won falls R117m R356e H477w H487m R661w R672e H684m quiet 3:59@1:56
+  seed 6 11:59 won falls R117m R355w R367e R386m H450m H502e H583m R682w R687e quiet 3:57@1:57
+  seed 7 11:56 overrun falls R119e H569w H607m R656m R665e quiet 7:29@1:59
+  seed 8 11:53 overrun falls R117m R256m R355w R358e R395e H561e R585w H589m H692m quiet 2:45@6:34
+  seed 9 15:54 won falls R112m R367e R371m R382w H512m R566e H568w H681m R683w quiet 4:32@11:22
+  seed 10 14:02 won falls R114m R389e R394m H498e H508m H566w R667w R668e R699w H755m quiet 4:35@1:53
+  seed 11 12:13 overrun falls R115m H326m R357w R373m H374e H592m R664e R676w R692e quiet 3:37@6:13
+  seed 12 14:22 overrun falls R116e R347m R394m H432w H465e R676e H711w quiet 3:50@1:55
+  seed 13 12:20 overrun falls R116m H330w R386m H494e H560m H569w R667e R695e H722m quiet 3:33@1:56
+  seed 14 14:00 won falls R115m R359e H471w H489m R665w R673e H709m R820w quiet 4:04@1:54
+  seed 15 15:07 won falls R116m H300w R382m H494m H574e R666e H682w R692e H825m quiet 3:03@1:56
+  seed 16 11:52 overrun falls R117m R254m R284w H323m R383w H497e R539e H552m R667e quiet 2:17@1:57
+  seed 17 12:14 overrun falls R120e R351w R363m H475e H498w R678e H705w quiet 3:50@2:00
+  seed 18 12:10 overrun falls R119e R389e H464m H478w H633m R662w R692w quiet 4:30@1:59
+  seed 19 13:27 won falls R114m H292w R368m H496m H555e H668w R674e H779m quiet 2:57@1:53
+  seed 20 12:18 overrun falls R116m H334e R390m H483w H495m R554w R682w H702e quiet 3:37@1:56
+  seed 21 11:32 won falls R117m H253e H301m R397m H451w H550m R661w R670e R691w quiet 2:15@1:57
+  seed 22 15:57 won falls R123e H427w H475m H513e R665w R677m R696w H697e H859m quiet 5:04@2:03
+  seed 23 16:26 overrun falls R114m R371e R388m H409w H454e H490m R680e H700w H854m quiet 4:17@1:53
+  seed 24 12:14 overrun falls R108m R262m H311e R382e H424w H557m H655m R667w R684e R706w quiet 2:33@1:48
+  seed 25 14:20 won falls R109m R394m H420e H536w R559e H590m R669w H715e R819w H859m quiet 4:45@1:49
+  seed 26 12:26 won falls R116m H268m H489w H529m R643e R659w R690w R699e quiet 3:41@4:27
+  seed 27 14:36 won falls R129e R307m R359w R374m H427e H580w R697w H709e H856m quiet 2:58@2:08
+  seed 28 13:53 won falls R119e H260m H298w H558e H603w R681e H709m quiet 4:20@4:58
+  seed 29 12:19 overrun falls R115m R261m H414w H457e H522m R662e R665w R694w H733m quiet 2:33@4:20
+  seed 30 14:41 won falls R115m R363w H406e H470m H578e R705m R794w H854m quiet 4:08@1:54

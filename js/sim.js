@@ -1362,7 +1362,7 @@ S.tideAfter = tideAfter;
    Events: slacklast (C.SLACK.last seconds before, u the house that would go), slacktake (u the house, then its
    structdown and slackend follow as for any house that falls on a slack thread). */
 function tideTake() {
-  const K = W.slack; if (!C.dif(W).slackTake || K.lane < 0) return null;
+  const K = W.slack; if (!C.dif(W).slackTake || K.lane < 0 || !(K.t > 0)) return null;
   let best = null, bf = 0, tie = false;
   for (let t = 0; t < 2; t++) {
     const st = W.st[t][K.lane], s = st.outer.alive ? st.outer : (st.inner.alive ? st.inner : null);
@@ -1382,8 +1382,8 @@ function slackStep(dt) {
     /* 0.30 play: the tide takes a house. Said `last` seconds before the thread pulls tight (slacklast names the house that would go now) */
     if (!K.said && K.t <= D.last && K.t > 0 && !W.fray) { K.said = true; const s = tideTake(); if (s) fx({ k: 'slacklast', lane: K.lane, u: s, t: D.last }); }
     if (K.t <= 0 || W.fray) {
-      const s = W.fray ? null : tideTake(); K.said = false;
-      if (s) { K.t = 0.001; fx({ k: 'slacktake', lane: K.lane, u: s, team: s.team }); K.taking = true; kill(s, null, null); K.taking = false; K.t = 0; }
+      K.t = 0.001; const s = W.fray ? null : tideTake(); K.said = false;
+      if (s) { fx({ k: 'slacktake', lane: K.lane, u: s, team: s.team }); K.taking = true; kill(s, null, null); K.taking = false; K.t = 0; }
       else { K.t = 0; fx({ k: 'slackend', lane: K.lane }); }
     }
     return;
