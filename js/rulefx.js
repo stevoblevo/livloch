@@ -93,7 +93,7 @@ function veilMesh() {
       if (i > 0) { const b = pos.length / 3 - nc * 2; for (let j = 0; j < nc - 1; j++) { const a0 = b + j, a1 = a0 + 1, c0 = a0 + nc, c1 = c0 + 1; idx.push(a0, a1, c0, a1, c1, c0); } } } }
   const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('aV', new T.Float32BufferAttribute(av, 3)); g.setIndex(idx);
   const v3 = function () { return { value: new T.Vector3() }; };
-  const m = new T.ShaderMaterial({ uniforms: { uT: { value: 0 }, uM: { value: 0 }, uDir: { value: 1 }, uK: { value: LK.add === false ? 0.75 : 1 }, uGold: { value: X.tc(0xffd28a).clone() }, uDrain: v3(), uRide: v3(), uSnap: v3(), uWarn: v3(), uArrS: v3(), uArrF: v3(), uArrA: v3(), uArrD: { value: new T.Vector3(1, 1, 1) } },
+  const m = new T.ShaderMaterial({ uniforms: { uT: { value: 0 }, uM: { value: 0 }, uDir: { value: 1 }, uK: { value: LK.add === false ? 0.75 : 1 }, uGold: { value: X.tc(0xffd060).clone() }, uDrain: v3(), uRide: v3(), uSnap: v3(), uWarn: v3(), uArrS: v3(), uArrF: v3(), uArrA: v3(), uArrD: { value: new T.Vector3(1, 1, 1) } },
     vertexShader: VVS, fragmentShader: VFS, transparent: true, depthWrite: false, fog: false, blending: T.CustomBlending, blendEquation: T.AddEquation, blendSrc: T.OneFactor, blendDst: T.OneMinusSrcAlphaFactor, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
   m.userData.lk = m.userData.bl = true;
   const o = new T.Mesh(g, m); o.renderOrder = 2; o.frustumCulled = false; o.visible = false; o.userData.rt = true; X.dyn.add(o); return o;
@@ -111,7 +111,7 @@ function inst(geo, mat, cap) { const m = new T.InstancedMesh(geo, mat, cap); m.c
 
 RF.build = function (ctx) {
   X = ctx; T = ctx.T; LK = ctx.LK; th = [];
-  const gold = ctx.tc(0xffd28a), dim = new T.Color(LK.add === false ? 0x9c94a8 : 0x6c6888);
+  const gold = ctx.tc(0xffd060), dim = new T.Color(LK.add === false ? 0x9c94a8 : 0x6c6888);
   for (let l = 0; l < pend.length; l++) {
     const m = pend[l]; if (!m) continue; const L = LL.lanes[l], g = m.geometry, n = g.attributes.position.count;
     const ring = (g.parameters && g.parameters.radialSegments || 5) + 1, segs = g.parameters && g.parameters.tubularSegments || Math.floor(L.len / 1.5), aS = new Float32Array(n);
@@ -125,7 +125,7 @@ RF.build = function (ctx) {
   }
   pend = [];
   /* a paper lantern: a lit body of eight panes between dark caps, and a ring to hang it by */
-  const lampG = merge([[new T.CylinderGeometry(0.12, 0.12, 0.22, 8), 0xffd28a], [new T.CylinderGeometry(0.075, 0.13, 0.05, 8).translate(0, 0.135, 0), 0x3a2418], [new T.CylinderGeometry(0.13, 0.09, 0.04, 8).translate(0, -0.13, 0), 0x3a2418],
+  const lampG = merge([[new T.CylinderGeometry(0.12, 0.12, 0.22, 8), 0xffe08c], [new T.CylinderGeometry(0.075, 0.13, 0.05, 8).translate(0, 0.135, 0), 0x3a2418], [new T.CylinderGeometry(0.13, 0.09, 0.04, 8).translate(0, -0.13, 0), 0x3a2418],
     [new T.TorusGeometry(0.035, 0.008, 4, 10).translate(0, 0.19, 0), 0x3a2418], [new T.CylinderGeometry(0.004, 0.004, 0.16, 3).translate(0, 0.28, 0), 0x2a1a12]]);
   lampM = inst(lampG, new T.MeshBasicMaterial({ vertexColors: true }), LAMP_N);
   /* the staff: up the back from the waist, bent over the left shoulder; local frame x right, y up, z forward */
@@ -142,7 +142,7 @@ RF.build = function (ctx) {
   glowP.material.userData.lk = glowP.material.userData.bl = true; glowP.frustumCulled = false; glowP.visible = false; glowP.userData.rt = true; glowP.renderOrder = 4; X.dyn.add(glowP);
   /* a bright house's ring of light on the ground */
   const ag = new T.RingGeometry(0.9, 1, 48).rotateX(-Math.PI / 2);
-  auraM = inst(ag, new T.MeshBasicMaterial({ color: 0xffd28a, transparent: true, opacity: 0.55, blending: add ? T.AdditiveBlending : T.NormalBlending, depthWrite: false, side: T.DoubleSide }), AURA_N);
+  auraM = inst(ag, new T.MeshBasicMaterial({ color: 0xffd060, transparent: true, opacity: 0.55, blending: add ? T.AdditiveBlending : T.NormalBlending, depthWrite: false, side: T.DoubleSide }), AURA_N);
   auraM.material.userData.bl = true; auraM.renderOrder = 2;
   /* the pinning paper: a folded band (zigzag strip round a ring) and a thread, one geometry each instance picks by scale:
      both are in one mesh as instances of a unit band; the thread is the band squeezed to a line (see bind()) */
@@ -161,35 +161,35 @@ RF.fx = function (e, w) {
   switch (e.k) {
     case 'arrive': {
       const t = th[e.lane]; if (t) { LL.laneNearest(e.lane, e.x, e.z, Q); t.u.uArrS.value = Q.s; t.u.uArrD.value = e.u && e.u.team === 1 ? -1 : 1; t.arrW = W ? W.t : 0; t.arrR = e.reach || 24; }
-      X.ring(e.x, 0.02, e.z, 0.6, e.r || 8, 0xffd28a, 0.5); X.ring(e.x, 0.04, e.z, 0.3, (e.r || 8) * 0.5, 0xfff4dc, 0.32);
+      X.ring(e.x, 0.02, e.z, 0.6, e.r || 8, 0xffd060, 0.5); X.ring(e.x, 0.04, e.z, 0.3, (e.r || 8) * 0.5, 0xfff4dc, 0.32);
       const n = red ? 6 : (low ? 9 : 16);
       for (let k = 0; k < n; k++) { const q = k / n * 6.283 + Math.random() * 0.2, v = 2.6 + Math.random() * 1.6; X.puff(e.x + Math.cos(q) * 0.5, 0.12, e.z + Math.sin(q) * 0.5, Math.cos(q) * v, 0.25 + Math.random() * 0.3, Math.sin(q) * v, 0.3, 1.15, 0.65, 0.4); }
       X.emit(e.x, 0.4, e.z, red ? 10 : 26, 0xffe2a0, 7, 0.55, 3.5);
-      if (!red && t) { LL.laneNearest(e.lane, e.x, e.z, Q); const d = t.u.uArrD.value; for (let s = 3; s <= t.arrR; s += low ? 6 : 3) { LL.lanePoint(e.lane, Q.s + s * d, P); X.emit(P.x, 0.3, P.z, 1, 0xffd28a, 2.2, 0.35 + s / t.arrR * 0.4, 2.5, 4); } }
+      if (!red && t) { LL.laneNearest(e.lane, e.x, e.z, Q); const d = t.u.uArrD.value; for (let s = 3; s <= t.arrR; s += low ? 6 : 3) { LL.lanePoint(e.lane, Q.s + s * d, P); X.emit(P.x, 0.3, P.z, 1, 0xffd060, 2.2, 0.35 + s / t.arrR * 0.4, 2.5, 4); } }
       if (e.n && X.bits) X.bits(e.x, 0.6, e.z, Math.min(14, 4 + e.n * 2), X.TISSUE, 3.2, X.BIT_TISSUE);
       if (mine && !red) { X.kick(1.1); dipV -= 3.4; X.shake(0.22); }
       break;
     }
     case 'caught': {
       const cx = creaseX(e.i);
-      X.ring(cx, 0.04, e.z, 0.2, 1.8, 0xffd28a, 0.35); X.emit(cx, 0.5, e.z, red ? 4 : 9, 0xffe2a0, 2.4, 0.5, 2, 2);
+      X.ring(cx, 0.04, e.z, 0.2, 1.8, 0xffd060, 0.35); X.emit(cx, 0.5, e.z, red ? 4 : 9, 0xffe2a0, 2.4, 0.5, 2, 2);
       if (X.bits) X.bits(e.x, 1, e.z, red ? 2 : 5, X.PAPER, 1.2, X.BIT_PAPER);
       break;
     }
     case 'death':
       if (e.creased && e.kind === 'trooper') {
         const big = e.u && e.u.big;
-        if (!big) { const cx = nearCrease(e.x); X.ring(cx, 0.04, e.z, 0.3, 2.4, 0xffd28a, 0.4); X.emit(cx, 0.35, e.z, red ? 5 : 12, 0xffd28a, 3, 0.5, 2.6, 4); if (X.bits) X.bits(e.x, 0.6, e.z, red ? 3 : 9, X.PAPER, 1.6, X.BIT_PAPER); }
-        else { X.ring(e.x, 0.04, e.z, 0.5, 5, 0xffd28a, 0.6); if (X.bits) X.bits(e.x, 1.6, e.z, red ? 6 : 18, X.PAPER, 2.6, X.BIT_PAPER); }
+        if (!big) { const cx = nearCrease(e.x); X.ring(cx, 0.04, e.z, 0.3, 2.4, 0xffd060, 0.4); X.emit(cx, 0.35, e.z, red ? 5 : 12, 0xffd060, 3, 0.5, 2.6, 4); if (X.bits) X.bits(e.x, 0.6, e.z, red ? 3 : 9, X.PAPER, 1.6, X.BIT_PAPER); }
+        else { X.ring(e.x, 0.04, e.z, 0.5, 5, 0xffd060, 0.6); if (X.bits) X.bits(e.x, 1.6, e.z, red ? 6 : 18, X.PAPER, 2.6, X.BIT_PAPER); }
       }
       break;
-    case 'pinned': X.ring(e.x, 0.04, e.z, 0.4, 3.4, 0xffd28a, 0.45); X.emit(e.x, 1.6, e.z, red ? 6 : 16, 0xffe2a0, 3, 0.6, 1.5, 2); if (X.bits) X.bits(e.x, 2.2, e.z, red ? 3 : 8, X.PAPER, 1.6, X.BIT_PAPER); break;
+    case 'pinned': X.ring(e.x, 0.04, e.z, 0.4, 3.4, 0xffd060, 0.45); X.emit(e.x, 1.6, e.z, red ? 6 : 16, 0xffe2a0, 3, 0.6, 1.5, 2); if (X.bits) X.bits(e.x, 2.2, e.z, red ? 3 : 8, X.PAPER, 1.6, X.BIT_PAPER); break;
     case 'unpinned': if (X.bits) X.bits(e.x, 1.8, e.z, red ? 3 : 10, X.PAPER, 2.8, X.BIT_PAPER); break;
-    case 'ember': { const u = e.u; if (!u) break; X.ring(u.x, 0.04, u.z, 0.3, 2.6, 0xffd28a, 0.45); X.emit(u.x, 1.9, u.z, red ? 6 : 18, 0xffd28a, 2.2, 0.8, 2.5, 0); break; }
+    case 'ember': { const u = e.u; if (!u) break; X.ring(u.x, 0.04, u.z, 0.3, 2.6, 0xffd060, 0.45); X.emit(u.x, 1.9, u.z, red ? 6 : 18, 0xffd060, 2.2, 0.8, 2.5, 0); break; }
     case 'mended': {
       const u = e.u, s = e.s; if (!s) break; const big = !!e.relit, hy = s.kind === 'warden' ? 5 : 3.6;
-      X.ring(s.x, 0.04, s.z, 1, (s.r || 3) + (big ? 9 : 6), 0xffd28a, big ? 1.1 : 0.8); X.ring(s.x, 0.06, s.z, 0.5, (s.r || 3) + 3, 0xfff4dc, 0.5);
-      X.emit(s.x, hy, s.z, red ? 14 : (big ? 90 : 50), 0xffd28a, big ? 9 : 6, 1.1, 4, 1.5);
+      X.ring(s.x, 0.04, s.z, 1, (s.r || 3) + (big ? 9 : 6), 0xffd060, big ? 1.1 : 0.8); X.ring(s.x, 0.06, s.z, 0.5, (s.r || 3) + 3, 0xfff4dc, 0.5);
+      X.emit(s.x, hy, s.z, red ? 14 : (big ? 90 : 50), 0xffd060, big ? 9 : 6, 1.1, 4, 1.5);
       if (u && !red) for (let k = 0; k <= 10; k++) { const f = k / 10; X.emit(u.x + (s.x - u.x) * f, 2 + Math.sin(f * 3.14) * 2.5 + (hy - 2) * f, u.z + (s.z - u.z) * f, 2, 0xffe2a0, 0.8, 0.45 + f * 0.4, 0.6, 0); }
       if (mine && !red) X.shake(0.12);
       break;
@@ -264,7 +264,7 @@ RF.frame = function (dt, tm, w, cam, heroM, structM, creaseM) {
     const on = c.t > 0; cm.burn = (cm.burn || 0) + ((on ? 1 : 0) - (cm.burn || 0)) * Math.min(1, dt * 4);
     cm.dash.material.opacity = Math.min(1, cm.op0 + cm.burn * (0.5 + (red ? 0 : 0.12 * Math.sin(tm * 5 + i))));
     cm.dash.scale.x = 1 + cm.burn * 0.8;
-    if (on && !red && !low && Math.random() < dt * 9) X.emit(cm.cx + (Math.random() - 0.5) * 0.4, 0.2, (Math.random() - 0.5) * 25, 1, 0xffd28a, 0.5, 0.9, 1.6, 0); }
+    if (on && !red && !low && Math.random() < dt * 9) X.emit(cm.cx + (Math.random() - 0.5) * 0.4, 0.2, (Math.random() - 0.5) * 25, 1, 0xffd060, 0.5, 0.9, 1.6, 0); }
   /* the carried lights */
   let nl = 0, ng = 0;
   for (let i = 0; i < W.heroes.length; i++) {
@@ -287,8 +287,8 @@ RF.frame = function (dt, tm, w, cam, heroM, structM, creaseM) {
     const lx2 = hx + rx * ox + fx * oz, lz2 = hz + rz * ox + fz * oz, ly2 = hy + oy;
     put(lampM, nl, lx2, ly2, lz2, h.yaw + tm * (red ? 0 : 0.4), s.b, -s.a, 1, 1, 1);
     const fl = red ? 1 : 0.9 + 0.1 * Math.sin(tm * 13 + i) * Math.sin(tm * 7.3);
-    ng = glow(ng, lx2, ly2, lz2, 0xffc98a, 1.5 * fl, 1); ng = glow(ng, lx2, ly2, lz2, 0xfff0c0, 0.45, 1);
-    if (!red && !low && Math.random() < dt * 6) X.emit(lx2, ly2 - 0.1, lz2, 1, 0xffd28a, 0.3, 0.6, -0.4, 0);
+    ng = glow(ng, lx2, ly2, lz2, 0xffd060, 1.5 * fl, 1); ng = glow(ng, lx2, ly2, lz2, 0xfff0c0, 0.45, 1);
+    if (!red && !low && Math.random() < dt * 6) X.emit(lx2, ly2 - 0.1, lz2, 1, 0xffd060, 0.3, 0.6, -0.4, 0);
     nl++;
   }
   lampM.count = staffM.count = nl; lampM.visible = staffM.visible = nl > 0; if (nl) { lampM.instanceMatrix.needsUpdate = true; staffM.instanceMatrix.needsUpdate = true; }
@@ -305,10 +305,10 @@ RF.frame = function (dt, tm, w, cam, heroM, structM, creaseM) {
       if (m.glow) m.glow.scale.multiplyScalar(1 + 0.6 * k * fl);
       if (m.lit.flat) m.lit.flat.material.color.setScalar(1 + 0.35 * k * fl);
       if (m.paper && m.baseEm != null) m.paper.emissiveIntensity = m.baseEm * (1 + 0.8 * k);
-      ng = glow(ng, s.x, hy, s.z, 0xffc98a, (s.kind === 'warden' ? 15 : 12) * fl * (0.6 + 0.4 * k), 0.55 * k);
+      ng = glow(ng, s.x, hy, s.z, 0xffd060, (s.kind === 'warden' ? 15 : 12) * fl * (0.6 + 0.4 * k), 0.55 * k);
       if (!low && na < AURA_N) { const r = (s.r || 3) + 2.4 + (red ? 0 : 0.35 * Math.sin(tm * 2.6 + i)); put(auraM, na++, s.x, 0.07, s.z, tm * (red ? 0 : 0.2), 0, 0, r, 1, r);
         if (na < AURA_N) { const r2 = (s.r || 3) + 4.5 + (red ? 0 : ((tm * 2.2 + i) % 3)); put(auraM, na++, s.x, 0.06, s.z, 0, 0, 0, r2, 1, r2); } }
-      if (!red && !low && Math.random() < dt * 12 * k) { const a = Math.random() * 6.283, rr = (s.r || 3) + Math.random() * 2; X.emit(s.x + Math.cos(a) * rr, 0.6 + Math.random() * 2, s.z + Math.sin(a) * rr, 1, 0xffd28a, 0.4, 1.4, 2.2, 0); }
+      if (!red && !low && Math.random() < dt * 12 * k) { const a = Math.random() * 6.283, rr = (s.r || 3) + Math.random() * 2; X.emit(s.x + Math.cos(a) * rr, 0.6 + Math.random() * 2, s.z + Math.sin(a) * rr, 1, 0xffd060, 0.4, 1.4, 2.2, 0); }
     }
   }
   auraM.count = na; auraM.visible = na > 0; if (na) { auraM.instanceMatrix.needsUpdate = true; auraM.material.opacity = LK.add === false ? 0.34 : 0.3; }
