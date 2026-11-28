@@ -40,7 +40,7 @@ let X = null, T = null, LK = null, W = null;
 let pend = [], th = [];
 let lampM = null, staffM = null, glowP = null, gA = null, auraM = null, bindM = null, veil = null;
 const LAMP_N = 12, GLOW_N = 48, AURA_N = 16, BIND_N = 72;
-let dip = 0, dipV = 0, time = 0;
+let dip = 0, dipV = 0, time = 0, GK = 1;
 const sw = [];
 const Q = { s: 0, d: 0 }, P = { x: 0, z: 0, dx: 0, dz: 0 };
 const out = { x: 0, y: 0, z: 0, sx: 1, sy: 1, rz: 0, rx: 0 };
@@ -111,6 +111,10 @@ function inst(geo, mat, cap) { const m = new T.InstancedMesh(geo, mat, cap); m.c
 
 RF.build = function (ctx) {
   X = ctx; T = ctx.T; LK = ctx.LK; th = [];
+  /* a look with strong bloom (Hypermetapunk) clips stacked warm light to a sour green in its post: there, fewer sparks
+     and a gentler boost (GK) */
+  GK = (LK.bloom || 0) >= 0.6 ? 0.45 : 1;
+  if (GK < 1) { const em = ctx.emit; X.emit = function (x, y, z, n, col, sp, life, up, grav) { em(x, y, z, Math.max(1, Math.round(n * GK)), col, sp, life, up, grav); }; }
   const gold = ctx.tc(0xffd060), dim = new T.Color(LK.add === false ? 0x9c94a8 : 0x6c6888);
   for (let l = 0; l < pend.length; l++) {
     const m = pend[l]; if (!m) continue; const L = LL.lanes[l], g = m.geometry, n = g.attributes.position.count;
@@ -303,9 +307,9 @@ RF.frame = function (dt, tm, w, cam, heroM, structM, creaseM) {
     if (bright) {
       const k = Math.min(1, s.brightT / 2.5), fl = red ? 1 : 0.93 + 0.07 * Math.sin(tm * 11 + i) + 0.05 * Math.sin(tm * 4.3 + i), hy = s.kind === 'warden' ? 5.2 : 3.8;
       if (m.glow) m.glow.scale.multiplyScalar(1 + 0.6 * k * fl);
-      if (m.lit.flat) m.lit.flat.material.color.setScalar(1 + 0.35 * k * fl);
-      if (m.paper && m.baseEm != null) m.paper.emissiveIntensity = m.baseEm * (1 + 0.8 * k);
-      ng = glow(ng, s.x, hy, s.z, 0xffd060, (s.kind === 'warden' ? 15 : 12) * fl * (0.6 + 0.4 * k), 0.55 * k);
+      if (m.lit.flat) m.lit.flat.material.color.setScalar(1 + 0.35 * k * fl * GK);
+      if (m.paper && m.baseEm != null) m.paper.emissiveIntensity = m.baseEm * (1 + 0.8 * k * GK);
+      ng = glow(ng, s.x, hy, s.z, 0xffd060, (s.kind === 'warden' ? 15 : 12) * fl * (0.6 + 0.4 * k), 0.55 * k * GK);
       if (!low && na < AURA_N) { const r = (s.r || 3) + 2.4 + (red ? 0 : 0.35 * Math.sin(tm * 2.6 + i)); put(auraM, na++, s.x, 0.07, s.z, tm * (red ? 0 : 0.2), 0, 0, r, 1, r);
         if (na < AURA_N) { const r2 = (s.r || 3) + 4.5 + (red ? 0 : ((tm * 2.2 + i) % 3)); put(auraM, na++, s.x, 0.06, s.z, 0, 0, 0, r2, 1, r2); } }
       if (!red && !low && Math.random() < dt * 12 * k) { const a = Math.random() * 6.283, rr = (s.r || 3) + Math.random() * 2; X.emit(s.x + Math.cos(a) * rr, 0.6 + Math.random() * 2, s.z + Math.sin(a) * rr, 1, 0xffd060, 0.4, 1.4, 2.2, 0); }
