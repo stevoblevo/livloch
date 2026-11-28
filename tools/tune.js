@@ -114,11 +114,11 @@ function policy(W, L, seed) {
     let standS = W.front[0][lane] - (has(1) && !has('w') ? 3 : 6);
     const tw = enemyNext(lane), twS = tw === W.patron[en] ? Ln.len + 6 : rel(0, lane, tw.s);
     let pushing = false; for (const u of W.troopers) if (u.alive && u.team === 0 && hyp(u.x - tw.x, u.z - tw.z) < tw.range - 2) { pushing = true; break; }
-    const window = has(2) && !has('k') && W.hollowT[lane] > 0 && pushing;
+    const window = has(2) && !has('k') && !has('x') && W.hollowT[lane] > 0 && pushing;
     standS = Math.min(standS, pushing ? twS - (window ? 10 : 15) : twS - tw.range + 3);
-    if ((raid || (has(2) && !has('k'))) && S.slack(tw) && S.vuln(tw) && hpF > 0.35) standS = twS - 14;
+    if ((raid || (has(2) && !has('k') && !has('d'))) && S.slack(tw) && S.vuln(tw) && hpF > 0.35) standS = twS - 14;
     if (raid && !onLane && standS - myS > 50 && S.zipEnd(0, lane) - myS > 30) { LL.lanePoint(lane, Q.s, P); st.join = true; } else st.join = false; // lesson 4: get onto the slack thread first, then ride it // lesson 2: a slack house cannot fire; this is the moment to stand under it
-    if (has(2) && !has('k') && W.red > 0 && !W.thin) { const g = W.st[0][lane]; const own = g.outer.alive ? g.outer : g.inner; if (own.alive) standS = Math.min(standS, rel(0, lane, own.s) + 4); }
+    if (has(2) && !has('k') && !has('g') && W.red > 0 && !W.thin) { const g = W.st[0][lane]; const own = g.outer.alive ? g.outer : g.inner; if (own.alive) standS = Math.min(standS, rel(0, lane, own.s) + 4); }
     standS = U.clamp(standS, 8, Ln.len - 16);
     if (!st.join) LL.lanePoint(lane, rel(0, lane, standS), P); let gx = P.x - P.dz * (st.join ? 0 : st.lat), gz = P.z + P.dx * (st.join ? 0 : st.lat), job = 'lane'; const laneX = gx, laneZ = gz;
     // errands, in order of what a lesson says matters
@@ -235,7 +235,7 @@ function policy(W, L, seed) {
 function play(diff, mode, L, seed) {
   const heroPick = seed % LL.HEROES.length;
   const W = S.newWorld({ heroPick: heroPick, difficulty: diff, seed: seed * 7 + diff, mode: mode, auto: false });
-  const pol = policy(W, L, seed), p = W.player, o = { deaths: 0, by: {}, rLost: 0, hLost: 0, firstR: -1, firstH: -1, lastDown: 0, gap: 0, moods: 0, folds: 0, ness: 0, thefts: 0, chomps: 0, floods: 0, falls: [], gapAt: 0, arrivals: 0, mends: 0, caught: 0 };
+  const pol = policy(W, L, seed), p = W.player, o = { deaths: 0, by: {}, rLost: 0, hLost: 0, firstR: -1, firstH: -1, lastDown: 0, gap: 0, moods: 0, folds: 0, ness: 0, thefts: 0, chomps: 0, floods: 0, falls: [], gapAt: 0, arrivals: 0, mends: 0, caught: 0, tides: 0, tideFell: 0, tideTook: [0, 0] };
   while (!W.over && W.t < 1500) {
     pol.step(1 / 40); S.step(1 / 40);
     for (const e of W.fx) {
@@ -249,6 +249,9 @@ function play(diff, mode, L, seed) {
       else if (e.k === 'arrive' && e.p && e.n) o.arrivals++;
       else if (e.k === 'mended' && e.p) o.mends++;
       else if (e.k === 'caught') o.caught++;
+      else if (e.k === 'slack') o.tides++;
+      else if (e.k === 'slackend' && e.fell != null) o.tideFell++;
+      else if (e.k === 'slacktake') o.tideTook[e.team]++;
     }
     W.fx.length = 0;
   }
@@ -275,7 +278,7 @@ function report(a, res) {
   const D = ['Gentle', 'Even', 'Cruel'];
   for (const mode of a.modes) {
     console.log('\n' + (mode === 'match' ? 'LONG MATCH' : 'FIRST RAIN') + ', ' + a.n + ' seeds from ' + a.first + ' (scripted player; simulator output, not human play)');
-    if (mode === 'match') console.log('diff    lessons  win   margin  median  lost by gutter/overrun  structs lost R-H  player deaths (by)          longest quiet  first fall  folds moods ness  arrivals lights caught');
+    if (mode === 'match') console.log('diff    lessons  win   margin  median  lost by gutter/overrun  structs lost R-H  player deaths (by)          longest quiet  first fall  folds moods ness  arrivals lights caught  tides fell (taken R-H)');
     else console.log('diff    lessons  stars  3+    houses  structs lost R-H  player deaths  moods ness  star sets');
     for (const diff of a.diffs) for (const L of a.lessons) {
       const rs = res.filter(x => x.diff === diff && x.mode === mode && x.L === L).map(x => x.o), n = rs.length; if (!n) continue;
@@ -287,7 +290,7 @@ function report(a, res) {
         const w = rs.filter(x => x.win).length;
         console.log(D[diff].padEnd(7), name.padEnd(8), pct(w, n).padStart(4), avg(x => x.hLost - x.rLost).toFixed(1).padStart(7), U.fmtTime(med(rs.map(x => x.t))).padStart(7), ('  ' + rs.filter(x => x.how === 'gutter').length + '/' + rs.filter(x => x.how === 'overrun').length).padEnd(24),
           (avg(x => x.rLost).toFixed(1) + '-' + avg(x => x.hLost).toFixed(1)).padEnd(17), (avg(x => x.deaths).toFixed(1) + ' (' + byS + ')').padEnd(28), U.fmtTime(med(rs.map(x => x.gap))).padStart(6) + '      ', U.fmtTime(med(rs.map(x => Math.min(x.firstR < 0 ? 1e9 : x.firstR, x.firstH < 0 ? 1e9 : x.firstH)))).padStart(6) + '    ',
-          avg(x => x.folds).toFixed(1).padStart(4), avg(x => x.moods).toFixed(1).padStart(5), avg(x => x.ness).toFixed(1).padStart(4), avg(x => x.arrivals).toFixed(1).padStart(8), avg(x => x.mends).toFixed(1).padStart(6), avg(x => x.caught).toFixed(0).padStart(6));
+          avg(x => x.folds).toFixed(1).padStart(4), avg(x => x.moods).toFixed(1).padStart(5), avg(x => x.ness).toFixed(1).padStart(4), avg(x => x.arrivals).toFixed(1).padStart(8), avg(x => x.mends).toFixed(1).padStart(6), avg(x => x.caught).toFixed(0).padStart(6), avg(x => x.tides).toFixed(1).padStart(6), avg(x => x.tideFell).toFixed(1).padStart(4), '(' + avg(x => x.tideTook[0]).toFixed(1) + '-' + avg(x => x.tideTook[1]).toFixed(1) + ')');
       } else {
         const sets = {}; rs.forEach(x => { sets[x.starSet || '-'] = (sets[x.starSet || '-'] || 0) + 1; });
         console.log(D[diff].padEnd(7), name.padEnd(8), avg(x => x.stars || 0).toFixed(1).padStart(5), pct(rs.filter(x => x.stars >= 3).length, n).padStart(5), pct(rs.filter(x => x.houses).length, n).padStart(7),

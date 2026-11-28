@@ -113,7 +113,7 @@ var C = LL.C = {
   ARRIVE: { min: 45, r: 8, reach: 24, dmg: 140, dmgMin: 10, slow: 0.5, slowT: 2.5, among: 1 },
   FOLD_CATCH: 2.5, FOLD_CRUSH: 0.04, PATRON_DIM: 0.12,
   EMBER: { need: 0.4, r: 9, heal: 0.3, under: 1, bright: 80, fire: 2, wait: 3, guard: 0.35, thief: 1 },
-  SLACK: { first: 100, pre: 90, warn: 30, t: 60, mul: 2, ride: [0.58, 0.75], lead: 28 }
+  SLACK: { first: 100, pre: 90, warn: 30, t: 60, mul: 2, ride: [0.58, 0.75], lead: 28, take: 0.999, last: 10 }
 };
 /* 0.27 tune: THE DIFFICULTY TABLE. One row per difficulty (0 Gentle, 1 Even, 2 Cruel); every number that differs by
    difficulty lives here, and tools/tune.js measures them against the agreed target (docs/PLAN.md: Even winnable with two
@@ -136,9 +136,9 @@ var C = LL.C = {
    thin rain brought nothing, and answering the mood alone won Cruel 97% of scripted matches). In First Rain the rain is
    the ending, so there a thin rain still brings nothing (sim.js). */
 C.DIFF = [
-  { build: 1.35, towerH: 1, wave: 4, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 1500, hollowDmg: 55, hollowBack: 30, thiefEvery: 85, orbDrift: 0.7, slackHollows: 0 },
-  { build: 1.5, towerH: 1.25, wave: 4, rainWave: 2, thinWave: 1, rainHollows: 3, thinHollows: 2, hollowHp: 3000, hollowDmg: 82, hollowBack: 18, thiefEvery: 50, orbDrift: 0.4, slackHollows: 1 },
-  { build: 1.8, towerH: 1.5, wave: 5, rainWave: 3, thinWave: 2, rainHollows: 3, thinHollows: 2, hollowHp: 3400, hollowDmg: 100, hollowBack: 18, thiefEvery: 44, orbDrift: 0.4, slackHollows: 1 }
+  { build: 1.35, towerH: 1, wave: 4, rainWave: 2, thinWave: 0, rainHollows: 3, thinHollows: 0, hollowHp: 1500, hollowDmg: 55, hollowBack: 30, thiefEvery: 85, orbDrift: 0.7, slackHollows: 0, slackTake: 0, slackMul: 2, dimK: 1 },
+  { build: 1.5, towerH: 1.25, wave: 4, rainWave: 2, thinWave: 1, rainHollows: 3, thinHollows: 2, hollowHp: 3000, hollowDmg: 82, hollowBack: 18, thiefEvery: 50, orbDrift: 0.4, slackHollows: 1, slackTake: 1, slackMul: 2, dimK: 1 },
+  { build: 1.8, towerH: 1.5, wave: 5, rainWave: 3, thinWave: 2, rainHollows: 3, thinHollows: 2, hollowHp: 3400, hollowDmg: 100, hollowBack: 18, thiefEvery: 44, orbDrift: 0.4, slackHollows: 1, slackTake: 1, slackMul: 2, dimK: 1 }
 ];
 /* lead, 0.27: First Rain keeps 0.26's hollows and thieves. The gate is the owner finishing three First Rains in a row by
    choice, so the long-match tuning above (harder hollows, quicker thieves) must not make the short match harsher. */
