@@ -50,8 +50,8 @@ const srv = http.createServer(function (q, r) { let u = decodeURIComponent(q.url
     let vi = 0, vdir = null;
     const frame = async function (name) {
       await pg.evaluate(function () { window.FE.keep(); }); await pg.clock.runFor(1000 / FPS);
-      if (vdir) await pg.screenshot({ path: path.join(vdir, String(vi++).padStart(4, '0') + '.jpg'), type: 'jpeg', quality: 86 });
-      if (name) { const f = path.join(out, 'feel-0.29-' + name + '-' + look + '-' + TAG + '.jpg'); await pg.screenshot({ path: f, type: 'jpeg', quality: 86 }); console.log(look, TAG, name, JSON.stringify(await pg.evaluate(function () { return window.FE.st(); }))); }
+      if (vdir) await pg.screenshot({ path: path.join(vdir, String(vi++).padStart(4, '0') + '.jpg'), type: 'jpeg', quality: 86, timeout: 180000 });
+      if (name) { const f = path.join(out, 'feel-0.29-' + name + '-' + look + '-' + TAG + '.jpg'); await pg.screenshot({ path: f, type: 'jpeg', quality: 86, timeout: 180000 }); console.log(look, TAG, name, JSON.stringify(await pg.evaluate(function () { return window.FE.st(); }))); }
     };
     /* VIDEO: every frame drawn. Otherwise the sim is skipped ahead without drawing and only the PRE frames before each
        still are drawn, which is several times faster on SwiftShader; effects begun while skipping start when drawing does. */

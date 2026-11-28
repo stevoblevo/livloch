@@ -1820,7 +1820,7 @@ R.frame = function (dt, view) {
     if (kick > 0.01) camera.rotateZ(kick * 0.006 * kickSide);
     camera.fov = (R.portrait ? 82 : 64) * (1 - view.zoom * 0.3) * (1 + fovKick * 0.07) * (1 + kick * 0.006);
     if (LL.face) LL.face.cam(camera, pl, dt); // 0.28 face: the walk in settles the camera from a crane above the hero
-    heroM.forEach(m => { if (m.unit === pl && cp.dist < 1.4) m.visible = false; });
+    heroM.forEach(m => { if (m.unit === pl && pl.alive) m.visible = cp.dist >= 1.4; }); // 0.29 feel: shown again once the camera backs off (it used to stay hidden for good after one close pull-in, until the hero died)
   }
   camera.updateProjectionMatrix(); camera.updateMatrixWorld();
   sky.position.copy(camera.position);
