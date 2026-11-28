@@ -1,0 +1,194 @@
+0.30 feel: the rule sounds measured, not heard (tools/shots/feel30-audio.js renders each alone with LL.audio.offline, no music,
+seeded noise; tools/shots/feel30-audio.py measures). WAVs: feel-0.30-sounds/{before,after}/ (in A, as the code wrote them),
+after-valley/ and after-battle/ (.ogg: the same sounds with the effects following that cue's key). Demo: feel-0.30-sounds.ogg.
+
+Columns: peak dBFS; RMS dBFS over the sounding span; LUFS~ = BS.1770 K-weighted, ungated, over the span (not a true
+integrated loudness; fine for comparing short sounds); spectral centroid Hz; share of energy in 2-5 kHz; clicks (1 ms
+windows whose energy above 12 kHz is over 20 % of their total, within 30 dB of the loudest window); off% = share of
+tonal energy (peaks 60 Hz-2 kHz) not on a degree of the key (glides and noise read as off; see notes); length s.
+References for level: ref-soul-secured -31.6, ref-shot-dora -33.6 (one shot; many per second in play), ref-fold -27, toll -23.
+
+== 1. before (origin/work/0.30) | after, both judged in A major (as the code assumed)
+                       | before:   peak    rms  LUFS~   cent  2-5k  clk  off%  secs | after:   peak    rms  LUFS~   cent  2-5k  clk  off%  secs
+arrive-ally-25m         -22.9  -39.0  -42.6    126  0.00    0     3  0.49 |  -23.1  -39.0  -42.6    127  0.00    0     3  0.49
+arrive-yours            -11.9  -28.4  -31.9    128  0.00    0     2  0.43 |  -11.2  -28.2  -31.7    128  0.00    0    25  0.42
+brightend-10m           -30.8  -44.2  -45.0    313  0.00    0   100  0.59 |  -29.0  -42.0  -42.9    278  0.00    0     0  0.65
+caught                  -28.2  -47.7  -44.5   4332  0.76    5    54  0.39 |  -20.7  -42.6  -41.1   1976  0.33    0    67  0.39
+death-creased           -26.2  -43.4  -42.8    882  0.00    0     0  0.31 |  -20.9  -40.2  -39.7    882  0.00    1     0  0.36
+ember                   -24.5  -37.9  -38.6    481  0.00    0     0  0.78 |  -24.5  -37.9  -38.6    481  0.00    0     0  0.78
+mended-relit            -12.4  -33.4  -34.0    387  0.00    0     1  2.22 |  -12.4  -33.4  -34.0    387  0.00    0     1  2.22
+mended                  -13.4  -33.9  -34.6    302  0.00    0     1  2.01 |  -13.7  -33.9  -34.6    302  0.00    0     1  2.01
+pinned                  -27.1  -44.2  -45.6    343  0.03    0   100  0.88 |  -16.3  -32.7  -35.1    104  0.00    0     0  0.83
+ref-fold                 -8.8  -27.8  -27.4   4617  0.07   18     1  1.94 |   -8.8  -27.8  -27.4   4675  0.08   18     1  1.94
+ref-shot-dora           -17.9  -33.5  -33.7    476  0.01    0   100  0.08 |  -17.1  -33.5  -33.6    472  0.01    0   100  0.08
+ref-soul-secured        -16.2  -30.8  -31.6    353  0.00    0     0  0.32 |  -16.2  -30.8  -31.6    353  0.00    0     0  0.32
+ref-toll                 -2.9  -21.1  -22.8    120  0.00    0     1  2.67 |   -2.6  -21.1  -22.7    120  0.00    0     1  2.65
+slack                   -15.0  -34.5  -36.3    100  0.00    0     1  2.76 |  -14.8  -34.5  -36.3    100  0.00    0     1  2.76
+slackend-hush-fell      -15.7  -35.4  -35.9    512  0.01    0     1  1.84 |  -14.0  -33.8  -34.3    511  0.01    0     1  1.79
+slackend-time           -19.4  -39.0  -39.7    366  0.00    0     1  1.78 |  -17.0  -36.0  -36.7    364  0.00    0     1  1.71
+slackend-yours-fell     -18.6  -37.4  -38.2    244  0.00    0     1  2.18 |  -18.6  -37.4  -38.2    244  0.00    0     1  2.18
+slackwarn               -23.9  -41.6  -43.3    138  0.00    0     0  2.89 |  -20.2  -38.5  -40.2    131  0.00    0     0  2.90
+unpinned                -29.9  -47.5  -44.4   4333  0.72    6    43  0.07 |  -23.9  -41.3  -40.7    213  0.01    2     0  0.32
+
+arrive-ally-25m        tones [(329.7, 'E', 0, ''), (61.0, 'B', -19, ''), (254.4, 'C', -49, 'OFF'), (266.6, 'C', 32, 'OFF'), (282.8, 'C#', 35, 'OFF')]
+arrive-yours           tones [(329.8, 'E', 1, ''), (60.2, 'B', -44, 'OFF'), (243.2, 'B', -27, ''), (267.2, 'C', 37, 'OFF')]
+brightend-10m          tones [(277.3, 'C#', 0, ''), (329.3, 'E', -2, '')]
+caught                 tones [(1260.1, 'D#', 22, 'OFF'), (1252.4, 'D#', 11, 'OFF'), (1039.8, 'C', -11, 'OFF'), (627.5, 'D#', 14, 'OFF'), (1267.9, 'D#', 32, 'OFF')]
+death-creased          tones [(880.0, 'A', 0, '')]
+ember                  tones [(493.8, 'B', 0, ''), (330.1, 'E', 2, '')]
+mended-relit           tones [(219.9, 'A', -1, ''), (277.2, 'C#', 0, ''), (440.3, 'A', 1, ''), (329.4, 'E', -1, ''), (884.2, 'A', 8, '')]
+mended                 tones [(219.9, 'A', -1, ''), (277.0, 'C#', -1, ''), (329.6, 'E', 0, ''), (442.2, 'A', 9, ''), (556.9, 'C#', 8, '')]
+pinned                 tones [(82.8, 'E', 9, ''), (164.4, 'E', -4, ''), (247.3, 'B', 2, '')]
+ref-fold               tones [(329.5, 'E', -1, ''), (493.7, 'B', -1, ''), (662.6, 'E', 9, ''), (992.6, 'B', 8, ''), (909.7, 'A#', -42, 'OFF')]
+ref-shot-dora          tones [(407.7, 'G#', -32, 'OFF'), (1236.3, 'D#', -11, 'OFF')]
+ref-soul-secured       tones [(370.6, 'F#', 3, ''), (247.1, 'B', 1, '')]
+ref-toll               tones [(110.1, 'A', 1, ''), (220.9, 'A', 7, ''), (303.5, 'D#', -43, 'OFF')]
+slack                  tones [(82.3, 'E', -2, ''), (165.7, 'E', 9, ''), (227.4, 'A#', -43, 'OFF'), (216.5, 'A', -28, '')]
+slackend-hush-fell     tones [(439.9, 'A', -1, ''), (884.2, 'A', 8, ''), (1214.7, 'D#', -42, 'OFF')]
+slackend-time          tones [(329.8, 'E', 1, ''), (662.5, 'E', 8, ''), (909.8, 'A#', -42, 'OFF')]
+slackend-yours-fell    tones [(220.1, 'A', 1, ''), (442.1, 'A', 8, ''), (607.0, 'D#', -43, 'OFF')]
+slackwarn              tones [(110.2, 'A', 2, ''), (164.7, 'E', -1, ''), (330.1, 'E', 3, '')]
+unpinned               tones [(163.6, 'E', -12, '')]
+
+== 2. the music's key, measured (pitch-class profile of each mp3, Krumhansl fit):
+   title F major .85 | valley-1 F major .76 | valley-2 A major .86 | battle-1 F minor .91 | battle-2 F minor .72 | red B flat minor .46 (weak) | win D major .95 | lose E .69
+   valley-1 top pitch classes C A F G; C sharp 0.4 % of its energy. The effects' A major (C#, G#) clashes with F major and F minor.
+
+== 3. off% judged in F major: before (A) | after with valley-1 playing (effects moved to F major)
+arrive-ally-25m           14% ->    14%
+arrive-yours              20% ->    22%
+brightend-10m            100% ->     0%
+caught                    70% ->    64%
+death-creased              0% ->     0%
+ember                     93% ->     0%
+mended-relit              26% ->     1%
+mended                    34% ->     1%
+pinned                    99% ->     0%
+ref-fold                  30% ->     1%
+ref-shot-dora            100% ->   100%
+ref-soul-secured         100% ->     0%
+ref-toll                   1% ->     1%
+slack                      1% ->     1%
+slackend-hush-fell         1% ->     1%
+slackend-time              1% ->     1%
+slackend-yours-fell        1% ->     1%
+slackwarn                  0% ->     0%
+unpinned                  69% ->     0%
+arrive-ally-25m         'B',% ->   14,%
+arrive-yours            'B',% ->   46,%
+brightend-10m           'C',% ->      %
+caught                 'D#',% ->  -21,%
+ember                   'C',% ->      %
+mended-relit            'F',% ->    0,%
+mended                  'A',% ->   -1,%
+pinned                  'C',% ->      %
+ref-fold                'G',% ->    9,%
+ref-shot-dora           'B',% ->      %
+ref-soul-secured        'G',% ->      %
+ref-toll                'F',% ->      %
+slack                   'C',% ->  -41,%
+slackend-hush-fell      'F',% ->      %
+slackend-time           'C',% ->      %
+slackend-yours-fell     'F',% ->   -1,%
+slackwarn               'C',% ->      %
+
+== 4. off% judged in F minor: before (A) | after with battle-1 playing (effects moved to F minor)
+arrive-ally-25m           13% ->    16%
+arrive-yours              20% ->    22%
+brightend-10m              0% ->     0%
+caught                    66% ->    60%
+death-creased            100% ->     0%
+ember                     93% ->     0%
+mended-relit              61% ->     1%
+mended                    49% ->     1%
+pinned                    99% ->     0%
+ref-fold                  30% ->     1%
+ref-shot-dora             99% ->   100%
+ref-soul-secured         100% ->     0%
+ref-toll                 100% ->     1%
+slack                      1% ->     1%
+slackend-hush-fell       100% ->     1%
+slackend-time              1% ->     1%
+slackend-yours-fell      100% ->     1%
+slackwarn                 68% ->     0%
+unpinned                  73% ->     0%
+arrive-ally-25m         'B',% ->   49,%
+arrive-yours            'B',% ->   28,%
+brightend-10m           'C',% ->      %
+caught                  'D',% ->  -12,%
+ember                   'C',% ->      %
+mended-relit            'F',% ->    0,%
+mended                 'G#',% ->   -1,%
+pinned                  'C',% ->      %
+ref-fold                'G',% ->    9,%
+ref-shot-dora           'B',% ->      %
+ref-soul-secured        'G',% ->      %
+ref-toll                'F',% ->      %
+slack                   'C',% ->   44,%
+slackend-hush-fell      'F',% ->      %
+slackend-time           'C',% ->      %
+slackend-yours-fell     'F',% ->    1,%
+slackwarn               'C',% ->      %
+
+NOTES
+- Remaining 'off': caught is band-passed noise (its peaks are noise, not pitch); arrive is a thump falling 62->36 Hz and a
+  twang gliding a fifth (glides cross off-degree pitches by design); Dora's shot is a glide (unchanged, not a rule sound);
+  bells carry inharmonic partials (2.76x, 5.4x) at about 1 % of energy.
+- ref-fold (the existing fold whoosh, not changed) counts ~20 'clicks': its high noise trips the detector; listen before trusting.
+- death-creased after: 1 'click' is a 3 %-level window of 1.5 kHz noise with some air; its attack is 6 ms.
+
+DEMO CUES (feel-0.30-sounds.ogg; part 1 before then after, each sound; parts 2-3 over valley-1 at the game mix)
+  0.00  ref-shot-dora (before)
+  0.58  ref-shot-dora (after)
+  1.86  arrive-yours (before)
+  2.85  arrive-yours (after)
+  4.55  caught (before)
+  5.47  caught (after)
+  7.10  death-creased (before)
+  7.90  death-creased (after)
+  9.46  pinned (before)
+ 10.84  pinned (after)
+ 12.93  unpinned (before)
+ 13.50  unpinned (after)
+ 15.02  ember (before)
+ 16.30  ember (after)
+ 18.29  mended (before)
+ 20.96  mended (after)
+ 24.34  mended-relit (before)
+ 27.21  mended-relit (after)
+ 30.79  brightend-10m (before)
+ 31.88  brightend-10m (after)
+ 33.73  slackwarn (before)
+ 37.15  slackwarn (after)
+ 41.27  slack (before)
+ 44.74  slack (after)
+ 48.90  slackend-hush-fell (before)
+ 51.38  slackend-hush-fell (after)
+ 54.56  slackend-yours-fell (before)
+ 57.23  slackend-yours-fell (after)
+ 60.61  slackend-time (before)
+ 62.89  slackend-time (after)
+ 66.87  -- part 2: before (A major) over valley-1 (F major) --
+ 68.37  arrive-yours
+ 69.67  caught
+ 70.97  pinned
+ 72.27  ember
+ 73.57  mended
+ 75.31  slackwarn
+ 77.65  slack
+ 80.02  unpinned
+ 81.32  slackend-hush-fell
+ 82.90  brightend-10m
+ 84.20  ref-soul-secured
+ 91.87  -- part 3: after, in the cue key, over valley-1 --
+ 93.37  arrive-yours
+ 94.67  caught
+ 95.97  pinned
+ 97.27  ember
+ 98.57  mended
+100.31  slackwarn
+102.65  slack
+105.02  unpinned
+106.32  slackend-hush-fell
+107.90  brightend-10m
+109.20  ref-soul-secured
