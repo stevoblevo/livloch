@@ -283,9 +283,9 @@ RF.frame = function (dt, tm, w, cam, heroM, structM, creaseM) {
     put(staffM, nl, bx, y0 + 0.75, bz, h.yaw, -0.1, 0.12, 1, 1, 1);
     /* the hanging point is the staff's crook tip; the lantern hangs 0.3 below it, swung by (a, b) */
     const hx = bx + rx * -0.3, hz = bz + rz * -0.3, hy = y0 + 0.75 + 1.52;
-    const L = 0.32, ox = Math.sin(s.a) * L, oz = Math.sin(s.b) * L, oy = -Math.cos(s.a) * Math.cos(s.b) * L;
+    const L = 0.4, ox = Math.sin(s.a) * L, oz = Math.sin(s.b) * L, oy = -Math.cos(s.a) * Math.cos(s.b) * L;
     const lx2 = hx + rx * ox + fx * oz, lz2 = hz + rz * ox + fz * oz, ly2 = hy + oy;
-    put(lampM, nl, lx2, ly2, lz2, h.yaw + tm * (red ? 0 : 0.4), s.b, -s.a, 1, 1, 1);
+    put(lampM, nl, lx2, ly2, lz2, h.yaw + tm * (red ? 0 : 0.4), s.b, -s.a, 1.4, 1.4, 1.4);
     const fl = red ? 1 : 0.9 + 0.1 * Math.sin(tm * 13 + i) * Math.sin(tm * 7.3);
     ng = glow(ng, lx2, ly2, lz2, 0xffd060, 1.5 * fl, 1); ng = glow(ng, lx2, ly2, lz2, 0xfff0c0, 0.45, 1);
     if (!red && !low && Math.random() < dt * 6) X.emit(lx2, ly2 - 0.1, lz2, 1, 0xffd060, 0.3, 0.6, -0.4, 0);
@@ -318,8 +318,8 @@ RF.frame = function (dt, tm, w, cam, heroM, structM, creaseM) {
     const u = W.troopers[i]; if (!u.alive || !u.pinned) continue;
     const k = pinCrease(u), cx = k >= 0 ? creaseX(k) : nearCrease(u.x), sd = cx > u.x ? 1 : -1, j = red ? 0 : 1;
     const shx = Math.sin(tm * 37 + u.id) * 0.07 * j, R0 = 1.18;
-    put(bindM, nb++, u.x + shx, 1.15, u.z, tm * 0.0 + u.id, 0.08 * sd * j * Math.sin(tm * 5 + u.id), 0.12 * sd, R0 * 1.05, 0.32, R0 * 1.05);
-    put(bindM, nb++, u.x + shx, 2.25, u.z, u.id * 1.7, 0, -0.1 * sd, R0 * 0.92, 0.28, R0 * 0.92);
+    put(bindM, nb++, u.x + shx, 1.15, u.z, tm * 0.0 + u.id, 0.08 * sd * j * Math.sin(tm * 5 + u.id), 0.12 * sd, R0 * 1.05, 0.42, R0 * 1.05);
+    put(bindM, nb++, u.x + shx, 2.25, u.z, u.id * 1.7, 0, -0.1 * sd, R0 * 0.92, 0.36, R0 * 0.92);
     for (let c = -1; c <= 1; c++) {
       const ay = c === 0 ? 2.25 : 1.15, ax = u.x + shx + sd * R0 * (c === 0 ? 0.9 : 1), az = u.z + c * 0.55, bz = u.z + c * 2.2 + Math.sin(tm * 41 + c + u.id) * 0.04 * j;
       cord(nb++, ax, ay, az, u.x + sd * Math.min(4.5, Math.abs(cx - u.x)), 0.12, bz, 0.04);

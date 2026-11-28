@@ -81,7 +81,7 @@ const srv = http.createServer(function (q, r) { let u = decodeURIComponent(q.url
       const S = LL.sim, W = S.W, p = W.player, c = W.creases[0]; c.guard.alive = false; c.cd = 0; c.t = 0;
       p.x = c.x; p.z = c.z; p.y = 0; p.zip = null; p.yaw = Math.PI / 2; LL.dbg.view.yaw = Math.PI / 2; S.fold(p, 0); const lane = c.from;
       W.fx.forEach(function (e) { LL.gfx.fx(e); LL.ui.fx(e); }); W.fx.length = 0;
-      const q = window.FE.lanePt(lane, -7); p.x = q.x - 4.6; p.z = q.z; p.yaw = 0.24; window.FE.view(0.24, -0.08);
+      const q = window.FE.lanePt(lane, -7); p.x = q.x - 4.6; p.z = q.z; p.yaw = 0.6; window.FE.view(0.6, -0.08);
       W.troopers.forEach(function (u) { if (u.alive && u.lane === lane && u.z > -16 && u.z < 16 && u.team === 0) u.alive = false; });
       let k = 0; const zs = [1.5, 3.5, 6, 8]; W.troopers.forEach(function (u) { if (u.alive && u.team === 1 && !u.big && k < zs.length && Math.abs(u.z) > 16) { window.FE.put(u, lane, zs[k], (k % 2 ? 1 : -1) * 1.2); k++; } });
       S._t.spawnHollow(lane); const h = W.troopers[W.troopers.length - 1]; window.FE.put(h, lane, 5, 2.4);
