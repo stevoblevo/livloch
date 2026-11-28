@@ -828,6 +828,20 @@ test('0.29 play: a kept house takes less harm, is never slack, and no small one 
   const u = hushSmall(W, ln, k.s + 6); k.atkT = 0; const ev = run(W, 3, w => { hold(w); w.waveT = 99; u.hp = u.maxHp; u.x = k.x; u.z = k.z + 6; }); assert.ok(ev.some(e => e.k === 'towershot' && e.u === k), 'and it fires');
   const X = world({ auto: false }); X.heroes.forEach(h => { h.souls = 0; }); X.st[0][0].outer.brightT = X.st[0][1].outer.brightT = 500; for (let i = 0; i < 12; i++) { X.thiefT = 1e9; S._t.spawnThief(); const t = X.thieves[X.thieves.length - 1]; assert.strictEqual(t.mark, X.st[0][2].outer, 'the small one goes for the house that is not kept'); t.alive = false; }
 });
+test('0.29 play: a light carried to a Hush house blinds it: it cannot fire and stands open until the light burns down', () => {
+  const W = world({ auto: false }), h = W.player, E = C.EMBER, g = W.st[1][1].outer, wd = W.st[1][1].inner, pat = W.patron[1], hold = (w) => { keepAlive(w); w.waveT = 99; w.thiefT = 1e9; w.structs.forEach(s => { s.hp = s.maxHp; }); };
+  run(W, 5, hold); const at = (s) => { h.x = s.x; h.z = s.z - s.r - 4; h.y = 0; h.zip = null; };
+  h.ember = true; at(wd); let ev = run(W, 0.2, w => { hold(w); at(wd); }); assert.ok(h.ember && !ev.some(e => e.k === 'blinded'), 'a warden behind its guardian cannot be reached');
+  at(pat); ev = run(W, 0.2, w => { hold(w); at(pat); }); assert.ok(h.ember && !ev.some(e => e.k === 'blinded'), 'nor a patron behind its wardens');
+  at(g); h.zip = { lane: 1, dir: 1, s: g.s, s0: g.s }; S._t.heroStep(h, 1 / 30); assert.ok(h.ember && !(g.blindT > 0), 'a rider keeps the light as it passes');
+  ev = run(W, 0.2, w => { hold(w); at(g); }); const b = ev.find(e => e.k === 'blinded'); assert.ok(b && b.s === g && b.p && b.t === E.blind, 'on foot beside their guardian the light goes in'); assert.ok(!h.ember, 'and is spent'); assert.ok(S.slack(g) && !S.slack(wd), 'that house stands as a slack one does, and only that house');
+  g.pressed = false; const hp0 = g.hp; S._t.damage(g, 100, h, 'gun'); assert.ok(Math.abs((hp0 - g.hp) - 100 * E.blindMul) < 0.01, 'unprotected, it takes ' + E.blindMul + ' times: ' + (hp0 - g.hp)); W.fx.length = 0;
+  ev = run(W, E.blind - 1.5, w => { hold(w); at(g); }); assert.ok(!ev.some(e => e.k === 'towershot' && e.u === g), 'blind, it does not fire at the hero under it');
+  h.ember = true; ev = run(W, 0.3, w => { hold(w); at(g); }); assert.ok(h.ember, 'a second light does not go into a house already blind');
+  h.ember = false; ev = run(W, 3, w => { hold(w); at(g); }); assert.ok(ev.some(e => e.k === 'blindend' && e.u === g) && !S.slack(g), 'after ' + E.blind + ' s it sees again'); assert.ok(ev.some(e => e.k === 'towershot' && e.u === g), 'and fires');
+  W.st[1][2].inner.alive = false; h.ember = true; ev = run(W, 0.2, w => { hold(w); at(pat); }); assert.ok(ev.some(e => e.k === 'blinded' && e.s === pat) && S.slack(pat), 'once a warden is down the patron can be blinded too'); ev = run(W, 3, w => { hold(w); at(pat); }); assert.ok(!ev.some(e => e.k === 'towershot' && e.u === pat), 'and does not fire');
+  const F = world({ auto: false, mode: 'fallen' }), fh = F.player, fg = F.st[1][1].outer; fh.ember = true; fh.x = fg.x; fh.z = fg.z - fg.r - 4; run(F, 0.2); assert.ok(!(fg.blindT > 0), 'not in Ever Fallen');
+});
 test('0.29 play: the tides keep clear of the red rain', () => {
   const W = world({ difficulty: 0 }), D = C.SLACK, hold = (w) => { keepAlive(w); w.structs.forEach(s => { s.hp = s.maxHp; }); }, ev = run(W, 2 * C.RED_EVERY + C.RED_T + 5, hold);
   const at = ev.filter(e => e.k === 'slack').map(e => Math.round(e.at)), warn = ev.filter(e => e.k === 'slackwarn').map(e => Math.round(e.at)), want = [];

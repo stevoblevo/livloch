@@ -64,7 +64,7 @@ const P = { x: 0, z: 0, dx: 0, dz: 0 }, Q = { s: 0, d: 0 };
 function policy(W, L, seed) {
   const has = (k) => L.indexOf(String(k)) >= 0, r = LL.rng(seed * 7919 + (has('q') ? 14 : 13)), p = W.player;
   const st = { thinkT: 0, lane: 1, laneT: 0, pick: 0, buyT: 10, retreat: false, ax: p.x, ay: 1.5, az: p.z + 20, tgt: null, gx: p.x, gz: p.z,
-    lat: (r() * 2 - 1) * 2.5, strafe: r() * 9, ph: r() * 6, hp: {}, hurtAt: {}, covered: {}, moodAt: -1, fold: -1, orb: null, back: false, wantLens: null, zipOn: false, fetch: false, fetchAt: 40, fetchT0: 0, had: false, keep: null };
+    lat: (r() * 2 - 1) * 2.5, strafe: r() * 9, ph: r() * 6, hp: {}, hurtAt: {}, covered: {}, moodAt: -1, fold: -1, orb: null, back: false, wantLens: null, zipOn: false, fetch: false, fetchAt: 40, fetchT0: 0, had: false, keep: null, busyAt: -9 };
   const en = 1, rel = S.rel;
   function enemyNext(l) { const s = W.st[en][l]; return s.outer.alive ? s.outer : (s.inner.alive ? s.inner : W.patron[en]); }
   function think() {
@@ -79,7 +79,7 @@ function policy(W, L, seed) {
     const K = W.slack, slackOn = K.t > 0, slackSoon = K.warned || slackOn;
     { const rainDue = has('I') && W.red <= 0 && W.redNext - W.t < 14 && !W.short, tideDue = has('U') && K.warned && C.dif(W).slackHollows > 0 && W.st[0][K.lane].inner.alive;
       const tw0 = enemyNext(st.pick); let near0 = 0; for (const u of W.troopers) if (u.alive && u.team === 1 && hyp(u.x - p.x, u.z - p.z) < 35) near0 += u.big ? 3 : 1;
-      const siegeDue = !has('z') && tw0.kind !== 'patron' && S.vuln(tw0) && !(tw0.blindT > 0) && !S.slack(tw0) && near0 < 4 && !(W.red > 0 && !W.thin) && !slackOn && !W.fray;
+      const siegeDue = !has('z') && (tw0.kind !== 'patron' || !has('P')) && S.vuln(tw0) && !(tw0.blindT > 0) && !S.slack(tw0) && near0 < 4 && !(W.red > 0 && !W.thin) && !slackOn && W.t - st.busyAt > 1.5;
       if (st.had && !p.ember) { st.keep = null; st.fetchAt = W.t + 15; } st.had = !!p.ember;
       if (st.fetch) { if (p.ember || st.retreat || W.t > st.fetchT0 + 30) st.fetch = false; }
       else if (has(5) && !has('g') && C.EMBER.wait < 100 && !p.ember && !st.retreat && hpF > 0.5 && W.t > st.fetchAt && (rainDue || tideDue || siegeDue)) { st.fetch = true; st.fetchT0 = W.t; st.fetchAt = W.t + 40; st.keep = rainDue ? 'rain' : tideDue ? 'tide' : 'siege'; } }
@@ -107,7 +107,7 @@ function policy(W, L, seed) {
     if (fire && fire.lane !== st.lane && !raid) st.lane = fire.lane;
     // lesson 5: a light from home goes to the house that needs it most, and the hero's thread waits
     let mend = null;
-    let siege = null; if (has(5) && p.ember && st.keep === 'siege' && !st.retreat) { const e = enemyNext(st.pick); if (e.kind !== 'patron' && S.vuln(e) && !(e.blindT > 0)) siege = e; else st.keep = null; }
+    let siege = null; if (has(5) && p.ember && st.keep === 'siege' && !st.retreat) { const e = enemyNext(st.pick); if (S.vuln(e) && !(e.blindT > 0)) siege = e; else st.keep = null; }
     if (has(5) && !has('h') && p.ember && !st.retreat && !siege) { let bv = 0; for (const s of W.structs) { if (s.team !== 0 || !s.alive || s.kind === 'patron' || !S.vuln(s) || !(s.dark || s.hp <= s.maxHp * C.EMBER.under)) continue; let hol = 0; for (const u of W.troopers) if (u.alive && u.team === 1 && u.big && u.lane === s.lane && hyp(u.x - s.x, u.z - s.z) < 60) hol++; const v = (1 - s.hp / s.maxHp) + (s.dark ? 0.5 : 0) + (st.hurtAt[s.id] > W.t - 6 ? 0.5 : 0) + hol * 0.6 + (s.lane === st.pick ? 0.15 : 0) + (s.brightT > 0 ? -3 : 0) + (st.keep === 'tide' && s.lane === K.lane ? 4 : 0) + (st.keep === 'rain' && s.lane === st.pick ? 2 : 0) + (st.keep && s.kind === 'guardian' ? 0.3 : 0); if (v > bv) { bv = v; mend = s; } } if (mend) { st.lane = mend.lane; raid = null; } }
     const lane = st.lane, Ln = lanes[lane];
     LL.laneNearest(lane, p.x, p.z, Q); const myS = rel(0, lane, Q.s), onLane = Q.d < 6;
@@ -156,6 +156,7 @@ function policy(W, L, seed) {
     // lesson 4: a long way is ridden. Off its thread and far from where it is going, it walks to the nearest thread first
     st.via = -1;
     if (has(4) && !p.zip && (job === 'home' || job === 'mend' || job === 'siege') && S.canZip(p) < 0) { const far = job === 'home' ? p.z > -70 : ((job === 'siege' ? twS - 7 : mend.s) - myS > 40 && hyp(gx - p.x, gz - p.z) > 45); if (far) { const nl = job === 'home' ? LL.nearestLane(p.x, p.z) : lane; LL.laneNearest(nl, p.x, p.z, Q); if (Q.d > 5) { LL.lanePoint(nl, Math.max(Q.s, 4), P); gx = P.x; gz = P.z; st.via = nl; } } }
+    if (job === 'fold' || job === 'stray' || job === 'thief') st.busyAt = W.t;
     st.gx = gx; st.gz = gz; st.job = job;
     // threads (lesson 4)
     if (has(4)) {

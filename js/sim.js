@@ -1309,7 +1309,7 @@ function emberStep(h, inFount, mended, dt) {
     if (!best || (best.kind === 'patron' && s.kind !== 'patron')) best = s;
   }
   if (!best) { // 0.29 play: carried all the way to one of their houses, the light goes in there instead and blinds it
-    for (let i = 0; i < W.structs.length; i++) { const s = W.structs[i]; if (s.team === h.team || !s.alive || s.kind === 'patron' || s.blindT > 0 || !S.vuln(s) || hyp(s.x - h.x, s.z - h.z) > E.r + s.r) continue; s.blindT = E.blind; s.tgt = null; h.ember = false; h.blinds = (h.blinds || 0) + 1; fx({ k: 'blinded', u: h, s: s, t: E.blind, p: h.isPlayer }); return; }
+    for (let i = 0; i < W.structs.length; i++) { const s = W.structs[i]; if (s.team === h.team || !s.alive || s.blindT > 0 || !S.vuln(s) || hyp(s.x - h.x, s.z - h.z) > E.r + s.r) continue; s.blindT = E.blind; s.tgt = null; h.ember = false; h.blinds = (h.blinds || 0) + 1; fx({ k: 'blinded', u: h, s: s, t: E.blind, p: h.isPlayer }); return; }
   }
   if (!best || (best.kind === 'patron' && any)) return;
   const relit = !!best.dark, hp0 = best.hp;
@@ -1342,11 +1342,13 @@ function slackStep(dt) {
       if (sides < 2) w -= 10; if (w > bw) { bw = w; l = ln; } }
     K.lane = l; fx({ k: 'slackwarn', lane: l, in: D.warn });
   }
+  else if (K.warned && !K.leaned && W.t >= K.next - D.lead) { K.leaned = true; for (let i = 0; i < C.dif(W).slackHollows; i++) { spawnHollow(K.lane, true); W.troopers[W.troopers.length - 1].lean = K.n + 1; } } // 0.29 play: the hollow sets out before the thread goes slack, so it is seen coming and is there when the houses open
   else if (K.warned && W.t >= K.next) {
     K.warned = false; K.next += D.every; K.t = D.t; K.n++;
     for (let i = 0; i < W.structs.length; i++) { const s = W.structs[i]; if (s.alive && isSlack(s)) s.tgt = null; }
     fx({ k: 'slack', lane: K.lane, t: D.t, n: K.n });
-    for (let i = 0; i < C.dif(W).slackHollows; i++) { spawnHollow(K.lane, true); W.troopers[W.troopers.length - 1].lean = K.n; }
+    if (!K.leaned) for (let i = 0; i < C.dif(W).slackHollows; i++) { spawnHollow(K.lane, true); W.troopers[W.troopers.length - 1].lean = K.n; }
+    K.leaned = false;
   }
 }
 function heroStep(h, dt) {
