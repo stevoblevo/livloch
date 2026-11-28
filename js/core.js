@@ -98,7 +98,7 @@ var C = LL.C = {
                 fall on it pulls it tight at once; if that was a Hush house, the leaning hollow crumples. Which
                 thread: the most worn (sim.js, slackStep). Not in
                 First Rain or Ever Fallen, and never once the threads fray at 15:00 */
-  ARRIVE: { min: 45, r: 8, reach: 24, dmg: 140, dmgMin: 10, slow: 0.5, slowT: 2.5 },
+  ARRIVE: { min: 45, r: 8, reach: 24, dmg: 140, dmgMin: 10, slow: 0.5, slowT: 2.5, among: 1 },
   FOLD_CATCH: 2.5, FOLD_CRUSH: 0.04,
   EMBER: { need: 0.4, r: 9, heal: 0.3, under: 1, bright: 80, fire: 2, wait: 3, guard: 0.35, blind: 25, blindMul: 1.5 },
   SLACK: { first: 150, every: 300, warn: 20, t: 50, mul: 2, ride: [0.58, 0.75], clear: 0, lead: 0 }

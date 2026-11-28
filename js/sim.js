@@ -1280,13 +1280,15 @@ function rollStart(h, mx, mz) {
    no bot folds, walks a light to the house that needs it, or leaves its thread for the slack one. */
 function arrive(h) {
   const zp = h.zip, A = C.ARRIVE; if (!zp || zp.dir < 0 || rel(h.team, zp.lane, zp.s) - rel(h.team, zp.lane, zp.s0) < A.min) return false;
-  const dmg = A.dmg + A.dmgMin * (W.t / 60), ts = rel(h.team, zp.lane, zp.s); let n = 0;
-  for (let i = 0; i < W.troopers.length; i++) {
+  const dmg = A.dmg + A.dmgMin * (W.t / 60), ts = rel(h.team, zp.lane, zp.s); let n = 0, among = !A.among;
+  for (let i = 0; i < W.troopers.length && !among; i++) { const u = W.troopers[i]; if (u.alive && u.team !== h.team && hyp(u.x - h.x, u.z - h.z) <= A.r + u.r) among = true; } // 0.29 play: the pull runs on only for a rider who lands among them; let go behind your own line and it lands quietly
+  for (let i = 0; among && i < W.troopers.length; i++) {
     const u = W.troopers[i]; if (!u.alive || u.team === h.team) continue;
     const ahead = u.lane === zp.lane ? rel(h.team, u.lane, u.s) - ts : -1;
     if (hyp(u.x - h.x, u.z - h.z) > A.r + u.r && !(ahead >= 0 && ahead <= A.reach && Math.abs(u.lat || 0) < 5)) continue;
     n++; applySlow(u, A.slow, A.slowT); damage(u, u.big ? dmg * 0.25 : dmg, h, 'ab');
   }
+  if (!among) return false;
   h.arrivals = (h.arrivals || 0) + 1;
   fx({ k: 'arrive', u: h, x: h.x, z: h.z, r: A.r, reach: A.reach, lane: zp.lane, n: n, p: h.isPlayer });
   return true;
