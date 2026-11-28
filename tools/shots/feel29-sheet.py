@@ -12,7 +12,7 @@ RULES = {
     'light': [('before', 'light-carry', 'before: carrying a light'), ('after', 'light-carry', 'after: the lantern on the hero'), ('after', 'light-mend', 'after: the house mended'), ('after', 'light-bright', 'after: burning bright')],
     'slack': [('before', 'slack', 'before: slack'), ('after', 'slack-warn', 'after: warning, 3 s to go'), ('after', 'slack', 'after: slack'), ('after', 'slack-end', 'after: pulled tight')],
 }
-TW, TH = 576, 324
+TW, TH = 480, 270
 try: font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 17)
 except Exception: font = ImageFont.load_default()
 os.makedirs(od, exist_ok=True)

@@ -1,0 +1,45 @@
+0.29 feel: the four 0.28 rules seen and heard from the play camera.
+
+FILES
+  js/rulefx.js (new)   what each rule looks like; joined to gfx.js at lines marked `0.29 feel`
+  js/audio.js          ruleSound(): the rule sounds (0.29 FEEL comment)
+  js/glyphs.js (new)   a drawn sign per ability for the HUD lanterns; ui.js line and css/hud.css block marked `0.29 feel`
+  js/gfx.js            hooks only, plus one fix: the player's hero stayed hidden for good after the camera was pulled
+                       within 1.4 m of a wall once (until the hero died); now it shows again when the camera backs off.
+                       Seen in the first capture runs: after a thread ride started beside a house, the hero was gone
+                       for the rest of the match.
+
+CAPTURES (tools/shots/feel29.js, Playwright paused clock, SwiftShader, 960x540, Dora, staged in a real match)
+  before = origin/work/0.29 at 46e0380, after = this branch. Banner hidden in stills (it covers the middle).
+  Sheets: feel-0.29-arrive.jpg, -fold.jpg, -light.jpg, -slack.jpg: a row per look (Cobalt Snow, Inkblot Noir,
+  Origami, Hypermetapunk), before then after. Clips (Cobalt Snow, after, 20 fps): feel-0.29-<rule>.mp4.
+  Stills are drawn after a headless skip (five frames drawn before each); thread and veil state is read from W.t,
+  so a still shows the state at its game time. Particles begun during the skip start when drawing starts.
+
+DRAW CALLS (RF._state().draws, the rule objects visible in the frame): 0 with no rule in play; arrival 1 (the
+  veil); slack 1 (veil); fold 1 (pinning paper); carrying a light 3 (lantern, staff, glows); a bright house 3
+  (glows, aura rings, veil off). Six at most by construction. Everything else uses gfx.js's existing pools.
+
+SOUND LEVELS (tools/shots/feel29-audio.js, LL.audio.offline, alone, no music; measured, not listened to)
+dora shot (scale)                peak 0.143  rms 0.0029  0.05 s
+fold (scale)                     peak 0.386  rms 0.0287  1.42 s
+shared toll (scale)              peak 0.706  rms 0.0718  2.24 s
+arrive, yours, struck 3          peak 0.259  rms 0.0125  0.29 s
+arrive, an ally 25 m off         peak 0.068  rms 0.0039  0.25 s
+caught (small Hush crumples)     peak 0.052  rms 0.0013  0.43 s
+death, creased small             peak 0.046  rms 0.0019  0.18 s
+pinned (hollow)                  peak 0.041  rms 0.0029  0.46 s
+unpinned                         peak 0.037  rms 0.0005  0.03 s
+ember (light taken)              peak 0.059  rms 0.0056  0.46 s
+mended                           peak 0.207  rms 0.0143  1.35 s
+mended, relit                    peak 0.234  rms 0.0159  1.54 s
+brightend (house 10 m off)       peak 0.029  rms 0.0024  0.29 s
+slackwarn                        peak 0.060  rms 0.0070  2.60 s
+slack                            peak 0.182  rms 0.0157  1.67 s
+slackend, Hush house fell        peak 0.164  rms 0.0115  1.10 s
+slackend, yours fell             peak 0.118  rms 0.0100  1.18 s
+slackend, time                   peak 0.108  rms 0.0074  0.96 s
+
+REDUCED MOTION / LIGHTER GRAPHICS: by code reading only (not captured): reduced motion stops the thread's tremble and
+  sag, the chevrons and lantern swing, the camera kick and dip, and cuts particles; Lighter graphics drops rising
+  motes and aura rings. tools/smoke.js draws Lighter graphics without errors.

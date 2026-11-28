@@ -40,7 +40,7 @@ let X = null, T = null, LK = null, W = null;
 let pend = [], th = [];
 let lampM = null, staffM = null, glowP = null, gA = null, auraM = null, bindM = null, veil = null;
 const LAMP_N = 12, GLOW_N = 48, AURA_N = 16, BIND_N = 72;
-let dip = 0, dipV = 0, time = 0, GK = 1;
+let dip = 0, dipV = 0, time = 0, GK = 1, GC = null;
 const sw = [];
 const Q = { s: 0, d: 0 }, P = { x: 0, z: 0, dx: 0, dz: 0 };
 const out = { x: 0, y: 0, z: 0, sx: 1, sy: 1, rz: 0, rx: 0 };
@@ -111,9 +111,10 @@ function inst(geo, mat, cap) { const m = new T.InstancedMesh(geo, mat, cap); m.c
 
 RF.build = function (ctx) {
   X = ctx; T = ctx.T; LK = ctx.LK; th = [];
-  /* a look with strong bloom (Hypermetapunk) clips stacked warm light to a sour green in its post: there, fewer sparks
-     and a gentler boost (GK) */
-  GK = (LK.bloom || 0) >= 0.6 ? 0.45 : 1;
+  /* a look with strong bloom (Hypermetapunk) clips stacked warm light to a sour green in its post: there, fewer sparks,
+     a gentler boost (GK) and the glows an unmapped orange that clips toward gold */
+  GC = new T.Color();
+  GK = (LK.bloom || 0) >= 0.6 ? 0.3 : 1;
   if (GK < 1) { const em = ctx.emit; X.emit = function (x, y, z, n, col, sp, life, up, grav) { em(x, y, z, Math.max(1, Math.round(n * GK)), col, sp, life, up, grav); }; }
   const gold = ctx.tc(0xffd060), dim = new T.Color(LK.add === false ? 0x9c94a8 : 0x6c6888);
   for (let l = 0; l < pend.length; l++) {
@@ -227,7 +228,7 @@ RF.troop = function (t, tm) {
 };
 RF.dip = function (dt) { if (!X || X.R.reduced) { dip = dipV = 0; return 0; } let left = dt; while (left > 1e-6) { const h = Math.min(left, 1 / 120); dipV += (-120 * dip - 16 * dipV) * h; dip += dipV * h; left -= h; } return Math.min(0, dip); };
 
-function glow(n, x, y, z, hex, size, k) { if (n >= GLOW_N) return n; const c = X.tc(hex); gA.p[n * 3] = x; gA.p[n * 3 + 1] = y; gA.p[n * 3 + 2] = z; gA.c[n * 3] = c.r * k; gA.c[n * 3 + 1] = c.g * k; gA.c[n * 3 + 2] = c.b * k; gA.s[n] = size; return n + 1; }
+function glow(n, x, y, z, hex, size, k) { if (n >= GLOW_N) return n; const c = GK < 1 ? GC.setHex(0xffa850) : X.tc(hex); gA.p[n * 3] = x; gA.p[n * 3 + 1] = y; gA.p[n * 3 + 2] = z; gA.c[n * 3] = c.r * k; gA.c[n * 3 + 1] = c.g * k; gA.c[n * 3 + 2] = c.b * k; gA.s[n] = size; return n + 1; }
 const M4 = { m: null, q: null, s: null, v: null, e: null };
 function mat4() { if (!M4.m) { M4.m = new T.Matrix4(); M4.q = new T.Quaternion(); M4.s = new T.Vector3(); M4.v = new T.Vector3(); M4.e = new T.Euler(0, 0, 0, 'YXZ'); } return M4; }
 function put(mesh, i, x, y, z, ry, rx, rz, sx, sy, sz) { const K = mat4(); K.e.set(rx, ry, rz, 'YXZ'); K.q.setFromEuler(K.e); K.v.set(x, y, z); K.s.set(sx, sy, sz); K.m.compose(K.v, K.q, K.s); mesh.setMatrixAt(i, K.m); }
