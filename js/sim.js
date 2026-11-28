@@ -775,7 +775,7 @@ function kill(t, src, hero) {
     fx({ k: 'nessdown', team: hero ? hero.team : -1, hero: hero, x: t.x, z: t.z });
   } else if (t.kind === 'guardian' || t.kind === 'warden') {
     const b = t.kind === 'guardian' ? 350 : 600;
-    if (W.slack.t > 0 && W.slack.lane === t.lane) { W.slack.t = 0; let n = 0; if (t.team === 1) for (let i = 0; i < W.troopers.length; i++) { const u = W.troopers[i]; if (u.alive && u.lean === W.slack.n) { u.alive = false; n++; fx({ k: 'death', u: u, x: u.x, y: u.y, z: u.z, team: 1, kind: 'trooper', by: null, creased: true }); } } fx({ k: 'slackend', lane: t.lane, fell: t.team, broke: n }); } // 0.28 play: one house falls and the slack thread pulls tight
+    if (W.slack.t > 0 && W.slack.lane === t.lane) { W.slack.t = 0; let n = 0; if (t.team === 1) for (let i = 0; i < W.troopers.length; i++) { const u = W.troopers[i]; if (u.alive && u.lean === W.slack.n) { u.alive = false; n++; fx({ k: 'death', u: u, x: u.x, y: u.y, z: u.z, team: 1, kind: 'trooper', by: null, creased: true }); } } fx({ k: 'slackend', lane: t.lane, fell: t.team, broke: n, took: !!W.slack.taking }); } // 0.28 play: one house falls and the slack thread pulls tight
     for (let i = 0; i < W.heroes.length; i++) if (W.heroes[i].team !== t.team) give(W.heroes[i], b);
     fx({ k: 'structdown', u: t, bounty: b });
     if (t.team === 1 && C.PATRON_DIM > 0 && !W.fallen && !W.short) { const p = W.patron[1]; if (p.alive) { const dk = C.dif(W).dimK, cut = Math.min(p.hp - 1, p.maxHp * C.PATRON_DIM * (dk == null ? 1 : dk)); p.hp -= cut; p.dims = (p.dims || 0) + 1; fx({ k: 'patrondim', u: p, by: t, n: p.dims, amt: cut }); } } // 0.29 play: the Hush patron lives on its houses; every one that falls, on any thread, takes a part of it (not in First Rain, which must last until its rain)
@@ -1383,7 +1383,7 @@ function slackStep(dt) {
     if (!K.said && K.t <= D.last && K.t > 0 && !W.fray) { K.said = true; const s = tideTake(); if (s) fx({ k: 'slacklast', lane: K.lane, u: s, t: D.last }); }
     if (K.t <= 0 || W.fray) {
       const s = W.fray ? null : tideTake(); K.said = false;
-      if (s) { K.t = 0.001; fx({ k: 'slacktake', lane: K.lane, u: s, team: s.team }); kill(s, null, null); K.t = 0; }
+      if (s) { K.t = 0.001; fx({ k: 'slacktake', lane: K.lane, u: s, team: s.team }); K.taking = true; kill(s, null, null); K.taking = false; K.t = 0; }
       else { K.t = 0; fx({ k: 'slackend', lane: K.lane }); }
     }
     return;
@@ -1537,7 +1537,7 @@ function think(h) {
     else if (u.kind === 'thief') sc = 95 - dd * 0.3;
     else if (u.kind === 'trooper') sc = 40 - dd * 0.5 + (1 - u.hp / u.maxHp) * 30 + (u.big ? 22 : 0);
     else if (u.kind === 'knot') sc = 45 - dd * 0.5;
-    else if (u.struct) { if (!S.vuln(u) || (!u.pressed && !W.fray && !isSlack(u))) continue; sc = isSlack(u) ? 44 : 28; } // 0.28 play: bots take the slack house while it is open
+    else if (u.struct) { const sl = C.SLACK.bot && isSlack(u); if (!S.vuln(u) || (!u.pressed && !W.fray && !sl)) continue; sc = sl ? 44 : 28; } // 0.28 play: bots take the slack house while it is open
     else continue;
     if (sc > bs && losClear(h.x, h.z, u.x, u.z)) { bs = sc; best = u; }
   }

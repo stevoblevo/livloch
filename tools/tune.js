@@ -116,9 +116,11 @@ function policy(W, L, seed) {
     let pushing = false; for (const u of W.troopers) if (u.alive && u.team === 0 && hyp(u.x - tw.x, u.z - tw.z) < tw.range - 2) { pushing = true; break; }
     const window = has(2) && !has('k') && !has('x') && W.hollowT[lane] > 0 && pushing;
     standS = Math.min(standS, pushing ? twS - (window ? 10 : 15) : twS - tw.range + 3);
-    if ((raid || (has(2) && !has('k') && !has('d'))) && S.slack(tw) && S.vuln(tw) && hpF > 0.35) standS = twS - 14;
+    /* 0.30 play: lesson 2 goes under the open house only once no hollow is on its thread (D: at once, as until 0.30). Measured on 0.29's rules, Even, 48 seeds: going at once was the dip at lesson 2, the hollow walked past it to its own open house */
+    let hol = false; if (!has('D')) for (const u of W.troopers) if (u.alive && u.team === 1 && u.big && u.lane === lane) { hol = true; break; }
+    if ((raid || (has(2) && !has('k') && !has('d') && !hol)) && S.slack(tw) && S.vuln(tw) && hpF > 0.35) standS = twS - 14;
     if (raid && !onLane && standS - myS > 50 && S.zipEnd(0, lane) - myS > 30) { LL.lanePoint(lane, Q.s, P); st.join = true; } else st.join = false; // lesson 4: get onto the slack thread first, then ride it // lesson 2: a slack house cannot fire; this is the moment to stand under it
-    if (has(2) && !has('k') && !has('g') && W.red > 0 && !W.thin) { const g = W.st[0][lane]; const own = g.outer.alive ? g.outer : g.inner; if (own.alive) standS = Math.min(standS, rel(0, lane, own.s) + 4); }
+    if (has(2) && !has('k') && !has('g') && W.red > 0 && !W.thin) { const g = W.st[0][lane]; const own = g.outer.alive || has('G') ? (g.outer.alive ? g.outer : g.inner) : g.outer; if (own.alive) standS = Math.min(standS, rel(0, lane, own.s) + 4); }
     standS = U.clamp(standS, 8, Ln.len - 16);
     if (!st.join) LL.lanePoint(lane, rel(0, lane, standS), P); let gx = P.x - P.dz * (st.join ? 0 : st.lat), gz = P.z + P.dx * (st.join ? 0 : st.lat), job = 'lane'; const laneX = gx, laneZ = gz;
     // errands, in order of what a lesson says matters

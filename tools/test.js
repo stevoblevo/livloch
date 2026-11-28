@@ -845,6 +845,28 @@ test('0.29 play: a kept house takes less harm, is never slack, and no small one 
   const u = hushSmall(W, ln, k.s + 6); k.atkT = 0; const ev = run(W, 3, w => { hold(w); w.waveT = 99; u.hp = u.maxHp; u.x = k.x; u.z = k.z + 6; }); assert.ok(ev.some(e => e.k === 'towershot' && e.u === k), 'and it fires');
   const X = world({ auto: false }); X.heroes.forEach(h => { h.souls = 0; }); X.st[0][0].outer.brightT = X.st[0][1].outer.brightT = 500; for (let i = 0; i < 12; i++) { X.thiefT = 1e9; S._t.spawnThief(); const t = X.thieves[X.thieves.length - 1]; assert.strictEqual(t.mark, X.st[0][2].outer, 'the small one goes for the house that is not kept'); t.alive = false; }
 });
+/* ---------- 0.30 play: the tide takes a house ---------- */
+test('0.30 play: a slack thread nobody pulled tight takes the more worn front house; a kept house is never taken; Gentle takes none', () => {
+  const D = C.SLACK, setup = (o, each) => { const W = world(Object.assign({ auto: false, difficulty: 1 }, o)); W.waveT = 1e9; const hold = (w) => { keepAlive(w); w.waveT = 1e9; w.troopers.forEach(u => { u.alive = false; }); if (each) each(w); }; run(W, D.first + 1, hold); return { W, hold, ln: W.slack.lane }; };
+  { const { W, hold, ln } = setup(), mine = W.st[0][ln].outer, theirs = W.st[1][ln].outer; assert.ok(W.slack.t > 0, 'slack');
+    mine.hp = mine.maxHp * 0.8; theirs.hp = theirs.maxHp * 0.5; assert.strictEqual(S.tideTake(), theirs, 'theirs is the more worn');
+    let ev = run(W, D.t - D.last - 2, hold); assert.ok(!ev.some(e => e.k === 'slacklast' || e.k === 'slacktake'), 'nothing said before the last ' + D.last + ' s');
+    ev = run(W, 2, hold); const l = ev.find(e => e.k === 'slacklast'); assert.ok(l && l.u === theirs && l.lane === ln, 'said ' + D.last + ' s ahead, naming the house');
+    const hp0 = W.patron[1].hp; ev = run(W, D.last + 1, hold); const k = ev.map(e => e.k);
+    assert.ok(!theirs.alive && mine.alive, 'their house fell, mine stands'); assert.ok(k.indexOf('slacktake') >= 0 && k.indexOf('slacktake') < k.indexOf('structdown'), 'slacktake, then structdown');
+    const se = ev.find(e => e.k === 'slackend'); assert.ok(se && se.fell === 1 && se.took, 'the thread pulls tight, marked as taken'); assert.ok(!(W.slack.t > 0), 'no longer slack');
+    assert.ok(hp0 > 0 && ev.some(e => e.k === 'patrondim'), 'and their patron dims as for any house that falls'); }
+  { const { W, hold, ln } = setup(), mine = W.st[0][ln].outer, theirs = W.st[1][ln].outer; mine.hp = mine.maxHp * 0.3; theirs.hp = theirs.maxHp * 0.6;
+    run(W, D.t + 1, hold); assert.ok(!mine.alive && theirs.alive, 'mine was the more worn: mine falls'); assert.strictEqual(S.tideTake(), null, 'nothing to take once the thread is tight');
+    const W2 = setup().W; assert.ok(W2.slack.t > 0); }
+  { const { W, hold, ln } = setup(), mine = W.st[0][ln].outer, theirs = W.st[1][ln].outer; mine.hp = mine.maxHp * 0.3; theirs.hp = theirs.maxHp * 0.9; mine.brightT = 500;
+    const ev = run(W, D.t + 1, hold); assert.ok(mine.alive && !theirs.alive, 'a kept house is never taken: the tide takes theirs instead'); assert.ok(ev.some(e => e.k === 'slacktake' && e.team === 1)); }
+  { const { W, hold, ln } = setup(); const ev = run(W, D.t + 1, (w) => { hold(w); w.structs.forEach(s => { s.hp = s.maxHp; }); });
+    assert.ok(W.st[0][ln].outer.alive && W.st[1][ln].outer.alive, 'two whole houses: nothing falls'); assert.ok(ev.some(e => e.k === 'slackend' && e.fell == null) && !ev.some(e => e.k === 'slacktake'), 'the thread just pulls tight'); }
+  { const { W, hold, ln } = setup(), mine = W.st[0][ln], theirs = W.st[1][ln].outer; S._t.kill(mine.outer, null, null); assert.ok(!(W.slack.t > 0), 'a house that falls by itself still pulls the thread tight'); W.slack.t = 20; W.slack.lane = ln;
+    mine.inner.hp = mine.inner.maxHp * 0.4; theirs.hp = theirs.maxHp * 0.7; assert.strictEqual(S.tideTake(), mine.inner, 'with the guardian gone the warden is the front house'); }
+  { const { W, hold, ln } = setup({ difficulty: 0 }), mine = W.st[0][ln].outer; mine.hp = mine.maxHp * 0.3; const ev = run(W, D.t + 1, hold); assert.ok(mine.alive && !ev.some(e => e.k === 'slacktake' || e.k === 'slacklast'), 'Gentle: the tide takes nothing'); }
+});
 test('0.29 play: one early tide, then two to every rain, none while it rains; the hollow sets out ahead', () => {
   const W = world({ difficulty: 1 }), D = C.SLACK, E = C.RED_EVERY, hold = (w) => { keepAlive(w); w.structs.forEach(s => { s.hp = s.maxHp; }); }, ev = run(W, 2 * E + C.RED_T + D.t + 5, hold);
   const at = ev.filter(e => e.k === 'slack').map(e => Math.round(e.at)), warn = ev.filter(e => e.k === 'slackwarn').map(e => Math.round(e.at)), want = [D.first, E - D.pre, E + C.RED_T, 2 * E - D.pre, 2 * E + C.RED_T];
