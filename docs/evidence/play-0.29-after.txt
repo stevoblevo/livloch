@@ -1,0 +1,85 @@
+0.29 play, AFTER: work/0.29-play, tools/tune.js 48 1 --mode match (one run per difficulty), scripted player, simulator output.
+A row of 48 seeds has a standard error of about 7 points of win rate.
+
+LONG MATCH, 48 seeds from 1 (scripted player; simulator output, not human play)
+diff    lessons  win   margin  median  lost by gutter/overrun  structs lost R-H  player deaths (by)          longest quiet  first fall  folds moods ness  arrivals lights caught
+Gentle  none     100%     4.8    7:59   0/0                    0.2-5.0           0.0 ()                         2:25         1:53      0.0   0.0  0.0      0.0    0.5      0
+Gentle  1        100%     4.2    9:13   0/0                    0.7-4.9           0.3 (ness 0.3)                 2:36         1:53      0.0   0.0  0.9      0.0    1.4      0
+Gentle  12       100%     4.6    9:09   0/0                    0.6-5.2           0.1 (ness 0.1)                 2:30         1:51      0.0   0.0  1.1      0.0    2.3      0
+Gentle  123      100%     5.2    7:16   0/0                    0.1-5.3           0.0 ()                         2:11         1:51      0.0   1.1  1.0      0.0    1.0      0
+Gentle  1234     100%     4.5    7:16   0/0                    0.0-4.5           0.0 ()                         2:43         1:30      4.3   1.0  1.0      0.0    0.8     30
+Gentle  12345    100%     4.6    7:06   0/0                    0.0-4.7           0.0 ()                         2:26         1:30      4.2   1.1  1.1      0.0    1.5     30
+
+288 matches in 275 s
+
+LONG MATCH, 48 seeds from 1 (scripted player; simulator output, not human play)
+diff    lessons  win   margin  median  lost by gutter/overrun  structs lost R-H  player deaths (by)          longest quiet  first fall  folds moods ness  arrivals lights caught
+Even    none      48%    -1.0   12:24   0/25                   4.7-3.7           0.0 ()                         3:41         1:56      0.0   0.0  0.0      0.0    1.8      0
+Even    1         69%    -0.9   14:25   0/15                   4.3-3.4           0.2 (ness 0.2)                 4:10         1:58      0.0   0.0  0.6      0.0    2.9      0
+Even    12        48%    -0.7   12:16   0/25                   4.3-3.6           0.3 (ness 0.2, trooper 0.0, hollow 0.0)   3:08         1:58      0.0   0.0  0.9      0.0    3.4      0
+Even    123       92%     1.1   12:49   0/4                    3.4-4.5           0.2 (ness 0.1, hollow 0.1, trooper 0.0)   3:15         1:58      0.0   2.2  1.1      0.0    2.3      0
+Even    1234      96%     1.6   11:41   0/2                    2.3-3.9           0.0 (ness 0.0)                 3:52         1:57      5.4   2.0  1.0      0.1    1.8     49
+Even    12345     96%     2.2   12:02   0/2                    1.9-4.1           0.1 (ness 0.1, tower 0.0, trooper 0.0, hollow 0.0)   3:41         1:57      5.4   2.0  1.2      0.1    4.3     49
+
+288 matches in 440 s
+
+LONG MATCH, 48 seeds from 1 (scripted player; simulator output, not human play)
+diff    lessons  win   margin  median  lost by gutter/overrun  structs lost R-H  player deaths (by)          longest quiet  first fall  folds moods ness  arrivals lights caught
+Cruel   none      17%    -2.7   11:55   0/40                   5.0-2.3           0.0 ()                         3:22         1:48      0.0   0.0  0.0      0.0    1.3      0
+Cruel   1         23%    -2.8   11:54   0/37                   4.8-2.0           0.1 (ness 0.1, hollow 0.0)     3:56         1:53      0.0   0.0  0.4      0.0    1.9      0
+Cruel   12        15%    -2.7   11:54   0/41                   5.0-2.3           0.3 (trooper 0.1, hollow 0.1, ness 0.1)   3:29         1:53      0.0   0.0  0.6      0.0    2.4      0
+Cruel   123       54%    -1.7   12:20   0/22                   4.9-3.2           0.2 (ness 0.1, hollow 0.1, stray 0.0, trooper 0.0, tower 0.0)   3:12         1:53      0.0   2.3  1.1      0.0    1.9      0
+Cruel   1234      63%    -1.0   12:05   0/18                   4.3-3.3           0.3 (trooper 0.2, hollow 0.1, ness 0.0)   3:17         2:07      4.8   2.1  1.1      0.1    1.7     56
+Cruel   12345     77%    -0.9   13:16   0/11                   4.2-3.3           0.4 (trooper 0.1, hollow 0.1, ness 0.1)   3:41         2:13      4.7   2.4  1.3      0.2    4.7     56
+
+288 matches in 873 s
+
+CRUEL, lessons 4 and 5 again on 48 other seeds: tools/tune.js 48 49 --mode match --diff 2 --lessons 1234,12345,12345S
+(run one commit earlier, before a dark house's clock was let run on a slack thread; 12345S is lesson 5 as 0.28 played it, riding to the slack thread's far house)
+diff    lessons  win   margin  median  lost by gutter/overrun  structs lost R-H  player deaths (by)          longest quiet  first fall  folds moods ness  arrivals lights caught blinded
+Cruel   1234      54%    -1.3   12:29   0/22                   4.4-3.1           0.4 (hollow 0.1, trooper 0.1, ness 0.1)   3:10         2:08      4.5   2.1  1.0      0.1    1.6     52     0.0
+Cruel   12345     73%    -0.9   13:36   0/13                   4.2-3.3           0.4 (hollow 0.1, ness 0.1, trooper 0.1)   3:29         2:13      4.8   2.3  1.3      0.1    5.2     56     0.0
+Cruel   12345S    58%     0.1   13:29   0/20                   3.9-4.1           0.3 (trooper 0.1, hollow 0.1, ness 0.0, tower 0.0)   2:49         2:13      4.7   2.4  0.9      0.8    5.1     53     0.0
+144 matches in 560 s
+
+Lesson 4 against lesson 5 on Cruel over both sets, 96 seeds a row: 1234 wins 56 of 96 (58%), 12345 wins 72 of 96 (75%).
+Difference 17 points, standard error of the difference 6.7 points.
+
+First Rain, 24 seeds: tools/tune.js 24 1 --mode short (run after the patron rule was kept out of First Rain; with it in, three of 24
+Gentle matches at lessons 123 ended before the rain and scored nothing)
+
+FIRST RAIN, 24 seeds from 1 (scripted player; simulator output, not human play)
+diff    lessons  stars  3+    houses  structs lost R-H  player deaths  moods ness  star sets
+Gentle  none       2.0    0%    100%   0.0-2.8                     0.0     0.0   0.0   HT 24
+Gentle  1          2.2   25%     92%   0.1-2.5                     0.2     0.0   0.3   HT 16, HTN 6, T 2
+Gentle  12         2.3   42%     92%   0.1-2.3                     0.0     0.0   0.5   HT 11, HTN 10, H 1, TN 1
+Gentle  123        4.6  100%    100%   0.0-3.8                     0.0     1.0   0.6   HMTNG 14, HMTG 10
+Gentle  1234       4.8  100%    100%   0.0-3.4                     0.0     1.0   0.8   HMTNG 18, HMTG 6
+Gentle  12345      4.6  100%    100%   0.0-3.1                     0.1     1.0   0.6   HMTNG 15, HMTG 9
+Even    none       1.8    0%     92%   0.1-1.7                     0.0     0.0   0.0   HT 19, H 3, T 2
+Even    1          1.7    0%     83%   0.2-1.3                     0.2     0.0   0.0   HT 17, T 3, H 3, - 1
+Even    12         1.8   17%     71%   0.3-1.4                     0.0     0.0   0.2   HT 12, T 4, HTN 4, - 2
+Even    123        4.0   96%     96%   0.0-1.8                     0.2     1.0   0.2   HMTG 18, HMTNG 4, M 1, HMG 1
+Even    1234       4.4  100%     96%   0.0-2.1                     0.0     1.0   0.5   HMTG 12, HMTNG 11, MTG 1
+Even    12345      4.4  100%    100%   0.0-1.9                     0.0     1.0   0.4   HMTG 15, HMTNG 9
+Cruel   none       0.5    0%     29%   1.0-0.3                     0.0     0.0   0.0   - 14, H 4, T 3, HT 3
+Cruel   1          0.4    0%     17%   1.2-0.2                     0.2     0.0   0.0   - 17, HT 2, H 2, T 2
+Cruel   12         0.2    0%      8%   1.3-0.1                     0.1     0.0   0.0   - 19, T 2, H 2, N 1
+Cruel   123        3.2   75%     63%   0.4-0.6                     0.1     1.0   0.2   HMG 6, HMTG 5, MG 4, HMTNG 4
+Cruel   1234       3.4   75%     63%   0.4-0.8                     0.1     1.0   0.1   HMTG 9, MG 6, HMTNG 3, HMG 3
+Cruel   12345      3.3   79%     54%   0.5-0.7                     0.1     1.0   0.1   HMTG 9, MTG 6, MG 5, HMG 2
+
+432 matches in 294 s
+
+BOT-ONLY SOAK, after: node tools/soak.js 12 1 (before: Gentle 12/12, Even 1/12, Cruel 1/12)
+Gentle Reign wins 12/12 6:52W 12:44W 8:23W 6:12W 6:20W 7:20W 9:27W 6:47W 7:16W 7:30W 7:40W 10:27W
+Even Reign wins 5/12 11:33W 12:05L 12:01L 11:36W 12:52W 12:02W 11:46L 12:00L 11:56L 11:57W 12:01L 12:16L
+Cruel Reign wins 2/12 11:11W 11:40L 11:29L 11:48L 11:36L 11:53L 11:27L 16:00W 11:32L 11:34L 11:36L 11:34L
+
+GENTLE, tried and not adopted: Hush buildings 1.65 instead of 1.35 (--set 0.build=1.65), 48 seeds
+Gentle  none     100%     4.5    9:03   0/0                    0.4-4.9           0.0 (ness 0.0)                 2:32         1:57      0.0   0.0  0.0      0.0    0.8      0
+Gentle  1        100%     4.0    9:55   0/0                    0.9-4.9           0.2 (ness 0.2, stray 0.0)      2:49         1:57      0.0   0.0  1.0      0.0    1.6      0
+Gentle  12       100%     4.4    9:15   0/0                    0.7-5.1           0.1 (ness 0.1)                 2:28         1:55      0.0   0.0  1.2      0.0    2.1      0
+Gentle  123      100%     5.3    7:45   0/0                    0.1-5.3           0.1 (ness 0.1)                 2:23         1:55      0.0   1.1  1.1      0.0    0.9      0
+Gentle  1234     100%     4.6    7:35   0/0                    0.0-4.6           0.0 (ness 0.0)                 2:40         1:41      4.6   1.1  1.1      0.0    0.5     33
+Gentle  12345    100%     4.4    8:02   0/0                    0.0-4.5           0.0 ()                         2:50         1:41      4.7   1.2  1.1      0.1    1.9     33

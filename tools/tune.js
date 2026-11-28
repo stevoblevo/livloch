@@ -37,18 +37,20 @@
               thread to the Hush for 45 s; the Ness crease too once the Ness is down. Keeps the crease for the red rain
               when one is less than two minutes off, and folds 15 s into it, when the rain's hollows are on their way.
      5 You cannot keep everything lit. Stops running to every house under attack: leaves its thread only for an inner
-              house or the patron. When a thread goes slack it leaves its own thread dark, rides the slack thread to
-              the far side's open house and takes it. A light from home (it still walks home only at 12%) goes to the
-              house that needs it most, not the first one passed.
-              (0.28: until 0.28 lesson 5 also walked home at 35%. Going home early, or by choice when its thread was
-              quiet, and carrying every light out, measured at no gain or a loss at 40 seeds on Cruel, even with the
-              light worth half a house: time off the thread costs more than a mended house returns. See
-              docs/evidence/play-0.28-notes.txt.)
+              house or the patron, and stays on it when another thread goes slack. A light (from a small one it caught,
+              or from mending at home) is carried to the house that needs it most and that house is kept, where
+              lessons 0 to 4 leave it in the first house they happen to walk past.
+              (0.29: until 0.29 lesson 5 also rode the slack thread to the far side's open house. Measured over 96
+              seeds on Cruel that raid loses to staying: it takes more Hush houses, on the wrong threads. Riding home
+              to fetch a light before a rain or a tide, letters I and U, measured no better. And until 0.29 a rider
+              coming home down the middle thread walked into its own patron and stood there, which is part of why
+              0.28 measured going home as a loss. See docs/evidence/play-0.29-notes.txt.)
 
-   Letters after the digits switch one habit off (or, in capitals, an experiment on), to measure it alone: s no ride to
-   the slack thread's open house, h a light goes to the first house passed, n the crease is not kept for the rain,
-   a no arrivals; F keeps the crease for the slack thread and folds its own thread into it, R gives up the slack
-   house when its own is in danger, v runs to guardian fires as lessons 0 to 4 do. The 0.27 letters are in the code.
+   Letters after the digits switch one habit off (or, in capitals, an experiment on), to measure it alone: h a light
+   goes to the first house passed, n the crease is not kept for the rain, a no arrivals, v runs to guardian fires as
+   lessons 0 to 4 do; S rides the slack thread to the far side's open house (lesson 5 until 0.29), R gives that house up
+   when its own is in danger, F keeps the crease for the slack thread and folds its own thread into it, I rides home
+   for a light as a red rain is about to fall, U as a thread is about to go slack. The 0.27 letters are in the code.
 
    WHAT IT MEASURES. Per difficulty and lessons known: the long match's win rate, median length, how losses came (by the
    gutter after 20:00, or overrun), structures lost each side, the player's deaths and what killed it, the longest
@@ -64,7 +66,7 @@ const P = { x: 0, z: 0, dx: 0, dz: 0 }, Q = { s: 0, d: 0 };
 function policy(W, L, seed) {
   const has = (k) => L.indexOf(String(k)) >= 0, r = LL.rng(seed * 7919 + (has('q') ? 14 : 13)), p = W.player;
   const st = { thinkT: 0, lane: 1, laneT: 0, pick: 0, buyT: 10, retreat: false, ax: p.x, ay: 1.5, az: p.z + 20, tgt: null, gx: p.x, gz: p.z,
-    lat: (r() * 2 - 1) * 2.5, strafe: r() * 9, ph: r() * 6, hp: {}, hurtAt: {}, covered: {}, moodAt: -1, fold: -1, orb: null, back: false, wantLens: null, zipOn: false };
+    lat: (r() * 2 - 1) * 2.5, strafe: r() * 9, ph: r() * 6, hp: {}, hurtAt: {}, covered: {}, moodAt: -1, fold: -1, orb: null, back: false, wantLens: null, zipOn: false, fetch: false, fetchAt: 40, fetchT0: 0, had: false, keep: null };
   const en = 1, rel = S.rel;
   function enemyNext(l) { const s = W.st[en][l]; return s.outer.alive ? s.outer : (s.inner.alive ? s.inner : W.patron[en]); }
   function think() {
@@ -75,6 +77,12 @@ function policy(W, L, seed) {
     // retreat
     const low = 0.12;
     if (st.retreat) { if (hpF > 0.9) st.retreat = false; } else if (hpF < low) st.retreat = true;
+    // lesson 5 (0.29): home is somewhere to go by choice. Before a red rain, and when a thread is about to go slack, it rides home for a light and keeps one house with it
+    const K = W.slack, slackOn = K.t > 0, slackSoon = K.warned || slackOn;
+    { const rainDue = has('I') && W.red <= 0 && W.redNext - W.t < 14 && !W.short, tideDue = has('U') && K.warned && C.dif(W).slackHollows > 0 && W.st[0][K.lane].inner.alive;
+      if (st.had && !p.ember) st.keep = null; st.had = !!p.ember;
+      if (st.fetch) { if (p.ember || st.retreat || W.t > st.fetchT0 + 30) st.fetch = false; }
+      else if (has(5) && C.EMBER.wait < 100 && !p.ember && !st.retreat && hpF > 0.5 && W.t > st.fetchAt && (rainDue || tideDue)) { st.fetch = true; st.fetchT0 = W.t; st.fetchAt = W.t + 40; st.keep = rainDue ? 'rain' : 'tide'; } }
     // views (lesson 3)
     const m = W.mood;
     if (has(3)) {
@@ -90,17 +98,16 @@ function policy(W, L, seed) {
       if (W.t > 600 && has(1) && has('j')) { const b = W.heroes.find(h => h !== p && h.alive); if (b) st.pick = b.ai.lane; }
     }
     st.lane = st.pick;
-    const K = W.slack, slackOn = K.t > 0, slackSoon = K.warned || slackOn;
     for (const k of W.creases) if (k.t > 0 && k.team === 0 && k.from === st.lane) st.lane = k.to; // whoever folds its own thread away goes with its troopers
     // lesson 5: a slack thread carries to the far side's open house. It leaves its own thread dark for fifty seconds and takes that house
     let raid = null;
-    if (has(5) && !has('s') && slackOn && hpF > 0.35) { const e = enemyNext(K.lane); const mine = W.st[0][st.pick], mh = mine.outer.alive ? mine.outer : mine.inner, risk = has('R') && K.lane !== st.pick && st.lane === st.pick && mh.alive && (mh.hp < mh.maxHp * 0.5 || W.troopers.some(u => u.alive && u.team === 1 && u.big && u.lane === st.pick && hyp(u.x - mh.x, u.z - mh.z) < 30)); if (S.slack(e) && S.vuln(e) && !risk) { st.lane = K.lane; raid = e; } }
+    if (has(5) && has('S') && slackOn && hpF > 0.35) { const e = enemyNext(K.lane); const mine = W.st[0][st.pick], mh = mine.outer.alive ? mine.outer : mine.inner, risk = has('R') && K.lane !== st.pick && st.lane === st.pick && mh.alive && (mh.hp < mh.maxHp * 0.5 || W.troopers.some(u => u.alive && u.team === 1 && u.big && u.lane === st.pick && hyp(u.x - mh.x, u.z - mh.z) < 30)); if (S.slack(e) && S.vuln(e) && !risk) { st.lane = K.lane; raid = e; } }
     let fire = null; // a house of ours being hit
     for (const s of W.structs) if (s.team === 0 && s.alive && st.hurtAt[s.id] > W.t - 2) { if (!has(5) || has('v') || s.kind !== 'guardian') { if (!fire || s.kind !== 'guardian') fire = s; } }
     if (fire && fire.lane !== st.lane && !raid) st.lane = fire.lane;
     // lesson 5: a light from home goes to the house that needs it most, and the hero's thread waits
     let mend = null;
-    if (has(5) && !has('h') && p.ember && !st.retreat && !raid) { let bv = 0; for (const s of W.structs) { if (s.team !== 0 || !s.alive || s.kind === 'patron' || !S.vuln(s) || !(s.dark || s.hp <= s.maxHp * C.EMBER.under)) continue; let hol = 0; for (const u of W.troopers) if (u.alive && u.team === 1 && u.big && u.lane === s.lane && hyp(u.x - s.x, u.z - s.z) < 60) hol++; const v = (1 - s.hp / s.maxHp) + (s.dark ? 0.5 : 0) + (st.hurtAt[s.id] > W.t - 6 ? 0.5 : 0) + hol * 0.6 + (s.lane === st.pick ? 0.15 : 0); if (v > bv) { bv = v; mend = s; } } if (mend) st.lane = mend.lane; }
+    if (has(5) && !has('h') && p.ember && !st.retreat) { let bv = 0; for (const s of W.structs) { if (s.team !== 0 || !s.alive || s.kind === 'patron' || !S.vuln(s) || !(s.dark || s.hp <= s.maxHp * C.EMBER.under)) continue; let hol = 0; for (const u of W.troopers) if (u.alive && u.team === 1 && u.big && u.lane === s.lane && hyp(u.x - s.x, u.z - s.z) < 60) hol++; const v = (1 - s.hp / s.maxHp) + (s.dark ? 0.5 : 0) + (st.hurtAt[s.id] > W.t - 6 ? 0.5 : 0) + hol * 0.6 + (s.lane === st.pick ? 0.15 : 0) + (s.brightT > 0 ? -3 : 0) + (st.keep === 'tide' && s.lane === K.lane ? 4 : 0) + (st.keep === 'rain' && s.lane === st.pick ? 2 : 0) + (st.keep && s.kind === 'guardian' ? 0.3 : 0); if (v > bv) { bv = v; mend = s; } } if (mend) { st.lane = mend.lane; raid = null; } }
     const lane = st.lane, Ln = lanes[lane];
     LL.laneNearest(lane, p.x, p.z, Q); const myS = rel(0, lane, Q.s), onLane = Q.d < 6;
     // where to stand
@@ -143,20 +150,24 @@ function policy(W, L, seed) {
     }
     if (raid && job !== 'fold') { gx = laneX; gz = laneZ; job = 'lane'; st.wantLens = null; } // the open house comes before every errand
     if (mend && job !== 'thief' && !raid) { LL.lanePoint(lane, Math.max(4, mend.s - 5), P); gx = P.x; gz = P.z; job = 'mend'; }
-    if (st.retreat) { const sp = S.spawnPos(0, p.slot); gx = sp.x; gz = sp.z; job = 'home'; }
+    if (st.retreat || (st.fetch && !raid)) { gx = p.x >= 0 ? 8 : -8; gz = -C.SPAWN_Z + 8; job = 'home'; } // 0.29: a point in the fountain beside the patron, not behind it (until 0.29 a rider coming home down the middle thread walked into its own patron and stood there)
+    // lesson 4: a long way is ridden. Off its thread and far from where it is going, it walks to the nearest thread first
+    st.via = -1;
+    if (has(4) && !p.zip && (job === 'home' || job === 'mend') && S.canZip(p) < 0) { const far = job === 'home' ? p.z > -70 : (mend.s - myS > 40 && hyp(gx - p.x, gz - p.z) > 45); if (far) { const nl = job === 'home' ? LL.nearestLane(p.x, p.z) : lane; LL.laneNearest(nl, p.x, p.z, Q); if (Q.d > 5) { LL.lanePoint(nl, Math.max(Q.s, 4), P); gx = P.x; gz = P.z; st.via = nl; } } }
     st.gx = gx; st.gz = gz; st.job = job;
     // threads (lesson 4)
     if (has(4)) {
       if (p.zip) { const ts = rel(0, p.zip.lane, p.zip.s);
         if (job === 'mend') { if (p.zip.dir < 0 || p.zip.lane !== lane || ts >= mend.s - 8) c.zip = true; }
-        else if (job !== 'home' && job !== 'lane') c.zip = true;
+        else if (job === 'home' ? p.zip.dir > 0 : job !== 'lane') c.zip = true;
         else if (job === 'lane') { // an arrival: a long ride lets go among the small Hush, not behind its own troopers
           let among = 0; if (ts - p.zip.s0 >= C.ARRIVE.min && !has('a')) for (const u of W.troopers) if (u.alive && u.team === 1 && !u.big && hyp(u.x - p.x, u.z - p.z) < C.ARRIVE.r - 1) among++;
           const far = raid ? standS - 2 : ts - p.zip.s0 >= C.ARRIVE.min - 6 && !has('a') ? W.front[0][lane] + 4 : standS - 5;
           if (p.zip.dir < 0 || p.zip.lane !== lane || (among >= 2 && !raid) || ts >= far) c.zip = true; }
       }
       else if (job === 'mend') { if (onLane && S.canZip(p) === lane && mend.s - myS > 40) { c.zip = true; c.zipDir = 1; } }
-      else if (onLane && S.canZip(p) === lane) { if (job === 'lane' && standS - myS > 40 && S.zipEnd(0, lane) - myS > 25) { c.zip = true; c.zipDir = 1; } else if (job === 'home' && myS > 30) { c.zip = true; c.zipDir = -1; } }
+      else if (job === 'home') { const zl = S.canZip(p); if (zl >= 0) { LL.laneNearest(zl, p.x, p.z, Q); if (Q.s > 30) { c.zip = true; c.zipDir = -1; } } }
+      else if (onLane && S.canZip(p) === lane) { if (job === 'lane' && standS - myS > 40 && S.zipEnd(0, lane) - myS > 25) { c.zip = true; c.zipDir = 1; } }
     }
     // target
     if (job !== 'thief' && job !== 'stray') {
