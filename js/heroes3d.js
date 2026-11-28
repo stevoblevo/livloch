@@ -271,8 +271,8 @@ const LOOKP = {
 /* 0.29 look: skin. At 5 to 10 m the lift (light added evenly so a figure reads at night) left faces and hands one flat pale
    tone. Skin now keeps its own hue but deepens it on the side away from the key light (the colour times itself: richer, not
    greyer), is a touch warmer where lit, and catches a warm rim. SKK scales it per view (by drawing pass, as LOOKP): Inkblot
-   Noir turns everything to tone, so less there; Origami is daylight and flat by design, so less there too. */
-const SKK = { 0: 1, 1: 0.6, 2: 0.7, 3: 1, 4: 0.85, 5: 1, 6: 0.8, 7: 1 };
+   Noir turns everything to tone and a deepened face went to its black band, so a quarter there; Origami is daylight and flat by design, so less there too. */
+const SKK = { 0: 1, 1: 0.25, 2: 0.7, 3: 1, 4: 0.85, 5: 1, 6: 0.8, 7: 1 };
 function lookP(LK, team) {
   const p = LOOKP[LK && LK.post != null ? LK.post : 0] || LOOKP[0];
   const rim = new T.Color(p.team ? LK.team[team || 0] : (LK.rim != null ? LK.rim : (LK.sun ? LK.sun[0] : 0xffe0b0)));
@@ -1147,14 +1147,14 @@ H3.guardEvent = function (fig, e) {
 const FIDGET = {
   dora: function (b, e, w) { b.armR.rotation.x += -1.05 * e; b.armR.rotation.z += 0.1 * e; b.foreR.rotation.x += -1.2 * e; b.head.rotation.y += -0.32 * e; b.head.rotation.x += 0.12 * e; b.chest.rotation.y += -0.12 * e; },
   anna: function (b, e, w) { const tap = Math.max(0, Math.sin(w * 15)) * e; b.armR.rotation.x += -0.55 * e; b.armR.rotation.z += 0.12 * e; b.foreR.rotation.x += (-1.15 + 0.4 * tap) * e; b.armL.rotation.x += -0.5 * e; b.armL.rotation.z += -0.12 * e; b.foreL.rotation.x += -1.25 * e; b.head.rotation.x += 0.22 * e; b.head.rotation.y += -0.12 * e; },
-  myra: function (b, e, w, fig) { const hop = Math.max(0, Math.sin(w * 6.5)) * e; b.hips.position.y += 0.05 * hop; b.head.rotation.z += 0.2 * e * Math.sin(w * 3.2); b.armL.rotation.z += 0.45 * e; b.armR.rotation.z += -0.45 * e; fig.S.wph = (fig.S.wph || 0) + 0.5 * e; },
+  myra: function (b, e, w, fig) { const hop = Math.max(0, Math.sin(w * 6.5)) * e; b.hips.position.y += 0.09 * hop; b.head.rotation.z += 0.2 * e * Math.sin(w * 3.2); b.armL.rotation.z += 0.45 * e; b.armR.rotation.z += -0.45 * e; fig.S.wph = (fig.S.wph || 0) + 0.5 * e; },
   skein: function (b, e, w) { const f = Math.sin(w * 4.1); b.head.rotation.z += 0.38 * f * e; b.neck.rotation.z += 0.12 * f * e; b.armL.rotation.z += 0.18 * e * Math.max(0, -f); b.armR.rotation.z += -0.18 * e * Math.max(0, f); b.chest.rotation.z += -0.06 * f * e; },
   rook: function (b, e, w) { const r = Math.sin(w * 4.2); b.chest.rotation.x += (-0.1 + 0.06 * r) * e; b.armL.rotation.x += -0.35 * e; b.armR.rotation.x += -0.35 * e; b.foreL.rotation.x += -1.5 * e; b.foreR.rotation.x += -1.5 * e; b.armL.rotation.z += -0.15 * e; b.armR.rotation.z += 0.15 * e;
     if (b.finL) { b.finL.rotation.y += 0.35 * e * Math.max(0, r); b.finR.rotation.y += -0.35 * e * Math.max(0, r); } }
 };
 function fidget(fig, h, st, dt, red, mix, air) {
   const S = fig.S, F = FIDGET[fig.id]; if (!F || red) { S.still = 0; return; }
-  const calm = mix < 0.05 && air < 0.05 && !(st.aim > 0.08) && !(st.throw) && !(st.stomp > 0.01) && !(st.brace > 0.01) && h.alive !== false;
+  const calm = mix < 0.05 && air < 0.05 && !(st.aim > 0.08) && !(Math.abs(st.throw || 0) > 0.02) && !(st.stomp > 0.01) && !(st.brace > 0.01) && h.alive !== false;
   S.still = calm ? (S.still || 0) + dt : 0; if (S.still < 2) return;
   const f = (S.still - 2) % 6.5; if (f > 1.6) return;
   const e = ss(0, 0.35, f) * (1 - ss(1.2, 1.6, f));
