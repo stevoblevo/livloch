@@ -231,6 +231,13 @@ Rules in `sim.js` marked `0.29 play`, numbers in `C.EMBER`, `C.SLACK`, `C.PATRON
 - **View hooks waiting for an artist.** Nothing new is drawn. Wanted: a kept house against a merely lit one (`s.brightT`: it shrugs off harm and ignores the slack thread), a hero waiting for a light in the fountain (`h.homeT` rising to `C.EMBER.wait`), the light passing from a caught thief to its catcher (`ember` with `thief`), the hollow walking down a thread that has been warned (`u.lean === W.slack.n + 1` while `W.slack.warned`), the Hush patron dimmer for each house gone (`patron.dims`, 0 to 6; event `patrondim`). No sounds either. `ui.js` lines marked `0.29 play` carry the words.
 - **Debrief.** The `ember` and `slack` cards say the new rules. No new discovery id.
 
+## The tide takes a house (0.30 play)
+Rules in `sim.js` marked `0.30 play`, numbers in `C.SLACK.take`, `last`, `bot` and the `C.DIFF` keys `slackTake`, `slackMul`, `dimK`. Why and what it measured: `docs/evidence/play-0.30-notes.txt`.
+- **The take.** `tideTake()` (`S.tideTake`) names the house a slack thread would take now: of the two front houses on it (outer if it stands, else inner; never a patron, never a kept house) the one with the lower share of its health, or `null` when they are equal, both whole, or the difficulty has no `slackTake` (Gentle). `slackStep` sends `slacklast` (`lane`, `u` the house, `t` seconds left) once, `C.SLACK.last` seconds before the end, and when the time runs out `slacktake` (`lane`, `u`, `team`) and then kills the house through `kill`, so `structdown`, `patrondim` and `slackend` (`fell`, `broke`, and `took: true`; `structdown` carries `took: true` as well) follow as for any house that falls on a slack thread. A house felled by a hero or a hollow before then still pulls the thread tight at once, as in 0.28.
+- **Per difficulty.** `slackMul` is what a slack house takes of each blow (Gentle 1: its houses only stop firing and lose their protection), `dimK` scales `C.PATRON_DIM` (Gentle half).
+- **Bots.** `C.SLACK.bot` 0: a bot no longer singles out a slack house; it shoots one only as it shoots any house, pressed and in range.
+- **View hooks waiting for an artist.** `slacklast` and `slacktake` are said in banners only (`ui.js`, lines marked `0.30 play`). Wanted: the two front houses of a slack thread shown as a pair being weighed (`S.tideTake()` every frame gives the one that would go), the last ten seconds, and the take itself.
+
 ## Paper heroes: from sheet to screen
 
 The painted cards, the look until 0.23 and still one setting away: flat painted cutouts that always face the camera.

@@ -2,6 +2,30 @@
 
 Every version of Livloch, newest first. Each one from 0.4 on is a `release/X.Y` branch that never moves, and the published ones stay playable at [stevoblevo.github.io/livloch/versions/](https://stevoblevo.github.io/livloch/versions/). The reasons behind each step are in [`docs/PLAN.md`](docs/PLAN.md); where each was published is in [`docs/IMPORT.md`](docs/IMPORT.md).
 
+## 0.30
+**No more quiet stretches, a readable fold, warm Hypermetapunk, and sounds in the music's key.**
+
+- **The tide takes a house** (Even and Cruel):
+  - A slack thread that runs its whole minute with nothing fallen pulls tight, and the more worn of its two front houses falls.
+  - A kept house is never taken.
+  - The game says which house 10 s ahead, with a gold column over it, a ring and a low tremble. It falls with a thump and a bell.
+  - The median longest quiet stretch is now 2:33–2:59 (0.29: 3:08–4:10), and Even and Cruel matches still run 12–14 min.
+  - Bots no longer single out the slack house for you.
+- **Gentle lasts:** tougher Hush buildings, and slack houses don't take double harm. Matches now run 9–11 min and are still won every time.
+- **Even's lesson-2 dip:** partly the scripted player's own habits, now fixed. With 0, 1 and 2 lessons it is now 50 / 68 / 60, so the slope still dips at lesson 2.
+- **Cruel:** lesson 5 still beats lesson 4, 68% against 58% (96 seeds).
+- **The fold reads from behind:**
+  - A column of gold folded-paper light rises over every small Hush it catches and every hollow it pins.
+  - The crease burns wider.
+  - A "CAUGHT" arrow at the screen edge points to an off-screen catch.
+- **Hypermetapunk:** warm glows stay warm. The post was adding bloom to the green channel only, which turned gold olive.
+- **Sounds:**
+  - Rule sounds without harsh top end or clicks, and the quiet ones brought up to sit near the shots.
+  - Every effect now follows the key of the music cue that's playing. Most cues aren't in A major, which the effects had assumed.
+- **Banners** stay off the play centre on desktop, phone portrait and phone landscape.
+- **Inkblot Noir:** skin is lifted out of the black band.
+- **Fixed:** the page no longer asks for a missing /favicon.ico (Livloch has its own icon now).
+
 ## 0.29
 **The rules show and sound, choosing which house to keep wins, and the heroes move like cloth and skin.**
 
