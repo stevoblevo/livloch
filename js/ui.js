@@ -201,7 +201,7 @@ UI.startHUD = function (w) {
   W = w; const p = W.player, d = p.def;
   $('hud').hidden = false; show(null);
   $('hud').style.setProperty('--hc', d.css);
-  for (let i = 0; i < 3; i++) { const b = $('ab' + i); b.querySelector('span').textContent = d.ab[i].name; b.title = d.ab[i].name + ': ' + d.ab[i].desc; }
+  for (let i = 0; i < 3; i++) { const b = $('ab' + i), sp = b.querySelector('span'); if (LL.glyphs) { sp.innerHTML = LL.glyphs.svg(d.id, i, d.ab[i]); b.setAttribute('aria-label', b.querySelector('b').textContent + ': ' + d.ab[i].name); } else sp.textContent = d.ab[i].name; b.title = d.ab[i].name + ': ' + d.ab[i].desc; } // 0.29 feel: a drawn sign per ability in place of its name (js/glyphs.js); the name stays the button's title and accessible name
   $('gunN').textContent = d.gun.name;
   ammoBuild(d); // 0.26 shots: a row of icons in the gun's shape
   viewTag(W.lens); $('lvN').textContent = String(p.level); // 0.28 face
