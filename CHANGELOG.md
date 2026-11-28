@@ -2,6 +2,36 @@
 
 Every version of Livloch, newest first. Each one from 0.4 on is a `release/X.Y` branch that never moves, and the published ones stay playable at [stevoblevo.github.io/livloch/versions/](https://stevoblevo.github.io/livloch/versions/). The reasons behind each step are in [`docs/PLAN.md`](docs/PLAN.md); where each was published is in [`docs/IMPORT.md`](docs/IMPORT.md).
 
+## 0.29
+**The rules show and sound, choosing which house to keep wins, and the heroes move like cloth and skin.**
+
+- **Lesson 5 wins:** a light now has three sources: being mended at home, standing 3 s in the fountain, or catching a small Hush. Carry it to a house and that house is kept for 80 s. A kept house fires twice as fast, takes 35% of harm and is never slack. Every Hush guardian or warden that falls takes 12% of the Hush patron's health. On Cruel the scripted player wins 75% with lesson 5 against 58% with lesson 4 (96 seeds a row).
+- **Tides:** a thread goes slack at 1:40, 90 s before each rain, and as the rain ends. The leaning hollow sets out ahead of each one.
+- **Bot teammates no longer play the lessons for you:**
+  - An arrival now needs a landing among the Hush.
+  - Even with no lessons is back to 48% (0.28: 56%).
+  - The longest quiet stretch is still 3–4 minutes, and Gentle matches run 7–9 minutes.
+- **Seen and heard:**
+  - **Arrival:** rings, a band of light along the thread, sparks, and a camera kick with a thump.
+  - **The fold:** small Hush crumple into the burning crease, and a hollow strains in paper bands and gold cords.
+  - **A light from home:** a paper lantern swings on the hero's shoulder, and a kept house flares and burns bright with a bell.
+  - **The slack thread:** it trembles and drains, sags with gold chevrons, then snaps tight with a sting.
+- **HUD:** each of the 15 abilities has a drawn sign on its lantern.
+- **Heroes:**
+  - Cloth follows raised arms, and arms clear skirts.
+  - Myra tips forward and kicks her legs in the hover, under a flared skirt.
+  - Skin has warmth, shading and cheeks, and the smiles are filled.
+  - Anna's shield sits out at her side.
+  - Each hero has an idle fidget, and landings squash deeper.
+  - Paper heroes (Lighter graphics) breathe and waddle.
+- **World:**
+  - Painted slots for fruit bushes, strays and cranes in the paper looks (#39).
+  - The stray has a face.
+  - Origami flowers and far blossoms read.
+  - Fuller bushes, red rose hips, solid Hypermetapunk leaves, and gentler crane and stray glows.
+- **Fixed:** your hero could vanish for the rest of a match after the camera was pushed against a wall.
+- **Tools:** `tools/smoke.js` takes `CHROME=` to use a full browser.
+
 ## 0.28.1
 **The valley behind the title actually comes alive.** In 0.28 the title gave up on the live valley for the whole session if its first 1.2 s were slow, if the tab opened in the background, or if frames ran below 22 fps. Many machines tripped one of those, so they saw only a still painting. Now a hidden tab doesn't count. The painting waits up to 9 s for any ten frames at about 18 fps or better, then fades. It only gives up if the shown valley runs below about 9 fps, and every return to the title tries again. `tools/face-sim.js` replays five frame patterns. 0.28 went live only at a steady 60 fps; 0.28.1 goes live in four of the five and keeps the painting only at 8 fps.
 
