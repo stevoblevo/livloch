@@ -857,7 +857,7 @@ test('0.30 play: a slack thread nobody pulled tight takes the more worn front ho
     ev = run(W, 2, hold); const l = ev.find(e => e.k === 'slacklast'); assert.ok(l && l.u === theirs && l.lane === ln, 'said ' + D.last + ' s ahead, naming the house');
     const hp0 = W.patron[1].hp; ev = run(W, D.last + 1, hold); const k = ev.map(e => e.k);
     assert.ok(!theirs.alive && mine.alive, 'their house fell, mine stands'); assert.ok(k.indexOf('slacktake') >= 0 && k.indexOf('slacktake') < k.indexOf('structdown'), 'slacktake, then structdown');
-    const se = ev.find(e => e.k === 'slackend'); assert.ok(se && se.fell === 1 && se.took, 'the thread pulls tight, marked as taken'); assert.ok(!(W.slack.t > 0), 'no longer slack');
+    const se = ev.find(e => e.k === 'slackend'); assert.ok(se && se.fell === 1 && se.took, 'the thread pulls tight, marked as taken'); assert.ok(ev.find(e => e.k === 'structdown').took, 'and so is its structdown'); assert.ok(!(W.slack.t > 0), 'no longer slack');
     assert.ok(hp0 > 0 && ev.some(e => e.k === 'patrondim'), 'and their patron dims as for any house that falls'); }
   { const { W, hold, ln } = setup(), mine = W.st[0][ln].outer, theirs = W.st[1][ln].outer; mine.hp = mine.maxHp * 0.3; theirs.hp = theirs.maxHp * 0.6;
     run(W, D.t + 1, hold); assert.ok(!mine.alive && theirs.alive, 'mine was the more worn: mine falls'); assert.strictEqual(S.tideTake(), null, 'nothing to take once the thread is tight');
